@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0 Ultimate</title>
+    <title>Bode Health v11.0 Pro</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,43 +12,32 @@
 <body>
     <div class="app-container">
         <header>
-            <div>
-                <h1>Bode Health <span class="version">v11.0</span></h1>
-                <p class="subtitle">Pro Analytics & Risk Management</p>
-            </div>
-            <div class="status-bar">
-                <span id="trust-score-display">Trust: 0</span>
-                <span id="xp-display">XP: 0</span>
-            </div>
+            <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Pro Analytics</p></div>
+            <div class="status-bar"><span id="xp-display">XP: 0</span></div>
         </header>
 
         <nav class="tabs">
             <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
             <button class="tab-btn" data-tab="stack">💉 Стек</button>
-            <button class="tab-btn" data-tab="support">💊 Поддержка</button>
             <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
-            <button class="tab-btn" data-tab="nutrition">🍎 Питание</button>
-            <button class="tab-btn" data-tab="training">🏋️ Тренировки</button>
+            <button class="tab-btn" data-tab="support">💊 Поддержка</button>
             <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
-            <button class="tab-btn" data-tab="reports">📑 Отчеты</button>
-            <button class="tab-btn" data-tab="shop">🛒 Статьи/Магазин</button>
+            <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
         </nav>
 
         <main>
             <!-- Dashboard -->
             <section id="dashboard" class="tab-content active">
                 <div class="cards-grid">
-                    <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
-                    <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
-                    <div class="card"><h3>Risk (Net)</h3><div class="big-value" id="dash-risk">--</div></div>
+                    <div class="card"><h3>Max Risk</h3><div class="big-value" id="dash-max-risk">--</div></div>
+                    <div class="card"><h3>Duration</h3><div class="big-value" id="dash-duration">--</div></div>
+                    <div class="card"><h3>Status</h3><div class="big-value" id="dash-status">--</div></div>
                 </div>
-                <div class="alert-box" id="daily-alert">Добавьте препараты для расчета прогноза.</div>
-                <div id="quick-alerts"></div>
             </section>
 
-            <!-- Stack (FIXED INPUT: Start/End Weeks) -->
+            <!-- Stack (Start/End Logic) -->
             <section id="stack" class="tab-content">
-                <h2>Добавить препарат в курс</h2>
+                <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
                     <label>Вещество:</label>
                     <select id="drug-substance" onchange="App.loadEsters()"></select>
@@ -58,103 +47,64 @@
                     
                     <div class="row">
                         <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
-                    </div>
-                    <div class="row">
-                        <input type="number" id="drug-start" placeholder="С недели" min="1" value="1" required>
-                        <input type="number" id="drug-end" placeholder="По неделю" min="1" value="10" required>
+                        <input type="number" id="drug-start" placeholder="Старт (нед)" value="1" min="1" required>
+                        <input type="number" id="drug-duration" placeholder="Длит. (нед)" required>
                     </div>
                     <button type="submit" class="btn-primary">Включить в курс</button>
                 </form>
-                
-                <h3>Текущий стек</h3>
                 <div id="stack-list" class="list-container"></div>
-                
-                <div class="actions">
-                    <button onclick="App.generatePlan()" class="btn-success">Рассчитать план и риски</button>
-                    <button onclick="state.stack=[]; App.renderStack(); document.getElementById('weekly-plan-output').innerHTML='';" class="btn-secondary" style="background:#cf6679">Очистить всё</button>
+                <button onclick="App.generatePlan()" class="btn-success">Рассчитать динамику курса</button>
+                <div id="weekly-plan-output"></div>
+            </section>
+
+            <!-- Risks (Heatmap & Charts) -->
+            <section id="risks" class="tab-content">
+                <div class="controls-row">
+                    <label>Неделя: </label>
+                    <select id="week-selector" onchange="App.renderWeekDetails()"></select>
                 </div>
                 
-                <div id="weekly-plan-output"></div>
+                <h3>Тепловая карта рисков (7x7)</h3>
+                <div id="risk-heatmap" class="heatmap-container"></div>
+
+                <h3>Динамика по системам</h3>
+                <div class="chart-controls">
+                    <label><input type="checkbox" checked onchange="App.toggleDataset('liver')"> Печень</label>
+                    <label><input type="checkbox" checked onchange="App.toggleDataset('cardio')"> Сердце</label>
+                    <label><input type="checkbox" checked onchange="App.toggleDataset('hemato')"> Кровь</label>
+                    <label><input type="checkbox" checked onchange="App.toggleDataset('endo')"> Эндо</label>
+                </div>
+                <canvas id="risk-trend-chart"></canvas>
             </section>
 
             <!-- Support -->
             <section id="support" class="tab-content">
                 <h2>Протокол поддержки</h2>
-                <div class="toggle-switch">
-                    <label>Активировать расчет Net Risks</label>
-                    <input type="checkbox" id="support-toggle" checked onchange="App.generatePlan()">
-                </div>
                 <div id="support-schedule" class="schedule-container"></div>
-            </section>
-
-            <!-- Risks (FULL 7x7 MATRIX) -->
-            <section id="risks" class="tab-content">
-                <h2>Динамика рисков (по неделям)</h2>
-                <canvas id="risk-trend-chart"></canvas>
-                
-                <h3>Полная матрица рисков (Неделя <span id="current-week-num">1</span>)</h3>
-                <div class="matrix-controls">
-                    <button onclick="App.changeWeek(-1)" class="btn-secondary">← Назад</button>
-                    <button onclick="App.changeWeek(1)" class="btn-secondary">Вперед →</button>
-                </div>
-                <div id="matrix-container" class="matrix-grid"></div>
-            </section>
-
-            <!-- Nutrition -->
-            <section id="nutrition" class="tab-content">
-                <h2>Дневник питания</h2>
-                <button id="voice-btn" class="btn-icon">🎙️</button>
-                <form id="food-form" class="input-group">
-                    <input type="text" id="food-name" placeholder="Продукт">
-                    <input type="number" id="food-weight" placeholder="г">
-                    <button type="submit">OK</button>
-                </form>
-                <div id="food-log"></div>
-            </section>
-
-            <!-- Training -->
-            <section id="training" class="tab-content">
-                <h2>Тренировочный план</h2>
-                <p>Генерация на основе Readiness и слабых мест...</p>
-                <div id="workout-plan"></div>
             </section>
 
             <!-- Labs -->
             <section id="labs" class="tab-content">
-                <h2>Анализы и Фертильность</h2>
-                <div class="fertility-block">
-                    <h3>Спермограмма (WHO 2021)</h3>
-                    <div class="input-group">
-                        <input type="number" id="semen-vol" placeholder="Объем (мл)">
-                        <input type="number" id="semen-conc" placeholder="Конц.">
-                        <input type="number" id="semen-pr" placeholder="PR (%)">
-                        <input type="number" id="semen-morph" placeholder="Morph (%)">
-                    </div>
-                    <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
-                    <div id="fertility-result"></div>
+                <h2>Фертильность (WHO 2021)</h2>
+                <div class="input-group">
+                    <input type="number" id="semen-vol" placeholder="Объем">
+                    <input type="number" id="semen-conc" placeholder="Конц.">
+                    <input type="number" id="semen-pr" placeholder="PR%">
+                    <input type="number" id="semen-morph" placeholder="Morph%">
                 </div>
+                <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
+                <div id="fertility-result"></div>
             </section>
 
-            <!-- Reports -->
-            <section id="reports" class="tab-content">
-                <h2>Отчеты</h2>
-                <button onclick="App.exportPDF()" class="btn-secondary">📄 Скачать PDF для врача</button>
-                <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
-                <div id="report-preview"></div>
-            </section>
-
-            <!-- Shop & Articles -->
+            <!-- Shop -->
             <section id="shop" class="tab-content">
-                <h2>Магазин поддержки</h2>
+                <h2>Магазин</h2>
                 <div id="shop-list" class="list-container"></div>
                 <h2>Глоссарий</h2>
-                <div id="glossary-list" class="glossary-container"></div>
-                <h2>Статьи (База знаний)</h2>
-                <div id="articles-list" class="articles-container"></div>
+                <div id="glossary-list"></div>
             </section>
         </main>
     </div>
-
     <script src="assets/js/core/database.js"></script>
     <script src="assets/js/core/engine.js"></script>
     <script src="assets/js/app.js"></script>
