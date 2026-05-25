@@ -2,94 +2,132 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bode Health v11</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/app.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body>
-    <div class="container">
+<body class="dark-theme">
+    <div class="app-container">
         <header>
-            <h1>Bode Health <span style="font-size:12px; opacity:0.7">v11.0 Ultimate</span></h1>
-            <p>Система анализа фармакологических рисков и поддержки</p>
+            <h1>Bode Health <span class="version">v11.0</span></h1>
+            <div class="status-bar">
+                <span id="trust-score">Trust: 0</span>
+                <span id="connection-status">● Online</span>
+            </div>
         </header>
 
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="stack">💉 Стек</button>
-            <button class="tab-btn" data-tab="support">💊 Поддержка</button>
-            <button class="tab-btn" data-tab="risks">📊 Риски</button>
-            <button class="tab-btn" data-tab="nutrition">🍎 Питание</button>
-            <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
-            <button class="tab-btn" data-tab="training">🏋️ Тренировки</button>
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-tab="dashboard">🏠 Главная</button>
+            <button class="nav-btn" data-tab="stack">💉 Стек</button>
+            <button class="nav-btn" data-tab="support">💊 Поддержка</button>
+            <button class="nav-btn" data-tab="risks">⚠️ Риски</button>
+            <button class="nav-btn" data-tab="nutrition">🍎 Питание</button>
+            <button class="nav-btn" data-tab="labs">🧬 Анализы</button>
         </nav>
 
-        <!-- Вкладка СТЕК -->
-        <div id="stack" class="tab-content active">
-            <h2>Управление стеком</h2>
-            <form id="drugForm" class="form-grid">
-                <select id="drugSelect" required><option value="">Выберите препарат...</option></select>
-                <input type="text" id="drugDose" placeholder="Доза (напр. 300 мг/нед)" required>
-                <input type="number" id="drugWeeks" placeholder="Длительность (нед)" value="12">
-                <button type="submit" class="btn-primary">Добавить в стек</button>
-            </form>
-            <div id="stackList" class="drug-list"></div>
-            <div class="actions">
-                <button id="calcRiskBtn" class="btn-success">🔄 Пересчитать риски</button>
-                <button id="clearStackBtn" class="btn-danger">🗑 Очистить</button>
-            </div>
-        </div>
+        <main class="content-area">
+            <!-- Dashboard -->
+            <section id="dashboard" class="tab-content active">
+                <div class="cards-grid">
+                    <div class="card readiness-card">
+                        <h3>Готовность (Readiness)</h3>
+                        <div class="big-score" id="dash-readiness">--</div>
+                        <p id="dash-readiness-desc">Нет данных</p>
+                    </div>
+                    <div class="card fatigue-card">
+                        <h3>Усталость (Fatigue)</h3>
+                        <div class="big-score" id="dash-fatigue">--</div>
+                        <p id="dash-fatigue-desc">Нет данных</p>
+                    </div>
+                </div>
+                <div class="alert-box" id="critical-alerts"></div>
+                <div class="quick-actions">
+                    <button onclick="app.navigate('stack')" class="btn-primary">Добавить препарат</button>
+                    <button onclick="app.navigate('labs')" class="btn-secondary">Загрузить анализы</button>
+                </div>
+            </section>
 
-        <!-- Вкладка ПОДДЕРЖКА -->
-        <div id="support" class="tab-content">
-            <h2>Протокол поддержки</h2>
-            <div id="supportSchedule"></div>
-            <div id="synergyBlock" class="synergy-block"></div>
-        </div>
+            <!-- Stack -->
+            <section id="stack" class="tab-content">
+                <h2>Фармакологический стек</h2>
+                <form id="add-drug-form" class="input-group">
+                    <select id="drug-select" required><option value="">Выберите препарат...</option></select>
+                    <div class="row">
+                        <input type="number" id="drug-dose" placeholder="Доза (мг/ед)" step="0.1" required>
+                        <select id="drug-freq">
+                            <option value="1">Ежедневно</option>
+                            <option value="3.5">2 раза в неделю</option>
+                            <option value="7">Раз в неделю</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-full">Добавить в курс</button>
+                </form>
+                <div id="active-stack-list" class="list-container"></div>
+                <div class="actions-row">
+                    <button id="calc-risks-btn" class="btn-success">Пересчитать риски</button>
+                    <button id="clear-stack-btn" class="btn-danger">Сброс</button>
+                </div>
+            </section>
 
-        <!-- Вкладка РИСКИ -->
-        <div id="risks" class="tab-content">
-            <h2>Карта рисков (Raw vs Net)</h2>
-            <canvas id="riskChart"></canvas>
-            <div id="riskDetails" class="risk-details"></div>
-        </div>
+            <!-- Support -->
+            <section id="support" class="tab-content">
+                <h2>Протокол поддержки</h2>
+                <div id="support-schedule" class="timeline"></div>
+                <div id="synergy-block" class="info-block"></div>
+            </section>
 
-        <!-- Вкладка ПИТАНИЕ -->
-        <div id="nutrition" class="tab-content">
-            <h2>Дневник питания</h2>
-            <div class="voice-input">
-                <button id="voiceBtn" class="btn-mic">🎙️ Голосовой ввод</button>
-                <span id="voiceStatus"></span>
-            </div>
-            <input type="text" id="foodSearch" placeholder="Поиск продукта или штрихкод...">
-            <div id="foodResults"></div>
-            <div id="dailySummary"></div>
-        </div>
+            <!-- Risks -->
+            <section id="risks" class="tab-content">
+                <h2>Матрица рисков (Raw vs Net)</h2>
+                <canvas id="risk-chart"></canvas>
+                <div id="risk-details" class="details-list"></div>
+            </section>
 
-        <!-- Вкладка АНАЛИЗЫ -->
-        <div id="labs" class="tab-content">
-            <h2>Лабораторные данные</h2>
-            <button class="btn-secondary" onclick="alert('Функция OCR в разработке')">📷 Загрузить фото анализов</button>
-            <div id="labResults"></div>
-            <div id="fertilityIndex" class="fertility-card"></div>
-        </div>
+            <!-- Nutrition -->
+            <section id="nutrition" class="tab-content">
+                <h2>Дневник питания</h2>
+                <div class="voice-input-wrap">
+                    <button id="voice-btn" class="btn-mic">🎙️ Голосовой ввод</button>
+                    <span id="voice-status"></span>
+                </div>
+                <form id="food-form">
+                    <input type="text" id="food-name" placeholder="Продукт (напр. Куриная грудка)">
+                    <input type="number" id="food-weight" placeholder="Вес (г)">
+                    <button type="submit" class="btn-small">+</button>
+                </form>
+                <div id="food-log" class="list-container"></div>
+            </section>
 
-        <!-- Вкладка ТРЕНИРОВКИ -->
-        <div id="training" class="tab-content">
-            <h2>Программа тренировок</h2>
-            <div id="workoutPlan"></div>
-        </div>
+            <!-- Labs -->
+            <section id="labs" class="tab-content">
+                <h2>Лабораторные данные</h2>
+                <div class="upload-area" id="drop-zone">
+                    📂 Перетащите фото анализа или JSON сюда
+                </div>
+                <div id="fertility-block" class="card">
+                    <h3>Индекс фертильности (IF)</h3>
+                    <div id="if-score">--</div>
+                    <p id="if-desc"></p>
+                </div>
+                <div id="lab-history" class="list-container"></div>
+            </section>
+        </main>
     </div>
 
-    <script src="assets/js/core/constants.js"></script>
-    <script src="assets/js/core/utils.js"></script>
-    <script src="assets/js/core/storage.js"></script>
-    <script src="assets/js/modules/drugs.js"></script>
-    <script src="assets/js/modules/support.js"></script>
-    <script src="assets/js/modules/risks.js"></script>
-    <script src="assets/js/modules/nutrition.js"></script>
-    <script src="assets/js/modules/labs.js"></script>
-    <script src="assets/js/app.js"></script>
+    <!-- Scripts -->
+    <script src="assets/data/drugs-anabolics.js"></script>
+    <script src="assets/data/drugs-support.js"></script>
+    <script src="assets/core/constants.js"></script>
+    <script src="assets/core/utils.js"></script>
+    <script src="assets/core/storage.js"></script>
+    <script src="assets/modules/stack.js"></script>
+    <script src="assets/modules/support.js"></script>
+    <script src="assets/modules/risks.js"></script>
+    <script src="assets/modules/nutrition.js"></script>
+    <script src="assets/modules/labs.js"></script>
+    <script src="assets/app.js"></script>
 </body>
 </html>
