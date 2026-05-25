@@ -1,13 +1,5 @@
-export const Storage = {
-    getDrugs: () => JSON.parse(localStorage.getItem('bh_drugs') || '[]'),
-    addDrug: (drug) => {
-        const drugs = Storage.getDrugs();
-        drugs.push(drug);
-        localStorage.setItem('bh_drugs', JSON.stringify(drugs));
-    },
-    removeDrug: (id) => {
-        const drugs = Storage.getDrugs().filter(d => d.id !== id);
-        localStorage.setItem('bh_drugs', JSON.stringify(drugs));
-    },
-    getSupport: () => JSON.parse(localStorage.getItem('bh_support') || '[]')
+const Storage = {
+    get: (key) => JSON.parse(localStorage.getItem(key) || '[]'),
+    set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+    clear: (key) => localStorage.removeItem(key)
 };
