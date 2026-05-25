@@ -3,83 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0 Pro</title>
+    <title>Bode Health v11.0</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <header>
-            <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Advanced Analytics</p></div>
-            <div class="status-bar"><span id="xp-display">XP: 0</span></div>
-        </header>
+        <header><h1>Bode Health <span style="font-size:0.5em; color:#03dac6">v11.0 Fix</span></h1></header>
         <nav class="tabs">
-            <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
-            <button class="tab-btn" data-tab="stack">💉 Стек</button>
+            <button class="tab-btn active" data-tab="stack">💉 Стек</button>
             <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
             <button class="tab-btn" data-tab="support">💊 Поддержка</button>
-            <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
-            <button class="tab-btn" data-tab="reports">📑 Отчеты</button>
             <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
         </nav>
         <main>
-            <section id="dashboard" class="tab-content active">
-                <div class="cards-grid">
-                    <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
-                    <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
-                    <div class="card"><h3>Avg Risk</h3><div class="big-value" id="dash-risk">--</div></div>
-                </div>
-            </section>
-            <section id="stack" class="tab-content">
+            <section id="stack" class="tab-content active">
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
-                    <label>Вещество:</label><select id="drug-substance" onchange="App.loadEsters()"></select>
-                    <label>Эфир:</label><select id="drug-ester" disabled></select>
-                    <div class="row"><input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required></div>
+                    <label>Вещество</label>
+                    <select id="drug-substance" onchange="App.loadEsters()"></select>
+                    <label>Эфир</label>
+                    <select id="drug-ester" disabled></select>
                     <div class="row">
-                        <input type="number" id="drug-start" placeholder="Старт (неделя)" value="1" min="1" required>
-                        <input type="number" id="drug-end" placeholder="Финиш (неделя)" value="8" min="1" required>
+                        <input type="number" id="drug-dose" placeholder="Доза (мг)" required>
+                        <input type="number" id="drug-start" placeholder="Старт" value="1" required>
+                        <input type="number" id="drug-end" placeholder="Финиш" value="8" required>
                     </div>
-                    <button type="submit" class="btn-primary">Добавить в курс</button>
+                    <button type="submit" class="btn-success">Добавить</button>
                 </form>
                 <div id="stack-list" class="list-container"></div>
-                <button id="calc-plan-btn" class="btn-success">Рассчитать динамику курса</button>
+                <button onclick="App.generatePlan()" class="btn-success" style="margin-top:20px">РАССЧИТАТЬ КУРС</button>
                 <div id="weekly-plan-output"></div>
             </section>
+
             <section id="risks" class="tab-content">
-                <h2>Динамика рисков</h2>
+                <h2>Динамика</h2>
                 <div class="chart-controls">
                     <label><input type="checkbox" checked onchange="App.toggleChart('liver')"> Печень</label>
                     <label><input type="checkbox" checked onchange="App.toggleChart('cardio')"> Сердце</label>
                     <label><input type="checkbox" checked onchange="App.toggleChart('hemato')"> Кровь</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('neuro')"> Нейро</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('kidney')"> Почки</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('endo')"> Эндо</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('repro')"> Репро</label>
                 </div>
                 <canvas id="risk-trend-chart"></canvas>
-                <h2>Матрица рисков (Heatmap)</h2>
+                
+                <h2>Матрица (Heatmap)</h2>
                 <div class="week-selector">
-                    <button id="prev-week-btn">◀</button>
+                    <button onclick="App.changeWeek(-1)">◀</button>
                     <span id="current-week-display">Неделя 1</span>
-                    <button id="next-week-btn">▶</button>
+                    <button onclick="App.changeWeek(1)">▶</button>
                 </div>
-                <div id="heatmap-container" class="heatmap-grid"></div>
+                <div id="heatmap-container"></div>
             </section>
-            <section id="support" class="tab-content"><h2>Протокол поддержки</h2><div id="support-schedule" class="schedule-container"></div></section>
-            <section id="labs" class="tab-content">
-                <h2>Фертильность (WHO 2021)</h2>
-                <div class="input-group">
-                    <input type="number" id="semen-vol" placeholder="Объем"><input type="number" id="semen-conc" placeholder="Конц.">
-                    <input type="number" id="semen-pr" placeholder="PR%"><input type="number" id="semen-morph" placeholder="Morph%">
-                </div>
-                <button id="calc-fert-btn" class="btn-primary">Рассчитать IF</button>
-                <div id="fertility-result"></div>
+
+            <section id="support" class="tab-content">
+                <h2>Поддержка</h2>
+                <div id="support-schedule" class="schedule-container"></div>
             </section>
-            <section id="reports" class="tab-content"><h2>Отчеты</h2><button id="export-json-btn" class="btn-secondary">💾 Экспорт JSON</button><div id="report-preview"></div></section>
-            <section id="shop" class="tab-content"><h2>Магазин</h2><div id="shop-list" class="list-container"></div><h2>Глоссарий</h2><div id="glossary-list"></div></section>
+
+            <section id="shop" class="tab-content">
+                <h2>Магазин</h2>
+                <div id="shop-list" class="list-container"></div>
+                <h2>Глоссарий</h2>
+                <div id="glossary-list"></div>
+            </section>
         </main>
     </div>
     <script src="assets/js/core/database.js"></script>
