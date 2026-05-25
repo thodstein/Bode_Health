@@ -45,7 +45,7 @@
                 <div class="alert-box" id="daily-alert">Добавьте препараты для расчета прогноза.</div>
             </section>
 
-            <!-- Stack (Deep Input) -->
+            <!-- Stack -->
             <section id="stack" class="tab-content">
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
@@ -57,7 +57,7 @@
                     
                     <div class="row">
                         <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
-                        <input type="number" id="drug-weeks" placeholder="Недель" required>
+                        <input type="number" id="drug-weeks" placeholder="Недель курса" required>
                     </div>
                     <button type="submit" class="btn-primary">Включить в курс</button>
                 </form>
@@ -65,7 +65,7 @@
                 <div id="stack-list" class="list-container"></div>
                 
                 <div class="actions">
-                    <button onclick="App.generatePlan()" class="btn-success">Рассчитать план курса</button>
+                    <button id="btn-generate-plan" class="btn-success">Рассчитать план и риски</button>
                 </div>
                 <div id="weekly-plan-output"></div>
             </section>
@@ -76,12 +76,16 @@
                 <div id="support-schedule" class="schedule-container"></div>
             </section>
 
-            <!-- Risks -->
+            <!-- Risks (FULL MATRIX) -->
             <section id="risks" class="tab-content">
-                <h2>Динамика рисков (по неделям)</h2>
+                <h2>Матрица рисков (7×7)</h2>
+                <div style="overflow-x:auto;">
+                    <table class="risk-matrix-table" id="risk-matrix-table">
+                        <!-- Генерируется JS -->
+                    </table>
+                </div>
+                <h3>Динамика средних рисков</h3>
                 <canvas id="risk-trend-chart"></canvas>
-                <h3>Матрица (Текущая неделя)</h3>
-                <canvas id="risk-radar-chart"></canvas>
             </section>
 
             <!-- Nutrition -->
@@ -99,7 +103,6 @@
             <!-- Training -->
             <section id="training" class="tab-content">
                 <h2>Тренировочный план</h2>
-                <p>Генерация на основе Readiness...</p>
                 <div id="workout-plan"></div>
             </section>
 
@@ -122,7 +125,6 @@
             <!-- Reports -->
             <section id="reports" class="tab-content">
                 <h2>Отчеты</h2>
-                <button onclick="alert('Генерация PDF...')" class="btn-secondary">📄 Скачать PDF для врача</button>
                 <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
                 <div id="report-preview"></div>
             </section>

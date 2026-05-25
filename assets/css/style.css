@@ -43,3 +43,15 @@ summary { cursor: pointer; color: var(--primary); }
 .fertility-block, .glossary-container { margin-top: 20px; }
 canvas { max-width: 100%; margin: 20px 0; background: var(--bg-card); border-radius: 12px; padding: 10px; }
 .alert-box { background: rgba(207, 102, 121, 0.15); border: 1px solid var(--error); color: var(--error); padding: 15px; border-radius: 8px; margin-top: 20px; }
+
+/* Risk Matrix Table */
+.risk-matrix-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.8em; }
+.risk-matrix-table th, .risk-matrix-table td { border: 1px solid #444; padding: 8px; text-align: center; }
+.risk-matrix-table th { background: #333; color: var(--primary); }
+.sys-name { text-align: left; font-weight: bold; background: #252525; }
+.matrix-cell { position: relative; min-width: 60px; }
+.cell-val { font-weight: bold; font-size: 1.1em; }
+.cell-diff { font-size: 0.7em; color: #03dac6; }
+.bg-red { background: rgba(207, 102, 121, 0.3); }
+.bg-orange { background: rgba(255, 159, 64, 0.3); }
+.bg-green { background: rgba(3, 218, 198, 0.3); }
