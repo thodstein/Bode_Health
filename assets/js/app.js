@@ -1,17 +1,21 @@
-// Инициализация Telegram WebApp
-if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    let currentStack = JSON.parse(localStorage.getItem('bh_stack')) || [];
-    let riskChartInstance = null;
+    // Инициализация Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+    }
 
-    // --- ТАБЫ ---
+    // Состояние
+    let state = {
+        stack: [],
+        supportActive: true,
+        risks: { raw: {}, net: {} }
+    };
+
+    // 1. Навигация
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
-    
+
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
@@ -21,224 +25,148 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- ЗАПОЛНЕНИЕ СПИСКА ПРЕПАРАТОВ ---
-    const dataList = document.getElementById('drug-list');
-    DRUGS_DB.forEach(drug => {
+    // 2. Заполнение селекта препаратами
+    const drugSelect = document.getElementById('drug-select');
+    DB.drugs.forEach(drug => {
         const opt = document.createElement('option');
-        opt.value = drug.name;
-        dataList.appendChild(opt);
+        opt.value = drug.id;
+        opt.textContent = `${drug.name} (${drug.type})`;
+        drugSelect.appendChild(opt);
     });
 
-    // --- ДОБАВЛЕНИЕ В СТЕК ---
+    // 3. Добавление препарата в стек
     document.getElementById('add-drug-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        const name = document.getElementById('drug-search').value;
+        const id = document.getElementById('drug-select').value;
         const dose = document.getElementById('drug-dose').value;
-        const route = document.getElementById('drug-route').value;
+        const freq = document.getElementById('drug-freq').value;
         
-        if (!name) return alert('Выберите препарат');
-        
-        const dbDrug = DRUGS_DB.find(d => d.name === name) || { name: name, risks: { liver: 10, cardio: 10, hemo: 10, neuro: 10, kidney: 10, endo: 10 } };
-        
-        currentStack.push({ ...dbDrug, userDose: dose, userRoute: route, id: Date.now() });
-        saveStack();
+        state.stack.push({ id, dose, freq });
         renderStack();
+        updateDashboard();
         e.target.reset();
     });
 
-    function saveStack() {
-        localStorage.setItem('bh_stack', JSON.stringify(currentStack));
+    function renderStack() {
+        const list = document.getElementById('stack-list');
+        list.innerHTML = '';
+        state.stack.forEach((item, idx) => {
+            const drug = DB.drugs.find(d => d.id === item.id);
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `
+                <div>
+                    <strong>${drug.name}</strong><br>
+                    <small>${item.dose} | ${item.freq}</small>
+                </div>
+                <button class="btn-secondary" onclick="app.removeDrug(${idx})">✕</button>
+            `;
+            list.appendChild(div);
+        });
     }
 
-    function renderStack() {
-        const container = document.getElementById('active-stack');
-        container.innerHTML = '';
-        if (currentStack.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#666;">Стек пуст</p>';
-            return;
+    // Экспорт функции удаления в глобальную область
+    window.app = {
+        removeDrug: (idx) => {
+            state.stack.splice(idx, 1);
+            renderStack();
+            updateDashboard();
         }
-        currentStack.forEach((item, index) => {
+    };
+
+    // 4. Рендеринг поддержки
+    function renderSupport() {
+        const container = document.getElementById('support-schedule');
+        container.innerHTML = '';
+        DB.support.forEach(block => {
             const div = document.createElement('div');
-            div.className = 'drug-item';
-            div.innerHTML = `
-                <div class="drug-info">
-                    <h4>${item.name}</h4>
-                    <p>${item.userDose} | ${item.userRoute.toUpperCase()}</p>
-                </div>
-                <button class="delete-btn" onclick="removeDrug(${index})">×</button>
-            `;
+            div.className = 'time-block';
+            div.innerHTML = `<h3>${block.label}</h3>`;
+            block.items.forEach(item => {
+                div.innerHTML += `
+                    <div class="item-card" style="padding:10px; margin-bottom:5px;">
+                        <div>
+                            <strong>${item.name}</strong> <span style="color:var(--secondary)">${item.dose}</span>
+                            <div style="font-size:0.8em; color:#888;">${item.mechanism}</div>
+                        </div>
+                    </div>
+                `;
+            });
             container.appendChild(div);
         });
-        window.removeDrug = (idx) => {
-            currentStack.splice(idx, 1);
-            saveStack();
-            renderStack();
-        };
     }
-    renderStack();
 
-    // --- ОЧИСТКА ---
-    document.getElementById('clear-stack-btn').addEventListener('click', () => {
-        if(confirm('Удалить весь стек?')) {
-            currentStack = [];
-            saveStack();
-            renderStack();
-            document.getElementById('support-plan').innerHTML = '';
-            document.getElementById('risk-matrix').innerHTML = '';
-        }
-    });
+    // 5. Обновление дэшборда и рисков
+    function updateDashboard() {
+        const raw = Engine.calculateRawRisks(state.stack);
+        const net = Engine.calculateNetRisks(raw, state.supportActive);
+        state.risks = { raw, net };
 
-    // --- РАСЧЕТ РИСКОВ И ПОДДЕРЖКИ ---
-    document.getElementById('calc-risks-btn').addEventListener('click', () => {
-        if (currentStack.length === 0) return alert('Стек пуст!');
-
-        // 1. Считаем RAW риски (сумма)
-        let totalRisks = { liver: 0, cardio: 0, hemo: 0, neuro: 0, kidney: 0, endo: 0, repro: 0 };
-        let oralCount = 0;
-
-        currentStack.forEach(drug => {
-            if (drug.type === 'oral') oralCount++;
-            Object.keys(totalRisks).forEach(key => {
-                if (drug.risks[key]) totalRisks[key] += drug.risks[key];
-            });
-        });
-
-        // Штраф за оральные
-        if (oralCount > 1) totalRisks.liver += (oralCount - 1) * 15;
-
-        // 2. Подбираем поддержку
-        const supportPlan = { morning: [], lunch: [], evening: [], pre: [] };
-        const coveredRisks = { ...totalRisks };
-
-        SUPPORT_DB.forEach(supp => {
-            supp.targets.forEach(target => {
-                if (coveredRisks[target] > 30) {
-                    // Добавляем поддержку если риск высок
-                    const timeKey = supp.time === 'morning' ? 'morning' : (supp.time === 'lunch' ? 'lunch' : 'evening');
-                    if (!supportPlan[timeKey].find(s => s.id === supp.id)) {
-                        supportPlan[timeKey].push(supp);
-                        coveredRisks[target] -= 20; // Снижаем риск
-                    }
-                }
-            });
-        });
-
-        // 3. Отрисовка поддержки
-        const planDiv = document.getElementById('support-plan');
-        planDiv.innerHTML = '';
-        const times = { morning: '☀️ Утро', lunch: '🍽️ Обед', evening: '🌙 Вечер', pre: '⚡ Предтреник' };
+        // Расчет интегрального риска (среднее по всем системам)
+        let totalRaw = 0, count = 0;
+        for(let sys in raw) for(let m in raw[sys]) { totalRaw += raw[sys][m]; count++; }
+        const avgRaw = Math.round(totalRaw / count);
         
-        Object.keys(times).forEach(time => {
-            if (supportPlan[time].length > 0) {
-                const group = document.createElement('div');
-                group.className = 'support-group card';
-                group.innerHTML = `<h3>${times[time]}</h3>`;
-                supportPlan[time].forEach(item => {
-                    group.innerHTML += `<div class="support-item"><strong>${item.name}</strong> ${item.dose}<br><small>Цель: ${item.targets.join(', ')}</small></div>`;
-                });
-                planDiv.appendChild(group);
-            }
-        });
+        let totalNet = 0;
+        for(let sys in net) for(let m in net[sys]) { totalNet += net[sys][m]; }
+        const avgNet = Math.round(totalNet / count);
 
-        // Синергия
-        const synDiv = document.getElementById('synergy-block');
-        synDiv.innerHTML = '<h3>💡 Синергетические связки:</h3>';
-        let foundSyn = false;
-        for (let key in SYNERGY_RULES) {
-            const [s1, s2] = key.split('_');
-            const hasS1 = supportPlan.morning.concat(supportPlan.lunch, supportPlan.evening).some(i => i.id.includes(s1));
-            const hasS2 = supportPlan.morning.concat(supportPlan.lunch, supportPlan.evening).some(i => i.id.includes(s2));
-            if (hasS1 && hasS2) {
-                synDiv.innerHTML += `<p>✅ ${SYNERGY_RULES[key]}</p>`;
-                foundSyn = true;
-            }
-        }
-        if (!foundSyn) synDiv.innerHTML += '<p>Нет активных связок</p>';
-        synDiv.style.display = 'block';
+        document.getElementById('dash-readiness').textContent = state.stack.length ? '65' : '90'; // Mock
+        document.getElementById('dash-fatigue').textContent = state.stack.length ? '45' : '10';
+        document.getElementById('dash-risk').textContent = `${avgRaw}% → ${avgNet}%`;
+        
+        renderRiskChart(net);
+    }
 
-        // 4. Отрисовка рисков (График + Матрица)
+    // 6. График рисков
+    let chartInstance = null;
+    function renderRiskChart(data) {
         const ctx = document.getElementById('risk-chart').getContext('2d');
-        if (riskChartInstance) riskChartInstance.destroy();
+        const labels = ['Печень', 'Кардио', 'Почки', 'Невро', 'Кровь', 'Эндо', 'Репро'];
+        const values = [
+            (data.liver.cholestasis + data.liver.cytolysis)/2,
+            (data.cardio.htn + data.cardio.lipids)/2,
+            (data.kidney.hyperfiltration + data.kidney.fibrosis)/2,
+            (data.neuro.dopamine + data.neuro.gaba)/2,
+            (data.hemato.erythrocytosis + data.hemato.rheology)/2,
+            (data.endo.insulin_resist + data.endo.estrogen)/2,
+            (data.repro.atrophy + data.repro.suppression)/2
+        ];
 
-        const labels = ['Печень', 'Сердце', 'Кровь', 'Невро', 'Почки', 'Эндо'];
-        const dataRaw = [totalRisks.liver, totalRisks.cardio, totalRisks.hemo, totalRisks.neuro, totalRisks.kidney, totalRisks.endo];
-        const dataNet = [coveredRisks.liver, coveredRisks.cardio, coveredRisks.hemo, coveredRisks.neuro, coveredRisks.kidney, coveredRisks.endo];
-
-        riskChartInstance = new Chart(ctx, {
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
             type: 'radar',
-            data: {
+             {
                 labels: labels,
-                datasets: [
-                    { label: 'RAW (Без защиты)', data: dataRaw, borderColor: '#cf6679', backgroundColor: 'rgba(207, 102, 121, 0.2)' },
-                    { label: 'NET (С защитой)', data: dataNet, borderColor: '#03dac6', backgroundColor: 'rgba(3, 218, 198, 0.2)' }
-                ]
+                datasets: [{
+                    label: 'Net Risk',
+                    data: values,
+                    backgroundColor: 'rgba(3, 218, 198, 0.4)',
+                    borderColor: '#03dac6',
+                    borderWidth: 2
+                }]
             },
-            options: { scales: { r: { min: 0, max: 100 } }, responsive: true }
+            options: {
+                scales: { r: { beginAtZero: true, max: 100, ticks: { color: '#fff' } } },
+                plugins: { legend: { labels: { color: '#fff' } } }
+            }
         });
-
-        // Матрица цифрами
-        const matrixDiv = document.getElementById('risk-matrix');
-        matrixDiv.innerHTML = '';
-        const names = { liver: 'Печень', cardio: 'Сердце', hemo: 'Кровь', neuro: 'Невро', kidney: 'Почки', endo: 'Гормоны' };
-        Object.keys(totalRisks).forEach(key => {
-            if (key === 'repro') return;
-            const raw = totalRisks[key];
-            const net = coveredRisks[key];
-            const colorClass = net > 50 ? 'risk-high' : (net > 25 ? 'risk-med' : 'risk-low');
-            
-            matrixDiv.innerHTML += `
-                <div class="risk-card">
-                    <div style="font-size:12px; color:#aaa">${names[key]}</div>
-                    <div class="risk-val ${colorClass}">${net}%</div>
-                    <div style="font-size:10px">Было: ${raw}%</div>
-                </div>
-            `;
-        });
-
-        // Переключаем вкладку на риски
-        setTimeout(() => {
-            document.querySelector('[data-tab="risks"]').click();
-        }, 500);
-    });
-
-    // --- ГОЛОСОВОЙ ВВОД (ПИТАНИЕ) ---
-    const voiceBtn = document.getElementById('voice-btn');
-    if ('webkitSpeechRecognition' in window) {
-        const recognition = new webkitSpeechRecognition();
-        recognition.lang = 'ru-RU';
-        recognition.onresult = (event) => {
-            const text = event.results[0][0].transcript;
-            document.getElementById('food-input').value = text;
-            addFood(text);
-        };
-        voiceBtn.addEventListener('click', () => recognition.start());
-    } else {
-        voiceBtn.style.display = 'none';
     }
 
-    document.getElementById('food-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addFood(e.target.value);
-    });
-
-    function addFood(text) {
-        const log = document.getElementById('food-log');
-        const item = document.createElement('div');
-        item.className = 'support-item'; // Используем стиль элемента
-        item.innerHTML = `🍽️ <strong>Сейчас:</strong> ${text}`;
-        log.prepend(item);
-        document.getElementById('food-input').value = '';
-    }
-
-    // --- ФЕРТИЛЬНОСТЬ ---
-    document.getElementById('calc-fertility').addEventListener('click', () => {
-        const count = parseFloat(document.getElementById('sperm-count').value);
-        const mot = parseFloat(document.getElementById('sperm-motility').value);
-        if (!count || !mot) return alert('Введите данные');
+    // 7. Фертильность
+    window.calcFertility = () => {
+        const vol = parseFloat(document.getElementById('semen-vol').value);
+        const conc = parseFloat(document.getElementById('semen-conc').value);
+        const pr = parseFloat(document.getElementById('semen-pr').value);
         
-        // Упрощенная формула WHO
-        const index = Math.min(100, ((count / 16) * 50) + ((mot / 30) * 50));
+        if(!vol || !conc) return alert('Введите данные');
+        
+        const ifScore = Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr: pr });
         const resDiv = document.getElementById('fertility-result');
-        const color = index > 60 ? '#4caf50' : (index > 30 ? '#ff9800' : '#f44336');
-        resDiv.innerHTML = `<h3 style="color:${color}">Индекс фертильности: ${Math.round(index)}%</h3>`;
-    });
+        resDiv.innerHTML = `<h2 style="color:${ifScore > 60 ? 'green' : 'red'}">IF: ${ifScore}/100</h2>`;
+    };
+
+    // Инициализация
+    renderSupport();
+    updateDashboard();
 });

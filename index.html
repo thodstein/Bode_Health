@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bode Health v11</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bode Health v11.0</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,12 +13,16 @@
     <div class="app-container">
         <header>
             <h1>Bode Health <span class="version">v11.0</span></h1>
-            <p id="user-status">Готов к работе</p>
+            <div class="status-bar">
+                <span id="trust-score">Trust: 0</span>
+                <span id="connection-status">🟢 Online</span>
+            </div>
         </header>
 
         <!-- Навигация -->
         <nav class="tabs">
-            <button class="tab-btn active" data-tab="stack">💉 Стек</button>
+            <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
+            <button class="tab-btn" data-tab="stack">💉 Стек</button>
             <button class="tab-btn" data-tab="support">💊 Поддержка</button>
             <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
             <button class="tab-btn" data-tab="nutrition">🍎 Питание</button>
@@ -28,83 +32,95 @@
 
         <!-- Контент -->
         <main>
-            <!-- Вкладка СТЕК -->
-            <section id="stack" class="tab-content active">
-                <div class="card">
-                    <h2>Добавить препарат</h2>
-                    <form id="add-drug-form">
-                        <input type="text" id="drug-search" placeholder="Поиск препарата (напр. DHB, Тестостерон)..." list="drug-list">
-                        <datalist id="drug-list"></datalist>
-                        
-                        <div class="form-row">
-                            <input type="text" id="drug-dose" placeholder="Доза (мг/нед или мг/день)">
-                            <select id="drug-route">
-                                <option value="inject">Инъекционно</option>
-                                <option value="oral">Перорально</option>
-                                <option value="topical">Местно</option>
-                                <option value="peptide">Пептиды (п/к)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn-primary">Добавить в стек</button>
-                    </form>
-                </div>
-                <div id="active-stack" class="drug-list"></div>
-                <div class="actions">
-                    <button id="calc-risks-btn" class="btn-success">Рассчитать риски и поддержку</button>
-                    <button id="clear-stack-btn" class="btn-danger">Очистить стек</button>
-                </div>
-            </section>
-
-            <!-- Вкладка ПОДДЕРЖКА -->
-            <section id="support" class="tab-content">
-                <div id="support-plan" class="support-grid"></div>
-                <div id="synergy-block" class="card synergy"></div>
-            </section>
-
-            <!-- Вкладка РИСКИ -->
-            <section id="risks" class="tab-content">
-                <div class="risk-summary">
-                    <canvas id="risk-chart"></canvas>
-                    <div id="risk-text"></div>
-                </div>
-                <div id="risk-matrix" class="risk-matrix"></div>
-            </section>
-
-            <!-- Вкладка ПИТАНИЕ -->
-            <section id="nutrition" class="tab-content">
-                <div class="card">
-                    <h2>Дневник питания</h2>
-                    <div class="voice-input">
-                        <button id="voice-btn" class="btn-icon">🎙️</button>
-                        <input type="text" id="food-input" placeholder="Что съели? (или нажмите микрофон)">
+            <!-- Вкладка 1: Главная (Дэшборд) -->
+            <section id="dashboard" class="tab-content active">
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3>Readiness</h3>
+                        <div class="big-value" id="dash-readiness">--</div>
                     </div>
-                    <div id="food-log"></div>
+                    <div class="card">
+                        <h3>Fatigue</h3>
+                        <div class="big-value" id="dash-fatigue">--</div>
+                    </div>
+                    <div class="card">
+                        <h3>Integr. Risk</h3>
+                        <div class="big-value" id="dash-risk">--</div>
+                    </div>
                 </div>
+                <div class="alert-box" id="daily-alert">Загрузка данных...</div>
             </section>
 
-            <!-- Вкладка ТРЕНИРОВКИ -->
+            <!-- Вкладка 2: Стек препаратов -->
+            <section id="stack" class="tab-content">
+                <h2>Фармакологический стек</h2>
+                <form id="add-drug-form" class="input-group">
+                    <select id="drug-select"></select>
+                    <input type="number" id="drug-dose" placeholder="Доза (мг/ЕД)">
+                    <input type="text" id="drug-freq" placeholder="Частота (напр. 2р/нед)">
+                    <button type="submit" class="btn-primary">Добавить</button>
+                </form>
+                <div id="stack-list" class="list-container"></div>
+            </section>
+
+            <!-- Вкладка 3: Поддержка (Расписание) -->
+            <section id="support" class="tab-content">
+                <h2>Протокол поддержки</h2>
+                <div class="toggle-switch">
+                    <label>Активировать расчет Net Risks</label>
+                    <input type="checkbox" id="support-toggle" checked>
+                </div>
+                <div id="support-schedule" class="schedule-container"></div>
+            </section>
+
+            <!-- Вкладка 4: Риски -->
+            <section id="risks" class="tab-content">
+                <h2>Матрица рисков (Raw vs Net)</h2>
+                <canvas id="risk-chart"></canvas>
+                <div id="risk-details" class="details-list"></div>
+            </section>
+
+            <!-- Вкладка 5: Питание -->
+            <section id="nutrition" class="tab-content">
+                <h2>Дневник питания</h2>
+                <div class="voice-input">
+                    <button id="voice-btn" class="btn-icon">🎙️</button>
+                    <span id="voice-status">Нажмите для ввода</span>
+                </div>
+                <form id="food-form">
+                    <input type="text" id="food-name" placeholder="Продукт">
+                    <input type="number" id="food-weight" placeholder="Вес (г)">
+                    <button type="submit">Добавить</button>
+                </form>
+                <div id="food-log"></div>
+            </section>
+
+            <!-- Вкладка 6: Тренировки -->
             <section id="training" class="tab-content">
-                <div class="card">
-                    <h2>План тренировок</h2>
-                    <p id="training-recs">Заполните стек для генерации плана.</p>
-                </div>
+                <h2>Программа тренировок</h2>
+                <p>Генерация на основе Readiness и слабых мест...</p>
+                <div id="workout-plan"></div>
             </section>
 
-            <!-- Вкладка АНАЛИЗЫ -->
+            <!-- Вкладка 7: Анализы -->
             <section id="labs" class="tab-content">
-                <div class="card">
-                    <h2>Фертильность (WHO 2021)</h2>
-                    <input type="number" id="sperm-count" placeholder="Концентрация (млн/мл)">
-                    <input type="number" id="sperm-motility" placeholder="Подвижность (%)">
-                    <button id="calc-fertility" class="btn-primary">Рассчитать индекс фертильности</button>
+                <h2>Лабораторный мониторинг</h2>
+                <button class="btn-secondary" onclick="alert('Функция OCR в разработке')">📷 Загрузить фото анализа</button>
+                <div id="fertility-block">
+                    <h3>Индекс фертильности (IF)</h3>
+                    <input type="number" id="semen-vol" placeholder="Объем (мл)">
+                    <input type="number" id="semen-conc" placeholder="Концентрация (млн)">
+                    <input type="number" id="semen-pr" placeholder="Подвижность PR (%)">
+                    <button onclick="calcFertility()" class="btn-primary">Рассчитать IF</button>
                     <div id="fertility-result"></div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Подключаем модули последовательно -->
-    <script src="assets/js/data.js"></script>
+    <!-- Подключение скриптов -->
+    <script src="assets/js/core/data.js"></script>
+    <script src="assets/js/core/engine.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>
