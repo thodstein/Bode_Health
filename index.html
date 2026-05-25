@@ -14,85 +14,48 @@
             <h1>Bode Health</h1>
             <p>Система анализа фармакологических рисков</p>
         </header>
-
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="dashboard">Дашборд</button>
-            <button class="tab-btn" data-tab="stack">Стек</button>
-            <button class="tab-btn" data-tab="settings">Настройки</button>
-        </nav>
-
-        <!-- Вкладка Дашборд -->
-        <div id="dashboard" class="tab-content active">
-            <h2>Общая сводка</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Препаратов</h3>
-                    <span id="total-drugs">0</span>
-                </div>
-                <div class="stat-card">
-                    <h3>Общий риск</h3>
-                    <span id="total-risk" class="risk-low">0%</span>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="riskChart"></canvas>
-            </div>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="input">Ввод данных</button>
+            <button class="tab-btn" data-tab="stack">Стек препаратов</button>
+            <button class="tab-btn" data-tab="results">Результаты</button>
         </div>
-
-        <!-- Вкладка Стек -->
+        <div id="input" class="tab-content active">
+            <h2>Добавить препарат</h2>
+            <form id="drugForm" class="form-grid">
+                <input type="text" id="drugName" placeholder="Название препарата" required>
+                <input type="text" id="drugDose" placeholder="Дозировка (напр. 50 мг)" required>
+                <select id="drugRoute"><option value="oral">Перорально</option><option value="inject">Инъекционно</option><option value="topical">Местно</option></select>
+                <input type="text" id="drugPeriod" placeholder="Период (напр. 12 недель)" required>
+                <h3>Оценка токсичности (0-10)</h3>
+                <div class="sliders">
+                    <label>Сердце (CV): <input type="range" id="riskCV" min="0" max="10" value="0"><span id="valCV">0</span></label>
+                    <label>Печень (Hep): <input type="range" id="riskHep" min="0" max="10" value="0"><span id="valHep">0</span></label>
+                    <label>Невро (Neuro): <input type="range" id="riskNeuro" min="0" max="10" value="0"><span id="valNeuro">0</span></label>
+                    <label>Липиды (Lipid): <input type="range" id="riskLipid" min="0" max="10" value="0"><span id="valLipid">0</span></label>
+                    <label>Почки (Nephro): <input type="range" id="riskNephro" min="0" max="10" value="0"><span id="valNephro">0</span></label>
+                    <label>Кровь (Hemo): <input type="range" id="riskHemo" min="0" max="10" value="0"><span id="valHemo">0</span></label>
+                </div>
+                <button type="submit" class="btn-primary">Добавить в стек</button>
+            </form>
+        </div>
         <div id="stack" class="tab-content">
-            <h2>Управление стеком</h2>
-            
-            <div class="form-group">
-                <h3>Добавить препарат</h3>
-                <input type="text" id="drug-name" placeholder="Название препарата">
-                <input type="text" id="drug-dose" placeholder="Дозировка (мг/мл)">
-                <select id="drug-route">
-                    <option value="oral">Перорально</option>
-                    <option value="inject">Инъекционно</option>
-                    <option value="topical">Местно</option>
-                </select>
-                <input type="number" id="drug-period" placeholder="Период (дни)" min="1">
-                
-                <h4>Параметры риска (0-10)</h4>
-                <div class="risk-inputs">
-                    <label>CV: <input type="number" id="risk-cv" min="0" max="10" value="0"></label>
-                    <label>Hep: <input type="number" id="risk-hep" min="0" max="10" value="0"></label>
-                    <label>Neuro: <input type="number" id="risk-neuro" min="0" max="10" value="0"></label>
-                    <label>Lipid: <input type="number" id="risk-lipid" min="0" max="10" value="0"></label>
-                    <label>Nephro: <input type="number" id="risk-nephro" min="0" max="10" value="0"></label>
-                    <label>Hemo: <input type="number" id="risk-hemo" min="0" max="10" value="0"></label>
-                </div>
-                <button id="add-drug-btn" class="btn-primary">Добавить в стек</button>
-            </div>
-
-            <div class="stack-list" id="stack-list">
-                <!-- Сюда добавляются препараты -->
-            </div>
-
+            <h2>Ваш текущий стек</h2>
+            <div id="stackList" class="drug-list"></div>
             <div class="actions">
-                <button id="calc-risks-btn" class="btn-success">Рассчитать риски</button>
-                <button id="clear-stack-btn" class="btn-danger">Очистить стек</button>
+                <button id="calcRiskBtn" class="btn-success">Рассчитать риски</button>
+                <button id="clearStackBtn" class="btn-danger">Очистить всё</button>
             </div>
-
-            <div id="risk-report" class="risk-report" style="display:none;">
-                <h3>Отчет по рискам</h3>
-                <div id="risk-details"></div>
-                <div class="total-toxicity">
-                    <h4>Кумулятивный индекс токсичности: <span id="toxicity-score">0</span></h4>
-                    <div class="progress-bar"><div id="toxicity-bar" style="width: 0%"></div></div>
-                </div>
+            <div id="riskSummary" class="risk-summary" style="display:none;">
+                <h3>Итоговый профиль токсичности</h3>
+                <canvas id="riskChart"></canvas>
+                <div id="totalScore" class="total-score"></div>
             </div>
         </div>
-
-        <!-- Вкладка Настройки -->
-        <div id="settings" class="tab-content">
-            <h2>Настройки</h2>
-            <p>Здесь будут настройки профилей и параметров расчета.</p>
-            <button id="export-data" class="btn-primary">Экспорт данных</button>
+        <div id="results" class="tab-content">
+            <h2>Детальный отчет</h2>
+            <div id="reportContent"></div>
         </div>
     </div>
-
     <script src="assets/js/app.js"></script>
 </body>
 </html>

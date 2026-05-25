@@ -1,170 +1,117 @@
 document.addEventListener('DOMContentLoaded', () => {
     let drugs = [];
     let riskChart = null;
-
-    // Табы
-    const tabs = document.querySelectorAll('.tab-btn');
-    const contents = document.querySelectorAll('.tab-content');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            contents.forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
         });
     });
-
-    // Добавление препарата
-    document.getElementById('add-drug-btn').addEventListener('click', () => {
-        const name = document.getElementById('drug-name').value;
-        const dose = document.getElementById('drug-dose').value;
-        const route = document.getElementById('drug-route').value;
-        const period = document.getElementById('drug-period').value;
-        
-        const risks = {
-            cv: parseFloat(document.getElementById('risk-cv').value) || 0,
-            hep: parseFloat(document.getElementById('risk-hep').value) || 0,
-            neuro: parseFloat(document.getElementById('risk-neuro').value) || 0,
-            lipid: parseFloat(document.getElementById('risk-lipid').value) || 0,
-            nephro: parseFloat(document.getElementById('risk-nephro').value) || 0,
-            hemo: parseFloat(document.getElementById('risk-hemo').value) || 0
+    ['CV', 'Hep', 'Neuro', 'Lipid', 'Nephro', 'Hemo'].forEach(type => {
+        const slider = document.getElementById(`risk${type}`);
+        const span = document.getElementById(`val${type}`);
+        if(slider && span) slider.addEventListener('input', () => span.textContent = slider.value);
+    });
+    document.getElementById('drugForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newDrug = {
+            id: Date.now(),
+            name: document.getElementById('drugName').value,
+            dose: document.getElementById('drugDose').value,
+            route: document.getElementById('drugRoute').value,
+            period: document.getElementById('drugPeriod').value,
+            risks: {
+                CV: parseInt(document.getElementById('riskCV').value),
+                Hep: parseInt(document.getElementById('riskHep').value),
+                Neuro: parseInt(document.getElementById('riskNeuro').value),
+                Lipid: parseInt(document.getElementById('riskLipid').value),
+                Nephro: parseInt(document.getElementById('riskNephro').value),
+                Hemo: parseInt(document.getElementById('riskHemo').value)
+            }
         };
-
-        if (!name || !dose) {
-            alert('Введите название и дозировку!');
+        drugs.push(newDrug);
+        renderStack();
+        e.target.reset();
+        ['CV', 'Hep', 'Neuro', 'Lipid', 'Nephro', 'Hemo'].forEach(t => document.getElementById(`val${t}`).textContent = '0');
+        alert('Препарат добавлен! Перейдите во вкладку "Стек".');
+    });
+    function renderStack() {
+        const list = document.getElementById('stackList');
+        list.innerHTML = '';
+        if (drugs.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:#718096;">Стек пуст. Добавьте препараты.</p>';
             return;
         }
-
-        drugs.push({ id: Date.now(), name, dose, route, period, risks });
-        renderStack();
-        updateDashboard();
-        
-        // Очистка полей
-        document.getElementById('drug-name').value = '';
-        document.getElementById('drug-dose').value = '';
-        document.getElementById('drug-period').value = '';
-        [6,7,8,9,10,11].forEach(i => document.getElementById(`risk-${i}`).value = 0); // Fix IDs later if needed
-    });
-
-    function renderStack() {
-        const list = document.getElementById('stack-list');
-        list.innerHTML = '';
         drugs.forEach(drug => {
-            const item = document.createElement('div');
-            item.className = 'drug-item';
-            item.innerHTML = `
-                <div class="drug-header">
-                    <strong>${drug.name}</strong> 
-                    <span class="badge">${drug.dose}</span>
-                    <span class="badge">${drug.route === 'oral' ? 'Per Os' : 'Inj'}</span>
+            const card = document.createElement('div');
+            card.className = 'drug-card';
+            const routeText = drug.route === 'oral' ? 'Перорально' : (drug.route === 'inject' ? 'Инъекционно' : 'Местно');
+            card.innerHTML = `
+                <div class="drug-info">
+                    <h4>${drug.name} (${drug.dose})</h4>
+                    <p>Путь: ${routeText} | Период: ${drug.period}</p>
+                    <p style="font-size:11px; color:#a0aec0;">Риски: CV:${drug.risks.CV} Hep:${drug.risks.Hep} Neuro:${drug.risks.Neuro}</p>
                 </div>
-                <div class="drug-meta">Период: ${drug.period || 'N/A'} дней</div>
-                <button class="btn-sm btn-danger" onclick="removeDrug(${drug.id})">Удалить</button>
+                <button class="delete-btn" onclick="window.removeDrug(${drug.id})">Удалить</button>
             `;
-            list.appendChild(item);
+            list.appendChild(card);
         });
     }
-
     window.removeDrug = (id) => {
         drugs = drugs.filter(d => d.id !== id);
         renderStack();
-        updateDashboard();
-        document.getElementById('risk-report').style.display = 'none';
+        document.getElementById('riskSummary').style.display = 'none';
     };
-
-    // Расчет рисков
-    document.getElementById('calc-risks-btn').addEventListener('click', () => {
-        if (drugs.length === 0) {
-            alert('Стек пуст!');
-            return;
-        }
-
-        const totals = { cv: 0, hep: 0, neuro: 0, lipid: 0, nephro: 0, hemo: 0 };
-        let oralCount = 0;
-
-        drugs.forEach(d => {
-            totals.cv += d.risks.cv;
-            totals.hep += d.risks.hep;
-            totals.neuro += d.risks.neuro;
-            totals.lipid += d.risks.lipid;
-            totals.nephro += d.risks.nephro;
-            totals.hemo += d.risks.hemo;
-            if (d.route === 'oral') oralCount++;
-        });
-
-        // Штраф за пероральные
-        const penalty = oralCount > 1 ? (oralCount - 1) * 5 : 0;
-        const totalScore = Object.values(totals).reduce((a,b)=>a+b, 0) + penalty;
-        const maxScore = drugs.length * 60 + 50; // Approx max
-        const percentage = Math.min(100, Math.round((totalScore / maxScore) * 100));
-
-        let reportHtml = '<ul>';
-        for (const [key, val] of Object.entries(totals)) {
-            const level = val > 15 ? 'high' : val > 8 ? 'med' : 'low';
-            reportHtml += `<li><b>${key.toUpperCase()}:</b> ${val} <span class="risk-${level}">(${level})</span></li>`;
-        }
-        reportHtml += '</ul>';
-        if (penalty > 0) reportHtml += `<p class="warning">Штраф за множественные Per Os: +${penalty}</p>`;
-
-        document.getElementById('risk-details').innerHTML = reportHtml;
-        document.getElementById('toxicity-score').innerText = totalScore;
-        document.getElementById('toxicity-bar').style.width = `${percentage}%`;
-        
-        const bar = document.getElementById('toxicity-bar');
-        bar.className = percentage > 70 ? 'bg-danger' : percentage > 40 ? 'bg-warning' : 'bg-success';
-
-        document.getElementById('risk-report').style.display = 'block';
-        updateChart(totals);
-    });
-
-    document.getElementById('clear-stack-btn').addEventListener('click', () => {
-        if(confirm('Очистить весь стек?')) {
+    document.getElementById('clearStackBtn').addEventListener('click', () => {
+        if(confirm('Очистить весь список?')) {
             drugs = [];
             renderStack();
-            updateDashboard();
-            document.getElementById('risk-report').style.display = 'none';
+            document.getElementById('riskSummary').style.display = 'none';
         }
     });
-
-    function updateDashboard() {
-        document.getElementById('total-drugs').innerText = drugs.length;
-        // Simple total risk calc for dashboard
-        const total = drugs.reduce((acc, d) => acc + Object.values(d.risks).reduce((a,b)=>a+b,0), 0);
-        const avg = drugs.length ? Math.round(total / (drugs.length * 6) * 100) : 0;
-        const riskEl = document.getElementById('total-risk');
-        riskEl.innerText = `${avg}%`;
-        riskEl.className = avg > 50 ? 'risk-high' : avg > 20 ? 'risk-med' : 'risk-low';
-    }
-
-    function updateChart(data) {
+    document.getElementById('calcRiskBtn').addEventListener('click', () => {
+        if (drugs.length === 0) return alert('Добавьте препараты сначала!');
+        const totals = { CV: 0, Hep: 0, Neuro: 0, Lipid: 0, Nephro: 0, Hemo: 0 };
+        let oralCount = 0;
+        drugs.forEach(d => {
+            Object.keys(totals).forEach(k => totals[k] += d.risks[k]);
+            if (d.route === 'oral') oralCount++;
+        });
+        const oralPenalty = oralCount > 1 ? (oralCount - 1) * 2 : 0;
+        const maxScore = Math.max(...Object.values(totals)) + oralPenalty;
         const ctx = document.getElementById('riskChart').getContext('2d');
         if (riskChart) riskChart.destroy();
-        
         riskChart = new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: ['CV', 'Hep', 'Neuro', 'Lipid', 'Nephro', 'Hemo'],
+                labels: ['Сердце', 'Печень', 'Невро', 'Липиды', 'Почки', 'Кровь'],
                 datasets: [{
-                    label: 'Текущий профиль риска',
-                    data: Object.values(data),
-                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
-                    borderColor: '#2563eb',
-                    pointBackgroundColor: '#1e40af'
+                    label: 'Суммарный риск',
+                    data: [totals.CV, totals.Hep, totals.Neuro, totals.Lipid, totals.Nephro, totals.Hemo],
+                    backgroundColor: 'rgba(49, 130, 206, 0.4)',
+                    borderColor: '#3182ce',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff'
                 }]
             },
             options: {
-                scales: {
-                    r: {
-                        angleLines: { display: false },
-                        suggestedMin: 0,
-                        suggestedMax: 20
-                    }
-                }
+                scales: { r: { beginAtZero: true, max: Math.max(50, maxScore + 10) } },
+                responsive: true
             }
         });
-    }
-
-    // Init
-    updateDashboard();
+        const summaryDiv = document.getElementById('riskSummary');
+        const scoreDiv = document.getElementById('totalScore');
+        summaryDiv.style.display = 'block';
+        let msg = `Общая нагрузка: ${maxScore}`;
+        if (oralPenalty > 0) msg += ` (вкл. штраф +${oralPenalty} за ${oralCount} пероральных преп.)`;
+        scoreDiv.textContent = msg;
+        scoreDiv.className = 'total-score ' + (maxScore < 20 ? 'score-low' : (maxScore < 40 ? 'score-med' : 'score-high'));
+        setTimeout(() => {
+            document.querySelector('[data-tab="results"]').click();
+            document.getElementById('reportContent').innerHTML = `<pre>${JSON.stringify(totals, null, 2)}</pre><p>График доступен во вкладке "Стек"</p>`;
+        }, 500);
+    });
+    renderStack();
 });
