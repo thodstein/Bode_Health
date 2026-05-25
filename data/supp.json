@@ -1,0 +1,11 @@
+{
+  "omega3": { "name": "Omega-3", "minDose": 2000, "systems": ["lipid", "cardio", "neuro"] },
+  "magnesiumtreonate": { "name": "Magnesium L-threonate", "minDose": 2000, "systems": ["neuro"] },
+  "tudca": { "name": "TUDCA", "minDose": 500, "systems": ["hep"] },
+  "coq10": { "name": "CoQ10", "minDose": 200, "systems": ["cardio"] },
+  "berberine": { "name": "Berberine", "minDose": 1000, "systems": ["lipid", "pancreas"] },
+  "nac": { "name": "NAC", "minDose": 1200, "systems": ["hep", "neuro"] },
+  "citicoline": { "name": "Citicoline", "minDose": 500, "systems": ["neuro"] },
+  "zinc": { "name": "Zinc", "minDose": 15, "systems": ["end", "immune"] },
+  "vitd3": { "name": "Vitamin D3", "minDose": 2000, "systems": ["bone", "immune", "end"] }
+}

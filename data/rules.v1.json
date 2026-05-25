@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "pctDelayFactor": 5,
+  "riskCaps": {
+    "cv": 100,
+    "hep": 100,
+    "nephro": 100,
+    "lipid": 100
+  },
+  "supportStrategyLevels": ["basic", "mid", "max"]
+}

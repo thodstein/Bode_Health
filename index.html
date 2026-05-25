@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>NeuroCalculator AAS Pro</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --tg-bg: #17212b;
+      --tg-bg-secondary: #232e3c;
+      --tg-bg-tertiary: #182533;
+      --tg-surface: #242f3d;
+      --tg-card: #1e2a38;
+      --tg-text: #f5f5f5;
+      --tg-text-secondary: #8e9ba8;
+      --tg-text-muted: #5e6d7a;
+      --tg-accent: #2ea6ff;
+      --tg-accent-light: #5cb8ff;
+      --tg-accent-dark: #1a8ad4;
+      --tg-success: #5dc97a;
+      --tg-warning: #eda738;
+      --tg-danger: #ff595a;
+      --tg-info: #7ec8ff;
+      --tg-border: rgba(255,255,255,0.08);
+      --tg-border-hover: rgba(255,255,255,0.15);
+      --tg-divider: rgba(255,255,255,0.06);
+      --tg-radius-sm: 8px;
+      --tg-radius-md: 12px;
+      --tg-radius-lg: 16px;
+      --tg-radius-xl: 20px;
+      --tg-radius-pill: 999px;
+      --tg-shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+      --tg-shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+      --tg-shadow-lg: 0 8px 24px rgba(0,0,0,0.3);
+      --tg-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --tg-transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --nav-height: 64px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; overscroll-behavior-y: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--tg-bg);
+      color: var(--tg-text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
+    }
+    ::-webkit-scrollbar { width: 0; height: 0; }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(23, 33, 43, 0.92);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border-bottom: 1px solid var(--tg-divider);
+      padding: 12px 16px;
+      padding-top: calc(12px + var(--safe-top));
+    }
+    .header-content { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .header-brand { display: flex; flex-direction: column; gap: 2px; }
+    .header-title { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: var(--tg-text); }
+    .header-subtitle { font-size: 13px; color: var(--tg-text-secondary); font-weight: 400; }
+    .header-action {
+      width: 36px; height: 36px; border-radius: var(--tg-radius-pill);
+      background: var(--tg-bg-secondary); border: none; color: var(--tg-accent);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: var(--tg-transition); font-size: 18px;
+    }
+    .header-action:active { transform: scale(0.92); background: var(--tg-surface); }
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(23, 33, 43, 0.95);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border-top: 1px solid var(--tg-divider);
+      padding-bottom: var(--safe-bottom);
+      height: calc(var(--nav-height) + var(--safe-bottom));
+      display: flex; justify-content: space-around; align-items: center;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; padding: 6px 0; cursor: pointer; transition: var(--tg-transition);
+      border: none; background: none; color: var(--tg-text-muted);
+      font-size: 10px; font-weight: 500; position: relative;
+    }
+    .nav-item.active { color: var(--tg-accent); }
+    .nav-item:active { opacity: 0.7; }
+    .nav-icon { font-size: 22px; line-height: 1; transition: var(--tg-transition-bounce); }
+    .nav-item.active .nav-icon { transform: translateY(-1px); }
+    .nav-badge {
+      position: absolute; top: 2px; right: calc(50% - 16px);
+      min-width: 16px; height: 16px; padding: 0 4px;
+      background: var(--tg-danger); color: #fff; font-size: 10px; font-weight: 700;
+      border-radius: var(--tg-radius-pill); display: flex; align-items: center; justify-content: center;
+    }
+    .main-content { max-width: 600px; margin: 0 auto; padding: 12px 16px; }
+    .section { display: none; animation: fadeIn 0.25s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+      background: var(--tg-card); border-radius: var(--tg-radius-lg);
+      margin-bottom: 12px; overflow: hidden; border: 1px solid var(--tg-border);
+      transition: var(--tg-transition);
+    }
+    .card:active { border-color: var(--tg-border-hover); }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; cursor: pointer; user-select: none; -webkit-user-select: none;
+      transition: var(--tg-transition);
+    }
+    .card-header:active { background: rgba(255,255,255,0.03); }
+    .card-header-left { display: flex; align-items: center; gap: 10px; }
+    .card-icon {
+      width: 32px; height: 32px; border-radius: var(--tg-radius-md);
+      background: linear-gradient(135deg, var(--tg-accent-dark), var(--tg-accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .card-title { font-size: 15px; font-weight: 600; color: var(--tg-text); margin: 0; }
+    .card-subtitle { font-size: 12px; color: var(--tg-text-muted); margin-top: 1px; }
+    .card-chevron { font-size: 20px; color: var(--tg-text-muted); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card.expanded .card-chevron { transform: rotate(180deg); }
+    .card-body { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card.expanded .card-body { max-height: 2000px; }
+    .card-inner { padding: 0 16px 16px; }
+    .status-hero {
+      background: linear-gradient(135deg, rgba(46, 166, 255, 0.15), rgba(46, 166, 255, 0.05));
+      border: 1px solid rgba(46, 166, 255, 0.2); border-radius: var(--tg-radius-lg);
+      padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px;
+    }
+    .status-hero-icon {
+      width: 44px; height: 44px; border-radius: var(--tg-radius-md);
+      background: linear-gradient(135deg, var(--tg-accent), var(--tg-accent-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(46, 166, 255, 0.3);
+    }
+    .status-hero-content { flex: 1; }
+    .status-hero-title { font-size: 13px; color: var(--tg-text-secondary); font-weight: 500; }
+    .status-hero-value { font-size: 20px; font-weight: 800; color: var(--tg-text); margin-top: 2px; }
+    .status-hero-desc { font-size: 12px; color: var(--tg-text-muted); margin-top: 4px; }
+    .quick-actions {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding: 4px 0 12px; margin: 0 -4px; scrollbar-width: none;
+    }
+    .quick-actions::-webkit-scrollbar { display: none; }
+    .quick-action {
+      flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; background: var(--tg-bg-secondary);
+      border: 1px solid var(--tg-border); border-radius: var(--tg-radius-pill);
+      color: var(--tg-text); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: var(--tg-transition); text-decoration: none;
+    }
+    .quick-action:active { transform: scale(0.96); background: var(--tg-surface); }
+    .quick-action.primary { background: var(--tg-accent); border-color: var(--tg-accent); color: #fff; }
+    .quick-action.success { background: var(--tg-success); border-color: var(--tg-success); color: #fff; }
+    .quick-action.danger { background: var(--tg-danger); border-color: var(--tg-danger); color: #fff; }
+    .field-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.full-width { grid-column: 1 / -1; }
+    .field label { font-size: 12px; font-weight: 500; color: var(--tg-text-secondary); padding-left: 2px; }
+    input, select, textarea {
+      width: 100%; height: 44px; border: 1px solid var(--tg-border);
+      background: var(--tg-bg-tertiary); color: var(--tg-text);
+      border-radius: var(--tg-radius-md); padding: 0 12px;
+      outline: none; font-size: 15px; font-weight: 500;
+      transition: var(--tg-transition); -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--tg-accent); background: var(--tg-bg-secondary);
+      box-shadow: 0 0 0 3px rgba(46, 166, 255, 0.15);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238e9ba8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+    }
+    textarea { height: auto; min-height: 80px; padding: 10px 12px; resize: vertical; }
+    input[type="number"] { text-align: center; font-variant-numeric: tabular-nums; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; height: 48px; border: none; border-radius: var(--tg-radius-md);
+      font-size: 15px; font-weight: 700; cursor: pointer; transition: var(--tg-transition);
+      color: #fff; background: var(--tg-accent); position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:active::after { opacity: 1; }
+    .btn-secondary { background: var(--tg-bg-secondary); color: var(--tg-text); border: 1px solid var(--tg-border); }
+    .btn-success { background: var(--tg-success); color: #fff; }
+    .btn-danger { background: var(--tg-danger); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--tg-accent); }
+    .btn-group { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-group .btn { flex: 1; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; background: var(--tg-bg-tertiary);
+      border: 1px solid var(--tg-border); border-radius: var(--tg-radius-pill);
+      font-size: 13px; font-weight: 500; color: var(--tg-text);
+      cursor: pointer; transition: var(--tg-transition);
+    }
+    .chip:active { transform: scale(0.95); }
+    .chip.active { background: var(--tg-accent); border-color: var(--tg-accent); color: #fff; }
+    .chip.success { background: rgba(93, 201, 122, 0.15); border-color: var(--tg-success); color: var(--tg-success); }
+    .chip.danger { background: rgba(255, 89, 90, 0.15); border-color: var(--tg-danger); color: var(--tg-danger); }
+    .symptom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .symptom-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; padding: 12px 8px; background: var(--tg-bg-tertiary);
+      border: 1px solid var(--tg-border); border-radius: var(--tg-radius-md);
+      cursor: pointer; transition: var(--tg-transition); text-align: center; min-height: 72px;
+    }
+    .symptom-item:active { transform: scale(0.95); }
+    .symptom-item.selected {
+      background: rgba(93, 201, 122, 0.12); border-color: var(--tg-success); color: var(--tg-success);
+    }
+    .symptom-icon { font-size: 22px; }
+    .symptom-label { font-size: 11px; font-weight: 500; }
+    .lab-list { display: flex; flex-direction: column; gap: 8px; }
+    .lab-item {
+      background: var(--tg-bg-tertiary); border: 1px solid var(--tg-border);
+      border-radius: var(--tg-radius-md); overflow: hidden;
+    }
+    .lab-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; cursor: pointer;
+    }
+    .lab-item-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .lab-item-status {
+      font-size: 11px; padding: 2px 8px; border-radius: var(--tg-radius-pill);
+      background: var(--tg-bg-secondary); color: var(--tg-text-muted);
+    }
+    .lab-item-status.ok { background: rgba(93, 201, 122, 0.15); color: var(--tg-success); }
+    .lab-item-status.warn { background: rgba(237, 167, 56, 0.15); color: var(--tg-warning); }
+    .lab-item-status.danger { background: rgba(255, 89, 90, 0.15); color: var(--tg-danger); }
+    .lab-item-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .lab-item.expanded .lab-item-body { max-height: 500px; }
+    .lab-item-inner { padding: 0 14px 14px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .tiles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .tile {
+      background: var(--tg-bg-tertiary); border: 1px solid var(--tg-border);
+      border-radius: var(--tg-radius-md); padding: 14px; position: relative; overflow: hidden;
+    }
+    .tile::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--tg-accent), var(--tg-accent-light));
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .tile:hover::before { opacity: 1; }
+    .tile-main {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(46, 166, 255, 0.1), rgba(46, 166, 255, 0.03));
+      border-color: rgba(46, 166, 255, 0.2);
+    }
+    .tile-main::before { opacity: 1; }
+    .tile-label { font-size: 11px; font-weight: 600; color: var(--tg-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .tile-values { display: flex; align-items: baseline; gap: 10px; }
+    .tile-value { font-size: 22px; font-weight: 800; color: var(--tg-text); }
+    .tile-value-supp { font-size: 16px; font-weight: 700; color: var(--tg-success); }
+    .tile-desc { font-size: 11px; color: var(--tg-text-muted); margin-top: 6px; line-height: 1.4; }
+    .chart-wrapper {
+      background: var(--tg-bg-tertiary); border: 1px solid var(--tg-border);
+      border-radius: var(--tg-radius-md); padding: 14px; margin-top: 12px;
+    }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .chart-title { font-size: 14px; font-weight: 700; color: var(--tg-text); }
+    .data-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      font-size: 13px; border-radius: var(--tg-radius-md); overflow: hidden; border: 1px solid var(--tg-border);
+    }
+    .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--tg-divider); }
+    .data-table th { background: var(--tg-bg-secondary); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tg-text-secondary); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:active { background: rgba(255,255,255,0.02); }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      justify-content: flex-end; align-items: flex-end; animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-sheet {
+      width: 100%; max-height: 85vh; background: var(--tg-bg);
+      border-radius: var(--tg-radius-xl) var(--tg-radius-xl) 0 0;
+      overflow: hidden; display: flex; flex-direction: column;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .modal-handle { width: 36px; height: 4px; background: var(--tg-text-muted); border-radius: var(--tg-radius-pill); margin: 8px auto; opacity: 0.5; }
+    .modal-header { padding: 8px 16px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 17px; font-weight: 700; margin: 0; }
+    .modal-close { width: 32px; height: 32px; border-radius: var(--tg-radius-pill); background: var(--tg-bg-secondary); border: none; color: var(--tg-text); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .modal-body { flex: 1; overflow-y: auto; padding: 0 16px 24px; -webkit-overflow-scrolling: touch; }
+    .toast-container {
+      position: fixed; top: calc(var(--safe-top) + 60px); left: 16px; right: 16px;
+      z-index: 1001; pointer-events: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      background: var(--tg-bg-secondary); border: 1px solid var(--tg-border);
+      border-radius: var(--tg-radius-md); padding: 12px 16px; box-shadow: var(--tg-shadow-lg);
+      display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500;
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; pointer-events: auto;
+    }
+    .toast.success { border-color: var(--tg-success); color: var(--tg-success); }
+    .toast.error { border-color: var(--tg-danger); color: var(--tg-danger); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateY(-20px); } }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--tg-text-muted); }
+    .text-success { color: var(--tg-success); }
+    .text-danger { color: var(--tg-danger); }
+    .text-accent { color: var(--tg-accent); }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+    .mb-2 { margin-bottom: 8px; }
+    .p-3 { padding: 12px; }
+    .hidden { display: none !important; }
+    .divider { height: 1px; background: var(--tg-divider); margin: 12px 0; }
+    .empty-state { text-align: center; padding: 32px 16px; color: var(--tg-text-muted); }
+    .empty-state-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.5; }
+    .empty-state-text { font-size: 14px; }
+    .scroll-hint { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+    .scroll-dot { width: 6px; height: 6px; border-radius: var(--tg-radius-pill); background: var(--tg-text-muted); opacity: 0.3; transition: var(--tg-transition); }
+    .scroll-dot.active { opacity: 1; background: var(--tg-accent); }
+    .notice {
+      background: rgba(46, 166, 255, 0.08); border: 1px solid rgba(46, 166, 255, 0.2);
+      border-radius: var(--tg-radius-md); padding: 12px 14px; color: var(--tg-text-secondary); font-size: 13px;
+    }
+    .checkbox-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--tg-text); cursor: pointer; }
+    .checkbox-inline input { width: auto; }
+    @media (min-width: 768px) {
+      .main-content { max-width: 680px; }
+      .field-group { grid-template-columns: repeat(3, 1fr); }
+      .symptom-grid { grid-template-columns: repeat(4, 1fr); }
+      .tiles-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-brand">
+        <div class="header-title">NeuroCalculator</div>
+        <div class="header-subtitle">AAS Pro &bull; v2.0</div>
+      </div>
+      <button class="header-action" onclick="showToast('Настройки скоро...', 'info')" title="Настройки">⚙️</button>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- HOME SECTION -->
+    <section class="section active" id="section-home">
+      <div class="status-hero">
+        <div class="status-hero-icon">📊</div>
+        <div class="status-hero-content">
+          <div class="status-hero-title">Кумулятивный индекс</div>
+          <div class="status-hero-value" id="heroTotalDry">0%</div>
+          <div class="status-hero-desc">Нажмите «Рассчитать» для обновления</div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="quick-action primary" onclick="switchTab('dashboard')">📈 Риски</button>
+        <button class="quick-action" onclick="switchTab('profile')">👤 Профиль</button>
+        <button class="quick-action" onclick="switchTab('labs')">🧪 Анализы</button>
+        <button class="quick-action" onclick="switchTab('stack')">💉 Стек</button>
+        <button class="quick-action success" onclick="calculateAll()">🚀 Рассчитать</button>
+      </div>
+
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🎯</div>
+            <div>
+              <div class="card-title">Быстрый обзор</div>
+              <div class="card-subtitle">Ключевые показатели</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="tiles-grid">
+              <div class="tile tile-main">
+                <div class="tile-label">Общий риск</div>
+                <div class="tile-values">
+                  <span class="tile-value" id="miniTotalDry">0%</span>
+                  <span class="tile-value-supp" id="miniTotalSupp">0%</span>
+                </div>
+                <div class="tile-desc">С поддержкой / без</div>
+              </div>
+              <div class="tile">
+                <div class="tile-label">CV-риск</div>
+                <div class="tile-values"><span class="tile-value" id="miniCvDry">0%</span></div>
+                <div class="tile-desc">Сердце и сосуды</div>
+              </div>
+              <div class="tile">
+                <div class="tile-label">Печень</div>
+                <div class="tile-values"><span class="tile-value" id="miniHepDry">0%</span></div>
+                <div class="tile-desc">Ферменты и токсичность</div>
+              </div>
+              <div class="tile">
+                <div class="tile-label">Почки</div>
+                <div class="tile-values"><span class="tile-value" id="miniNephroDry">0%</span></div>
+                <div class="tile-desc">Креатинин и СКФ</div>
+              </div>
+              <div class="tile">
+                <div class="tile-label">Гормоны</div>
+                <div class="tile-values"><span class="tile-value" id="miniLeydigDry">100%</span></div>
+                <div class="tile-desc">Яички / Лейдиг</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">📋</div>
+            <div>
+              <div class="card-title">Активность</div>
+              <div class="card-subtitle">Последние действия</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="empty-state">
+              <div class="empty-state-icon">📝</div>
+              <div class="empty-state-text">Нет данных. Заполните профиль и рассчитайте.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE SECTION -->
+    <section class="section" id="section-profile">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">👤</div>
+            <div>
+              <div class="card-title">Профиль</div>
+              <div class="card-subtitle">Основные параметры</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="field-group">
+              <div class="field"><label>Фаза</label><select id="phase"><option value="course">Курс</option><option value="pct">ПКТ</option></select></div>
+              <div class="field"><label>Пол</label><select id="sex"><option value="male">Мужской</option><option value="female">Женский</option></select></div>
+              <div class="field"><label>Возраст</label><input id="age" type="number" value="30"></div>
+              <div class="field"><label>Вес, кг</label><input id="weight" type="number" value="85"></div>
+              <div class="field"><label>Рост, см</label><input id="height" type="number" value="180"></div>
+              <div class="field"><label>Жир %</label><input id="bf" type="number" value="15"></div>
+              <div class="field"><label>Курение</label><select id="smoke"><option value="no">Нет</option><option value="yes">Да</option></select></div>
+              <div class="field"><label>Алкоголь</label><select id="alcohol"><option value="no">Нет</option><option value="yes">Да</option></select></div>
+              <div class="field"><label>Сон, ч</label><input id="sleep" type="number" value="7"></div>
+              <div class="field"><label>Стресс 1-10</label><input id="stress" type="number" value="5" min="1" max="10"></div>
+              <div class="field"><label>Кардио/нед</label><input id="cardioDays" type="number" value="3"></div>
+              <div class="field"><label>Мин/кардио</label><input id="cardioMin" type="number" value="40"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🍽️</div>
+            <div>
+              <div class="card-title">Питание</div>
+              <div class="card-subtitle">Макро и калории</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="field-group">
+              <div class="field"><label>Ккал/сут</label><input id="calories" type="number" value="2800"></div>
+              <div class="field"><label>Белки г/кг</label><input id="protein" type="number" value="2.2" step="0.1"></div>
+              <div class="field"><label>Жиры г/кг</label><input id="fat" type="number" value="0.8" step="0.1"></div>
+              <div class="field"><label>Углеводы г/кг</label><input id="carbs" type="number" value="4" step="0.1"></div>
+              <div class="field"><label>Вода л/сут</label><input id="water" type="number" value="3" step="0.1"></div>
+              <div class="field"><label>Тип диеты</label><select id="dietType"><option value="mixed">Смешанная</option><option value="keto">Кето</option><option value="lowcarb">Низкоуглеводная</option><option value="highcarb">Высокоуглеводная</option></select></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">💪</div>
+            <div>
+              <div class="card-title">Тренировки</div>
+              <div class="card-subtitle">Нагрузка и цели</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="field-group">
+              <div class="field"><label>Дней/нед</label><input id="trainDays" type="number" value="5"></div>
+              <div class="field"><label>Минут</label><input id="trainMin" type="number" value="75"></div>
+              <div class="field"><label>Интенсивность</label><select id="intensity"><option value="low">Низкая</option><option value="mid" selected>Средняя</option><option value="high">Высокая</option></select></div>
+              <div class="field"><label>Тип</label><select id="trainType"><option value="strength">Силовые</option><option value="mixed">Смешанные</option><option value="endurance">Выносливость</option></select></div>
+              <div class="field"><label>Цель</label><select id="goal"><option value="bulk">Масса</option><option value="cut">Сушка</option><option value="recomp" selected>Recomp</option><option value="maintain">Поддержание</option></select></div>
+              <div class="field"><label>Усталость 1-10</label><input id="fatigue" type="number" value="5"></div>
+              <div class="field"><label>Доступно дней</label><input id="trainDaysAvailable" type="number" value="5"></div>
+              <div class="field"><label>Боль суставов 1-10</label><input id="painLevel" type="number" value="0"></div>
+              <div class="field"><label>Быстрый прогресс</label><select id="rapidProgression"><option value="false">Нет</option><option value="true">Да</option></select></div>
+              <div class="field"><label>Тревога 1-10</label><input id="anxietyLevel" type="number" value="3"></div>
+              <div class="field"><label>Депрессия 1-10</label><input id="depressionLevel" type="number" value="3"></div>
+              <div class="field"><label>Агрессия 1-10</label><input id="aggressionLevel" type="number" value="3"></div>
+              <div class="field full-width"><label>Уровень подготовки</label><select id="trainingLevel"><option value="beginner">Любитель</option><option value="intermediate">Средний (1-2 года)</option><option value="advanced">Продвинутый (3+)</option><option value="elite">Полу-про</option></select></div>
+              <div class="field full-width"><label>Комментарий</label><input id="workoutComment" type="text" placeholder="Доп. информация..."></div>
+              <div class="field full-width"><label>Травмы в анамнезе</label><select id="injuryHistory"><option value="false">Нет</option><option value="true">Да</option></select></div>
+            </div>
+            <div class="field full-width mt-3">
+              <label>Акцент на мышцы</label>
+              <select id="focusMuscles" multiple size="3">
+                <option value="quads">Квадрицепс</option>
+                <option value="hams">Бицепс бедра</option>
+                <option value="chest">Грудные</option>
+                <option value="back">Спина</option>
+                <option value="shoulders">Дельты</option>
+                <option value="biceps">Бицепс</option>
+                <option value="triceps">Трицепс</option>
+                <option value="glutes">Ягодицы</option>
+                <option value="calves">Икры</option>
+              </select>
+            </div>
+            <div class="field full-width mt-2">
+              <label>MRR</label>
+              <div class="notice" id="mrrOutput" style="margin-top:6px">MRR будет рассчитан после нажатия кнопки.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-success mt-3" onclick="calculateAll()">
+        <span>🚀</span> Рассчитать всё
+      </button>
+    </section>
+
+    <!-- LABS SECTION -->
+    <section class="section" id="section-labs">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🧪</div>
+            <div>
+              <div class="card-title">Анализы</div>
+              <div class="card-subtitle">Биохимия и гормоны</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="lab-list">
+              <div class="lab-item">
+                <div class="lab-item-header" onclick="toggleLab(this)">
+                  <div class="lab-item-title">🫁 Печень</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <label class="checkbox-inline"><input type="checkbox" class="no-data-check" data-system="hep" style="width:auto"> Нет данных</label>
+                    <span class="card-chevron" style="font-size:16px">▼</span>
+                  </div>
+                </div>
+                <div class="lab-item-body">
+                  <div class="lab-item-inner">
+                    <div class="field"><label>АЛТ</label><input type="number" id="labalt" value="30"></div>
+                    <div class="field"><label>АСТ</label><input type="number" id="labast" value="25"></div>
+                    <div class="field"><label>ГГТ</label><input type="number" id="labggt" value="30"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lab-item">
+                <div class="lab-item-header" onclick="toggleLab(this)">
+                  <div class="lab-item-title">🫘 Почки</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <label class="checkbox-inline"><input type="checkbox" class="no-data-check" data-system="nephro" style="width:auto"> Нет данных</label>
+                    <span class="card-chevron" style="font-size:16px">▼</span>
+                  </div>
+                </div>
+                <div class="lab-item-body">
+                  <div class="lab-item-inner">
+                    <div class="field"><label>Креатинин</label><input type="number" id="labcreat" value="85"></div>
+                    <div class="field"><label>Мочевина</label><input type="number" id="laburea" value="5.2"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lab-item">
+                <div class="lab-item-header" onclick="toggleLab(this)">
+                  <div class="lab-item-title">🧈 Липиды</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <label class="checkbox-inline"><input type="checkbox" class="no-data-check" data-system="lipid" style="width:auto"> Нет данных</label>
+                    <span class="card-chevron" style="font-size:16px">▼</span>
+                  </div>
+                </div>
+                <div class="lab-item-body">
+                  <div class="lab-item-inner">
+                    <div class="field"><label>ЛПНП</label><input type="number" id="labldl" value="2.8"></div>
+                    <div class="field"><label>ЛПВП</label><input type="number" id="labhdl" value="1.2"></div>
+                    <div class="field"><label>ТГ</label><input type="number" id="labtg" value="1.5"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lab-item">
+                <div class="lab-item-header" onclick="toggleLab(this)">
+                  <div class="lab-item-title">❤️ Сердце/АД</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <label class="checkbox-inline"><input type="checkbox" class="no-data-check" data-system="cardio" style="width:auto"> Нет данных</label>
+                    <span class="card-chevron" style="font-size:16px">▼</span>
+                  </div>
+                </div>
+                <div class="lab-item-body">
+                  <div class="lab-item-inner">
+                    <div class="field"><label>Сист. АД</label><input type="number" id="labsbp" value="120"></div>
+                    <div class="field"><label>Диаст. АД</label><input type="number" id="labdbp" value="80"></div>
+                    <div class="field"><label>hs-CRP</label><input type="number" id="labcrp" value="1.5"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lab-item">
+                <div class="lab-item-header" onclick="toggleLab(this)">
+                  <div class="lab-item-title">🩸 Гематокрит</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <label class="checkbox-inline"><input type="checkbox" class="no-data-check" data-system="hem" style="width:auto"> Нет данных</label>
+                    <span class="card-chevron" style="font-size:16px">▼</span>
+                  </div>
+                </div>
+                <div class="lab-item-body">
+                  <div class="lab-item-inner">
+                    <div class="field"><label>Hct %</label><input type="number" id="labhct" value="44.5"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lab-item">
+                <div class="lab-item-header" onclick="toggleLab(this)">
+                  <div class="lab-item-title">⚡ Гормоны</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <label class="checkbox-inline"><input type="checkbox" class="no-data-check" data-system="end" style="width:auto"> Нет данных</label>
+                    <span class="card-chevron" style="font-size:16px">▼</span>
+                  </div>
+                </div>
+                <div class="lab-item-body">
+                  <div class="lab-item-inner">
+                    <div class="field"><label>Тестостерон</label><input type="number" id="labtesto" value="15"></div>
+                    <div class="field"><label>Эстрадиол</label><input type="number" id="labe2" value="30"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-secondary mt-3" id="setAllNoDataBtn" onclick="setAllNoData()">
+              <span>🔇</span> Режим «Нет анализов»
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SYMPTOMS SECTION -->
+    <section class="section" id="section-symptoms">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🩺</div>
+            <div>
+              <div class="card-title">Симптомы</div>
+              <div class="card-subtitle">Отметьте актуальные</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="symptom-grid" id="symptom-grid">
+              <div class="symptom-item" data-sym="edema"><span class="symptom-icon">💧</span><span class="symptom-label">Отеки</span></div>
+              <div class="symptom-item" data-sym="insomnia"><span class="symptom-icon">😴</span><span class="symptom-label">Бессонница</span></div>
+              <div class="symptom-item" data-sym="aggression"><span class="symptom-icon">😤</span><span class="symptom-label">Агрессия</span></div>
+              <div class="symptom-item" data-sym="brainfog"><span class="symptom-icon">🌫️</span><span class="symptom-label">Туман</span></div>
+              <div class="symptom-item" data-sym="headache"><span class="symptom-icon">🤕</span><span class="symptom-label">Головные боли</span></div>
+              <div class="symptom-item" data-sym="cramps"><span class="symptom-icon">⚡</span><span class="symptom-label">Судороги</span></div>
+              <div class="symptom-item" data-sym="libido"><span class="symptom-icon">💔</span><span class="symptom-label">↓ Либидо</span></div>
+              <div class="symptom-item" data-sym="breath"><span class="symptom-icon">😮‍💨</span><span class="symptom-label">Одышка</span></div>
+              <div class="symptom-item" data-sym="gyno"><span class="symptom-icon">🍈</span><span class="symptom-label">Гинекомастия</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STACK SECTION -->
+    <section class="section" id="section-stack">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">💉</div>
+            <div>
+              <div class="card-title">Стек AAS</div>
+              <div class="card-subtitle">Препараты и дозировки</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div id="emptyStack" class="empty-state" style="padding:20px 0">
+              <div class="empty-state-icon">💊</div>
+              <div class="empty-state-text">Стек пуст. Добавьте препарат.</div>
+            </div>
+            <div id="stackList" class="chips" style="display:none"></div>
+            <div class="divider"></div>
+            <div class="field-group">
+              <div class="field full-width"><label>Препарат</label><select id="drugSelect"></select></div>
+              <div class="field"><label>Эфир/форма</label><select id="esterSelect"></select></div>
+              <div class="field"><label>Доза мг/нед</label><input id="doseVal" type="number" value="250"></div>
+              <div class="field"><label>С недели</label><input id="startWeek" type="number" value="1"></div>
+              <div class="field"><label>По неделю</label><input id="endWeek" type="number" value="8"></div>
+            </div>
+            <button class="btn mt-3" onclick="addDrugToStack()">
+              <span>➕</span> Добавить в стек
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🛡️</div>
+            <div>
+              <div class="card-title">ПКТ</div>
+              <div class="card-subtitle">Пост-курсовая терапия</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="field-group">
+              <div class="field"><label>Последняя инъекция</label><input type="text" id="lastinjweekdisplay" readonly placeholder="Авто"></div>
+              <div class="field"><label>Max T½, дней</label><input type="text" id="maxhalflifedisplay" readonly placeholder="Авто"></div>
+            </div>
+            <button class="btn mt-3" onclick="calculatePCT()">
+              <span>📅</span> Рассчитать старт ПКТ
+            </button>
+            <div id="pctOutput" class="chips mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">💊</div>
+            <div>
+              <div class="card-title">Поддержка</div>
+              <div class="card-subtitle">Гепато, кардио, др.</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <input type="hidden" id="supportstrategy" value="mid">
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="applySupportPreset('basic')">Минимум</button>
+              <button class="btn" onclick="applySupportPreset('mid')">Середнячок</button>
+              <button class="btn btn-success" onclick="applySupportPreset('max')">Максимум</button>
+            </div>
+            <div id="activeSupportDisplay" class="notice mt-3" style="background:rgba(46,166,255,0.08);border-color:rgba(46,166,255,0.2)">
+              Выберите уровень поддержки
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD SECTION -->
+    <section class="section" id="section-dashboard">
+      <div class="status-hero">
+        <div class="status-hero-icon">📊</div>
+        <div class="status-hero-content">
+          <div class="status-hero-title">Кумулятивный индекс</div>
+          <div class="status-hero-value" id="dashTotalDry">0%</div>
+          <div class="status-hero-desc">С поддержкой: <span id="dashTotalSupp">0%</span></div>
+        </div>
+      </div>
+
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🎯</div>
+            <div>
+              <div class="card-title">Риски по системам</div>
+              <div class="card-subtitle">Детальная разбивка</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="tiles-grid">
+              <div class="tile tile-main">
+                <div class="tile-label">Общий риск</div>
+                <div class="tile-values"><span class="tile-value" id="totaldry">0%</span><span class="tile-value-supp" id="totalsupp">0%</span></div>
+                <div class="tile-desc" id="totaldesc"></div>
+              </div>
+              <div class="tile"><div class="tile-label">CV-риск</div><div class="tile-values"><span class="tile-value" id="cvdry">0%</span><span class="tile-value-supp" id="cvsupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Hep-риск</div><div class="tile-values"><span class="tile-value" id="hepriskdry">0%</span><span class="tile-value-supp" id="heprisksupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Нейро</div><div class="tile-values"><span class="tile-value" id="neurodry">0%</span><span class="tile-value-supp" id="neurosupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Кровь</div><div class="tile-values"><span class="tile-value" id="hemodry">0%</span><span class="tile-value-supp" id="hemosupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Кардио/АД</div><div class="tile-values"><span class="tile-value" id="cardiodry">0%</span><span class="tile-value-supp" id="cardiosupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Гепато</div><div class="tile-values"><span class="tile-value" id="hepdry">0%</span><span class="tile-value-supp" id="hepsupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Почки</div><div class="tile-values"><span class="tile-value" id="nephrodry">0%</span><span class="tile-value-supp" id="nephrosupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Липиды</div><div class="tile-values"><span class="tile-value" id="lipiddry">0%</span><span class="tile-value-supp" id="lipidsupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Яички</div><div class="tile-values"><span class="tile-value" id="leydigdry">100%</span><span class="tile-value-supp" id="leydigsupp">100%</span></div></div>
+              <div class="tile"><div class="tile-label">ЖКТ</div><div class="tile-values"><span class="tile-value" id="gutdry">0%</span><span class="tile-value-supp" id="gutsupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Поджелудочная</div><div class="tile-values"><span class="tile-value" id="pancreasdry">0%</span><span class="tile-value-supp" id="pancreassupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Щитовидная</div><div class="tile-values"><span class="tile-value" id="thyroiddry">0%</span><span class="tile-value-supp" id="thyroidsupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Кости</div><div class="tile-values"><span class="tile-value" id="bonedry">0%</span><span class="tile-value-supp" id="bonesupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Глаза</div><div class="tile-values"><span class="tile-value" id="eyedry">0%</span><span class="tile-value-supp" id="eyesupp">0%</span></div></div>
+              <div class="tile"><div class="tile-label">Иммунитет</div><div class="tile-values"><span class="tile-value" id="immunedry">0%</span><span class="tile-value-supp" id="immunesupp">0%</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">📈</div>
+            <div>
+              <div class="card-title">График рисков</div>
+              <div class="card-subtitle">Динамика по неделям</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="chart-wrapper">
+              <div class="chart-header">
+                <div class="chart-title">Новый график</div>
+              </div>
+              <div class="risk-checkboxes" id="riskCheckboxes"></div>
+              <div style="display:flex;gap:12px;margin:12px 0;flex-wrap:wrap">
+                <label class="checkbox-inline"><input type="radio" name="riskType" value="supp" checked> С поддержкой</label>
+                <label class="checkbox-inline"><input type="radio" name="riskType" value="dry"> Сухой риск</label>
+                <label class="checkbox-inline"><input type="radio" name="riskType" value="both"> Оба</label>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-secondary" onclick="updateChart()">🔄 Обновить</button>
+                <button class="btn btn-secondary" onclick="exportChart()">💾 PNG</button>
+              </div>
+              <canvas id="weeklyChartNew" height="300" style="max-height:350px;margin-top:12px"></canvas>
+            </div>
+
+            <div class="chart-wrapper mt-3">
+              <div class="chart-header">
+                <div class="chart-title">Классический график</div>
+              </div>
+              <select id="chartSystemSelect" multiple size="3" style="height:auto;width:100%;margin-bottom:12px">
+                <option value="total" selected>Total</option>
+                <option value="neuro">Neuro</option>
+                <option value="hemo">Hemo</option>
+                <option value="cardio">Cardio</option>
+                <option value="hep">Hep</option>
+                <option value="nephro">Nephro</option>
+                <option value="lipid">Lipid</option>
+                <option value="leydig">Leydig</option>
+                <option value="gut">Gut</option>
+                <option value="pancreas">Pancreas</option>
+                <option value="thyroid">Thyroid</option>
+                <option value="bone">Bone</option>
+                <option value="eye">Eye</option>
+                <option value="immune">Immune</option>
+              </select>
+              <button class="btn btn-secondary" onclick="updateOriginalChart()">🔄 Обновить</button>
+              <canvas id="weeklyChart" height="250" style="max-height:300px;margin-top:12px"></canvas>
+              <div id="segmentsOutput" style="margin-top:16px"></div>
+              <button class="btn btn-success mt-3" onclick="calculateMacrocycle()">🧮 РАССЧИТАТЬ СИСТЕМЫ И РИСКИ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COACH SECTION -->
+    <section class="section" id="section-coach">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🤖</div>
+            <div>
+              <div class="card-title">AI-коуч</div>
+              <div class="card-subtitle">Персональная программа</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div id="coachOutput" class="empty-state" style="padding:20px 0">
+              <div class="empty-state-icon">🎯</div>
+              <div class="empty-state-text">Нажмите кнопку ниже для генерации программы</div>
+            </div>
+            <button class="btn btn-secondary mt-3" onclick="runCoachRecommendations()">
+              <span>🎯</span> Получить программу
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOINTS SECTION -->
+    <section class="section" id="section-joints">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🦴</div>
+            <div>
+              <div class="card-title">Суставы и связки</div>
+              <div class="card-subtitle">Профилактика и реабилитация</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="field-group">
+              <div class="field"><label>Скованность 1-10</label><input type="number" id="jointStiffness" value="3" min="0" max="10"></div>
+              <div class="field"><label>Боль локти 1-10</label><input type="number" id="elbowPain" value="1" min="0" max="10"></div>
+              <div class="field"><label>Боль колени 1-10</label><input type="number" id="kneePain" value="1" min="0" max="10"></div>
+              <div class="field"><label>Боль плечи 1-10</label><input type="number" id="shoulderPain" value="1" min="0" max="10"></div>
+              <div class="field"><label>Помпа предплечий 1-10</label><input type="number" id="forearmPump" value="2" min="0" max="10"></div>
+              <div class="field"><label>История травм</label><select id="tendonHistory"><option value="false">Нет</option><option value="true">Да</option></select></div>
+              <div class="field"><label>Воспаление/отёк</label><select id="jointSwelling"><option value="false">Нет</option><option value="true">Да</option></select></div>
+              <div class="field"><label>Нестабильность</label><select id="jointInstability"><option value="false">Нет</option><option value="true">Да</option></select></div>
+              <div class="field"><label>Заклинивание</label><select id="jointLocking"><option value="false">Нет</option><option value="true">Да</option></select></div>
+            </div>
+            <div class="field full-width mt-3">
+              <label>Упражнения</label>
+              <div id="exercisePickerContainer" class="joint-exercise-picker" style="background:var(--tg-bg-tertiary);border:1px solid var(--tg-border);border-radius:var(--tg-radius-md);padding:10px;max-height:220px;overflow-y:auto"></div>
+            </div>
+            <div class="field full-width mt-2">
+              <label>Статус</label>
+              <div id="jointStatus" class="notice" style="margin-top:6px">Заполните данные и обновите блок</div>
+            </div>
+            <div class="btn-group mt-3">
+              <button class="btn btn-secondary" onclick="renderJointModule()">🔄 Обновить</button>
+              <button class="btn btn-secondary" onclick="saveProgramToLocalStorage()">💾 Сохранить</button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="loadProgramFromLocalStorage()">📂 Загрузить</button>
+              <button class="btn btn-secondary" onclick="exportFullProgramToPDF()">📄 PDF</button>
+            </div>
+            <div id="jointPlanOutput" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECIPE SECTION -->
+    <section class="section" id="section-recipe">
+      <div class="card expanded">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div class="card-header-left">
+            <div class="card-icon">🍳</div>
+            <div>
+              <div class="card-title">Рецепт</div>
+              <div class="card-subtitle">Калькулятор пищевой ценности</div>
+            </div>
+          </div>
+          <div class="card-chevron">▼</div>
+        </div>
+        <div class="card-body">
+          <div class="card-inner">
+            <div class="field-group">
+              <div class="field full-width"><label>Название рецепта</label><input type="text" id="recipeName" placeholder="Мой рецепт..."></div>
+              <div class="field"><label>Порций</label><input type="number" id="recipeServings" min="1" value="1"></div>
+            </div>
+            <div class="divider"></div>
+            <h4 style="margin:0 0 10px;font-size:14px">Ингредиенты</h4>
+            <div id="ingredientsList"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+              <input type="text" id="newIngredientName" placeholder="Название" style="flex:2">
+              <input type="number" id="newIngredientGrams" placeholder="Граммы" style="flex:1">
+              <button class="btn btn-secondary" onclick="addIngredient()" style="width:auto;padding:0 16px">+</button>
+            </div>
+            <div class="divider"></div>
+            <div class="field-group">
+              <div class="field"><label>Порций</label><input type="number" id="nutritionServingsInput" min="1" step="1" value="1" onchange="updateNutritionSettings()"></div>
+              <div class="field"><label>Режим</label><select id="nutritionPortionMode" onchange="updateNutritionSettings()"><option value="perServing">На порцию</option><option value="per100g">На 100 г</option><option value="wholeRecipe">На весь рецепт</option></select></div>
+              <div class="field"><label>Оценки</label><select id="nutritionIncludeMissing" onchange="updateNutritionSettings()"><option value="false">Нет</option><option value="true">Да, оценивать</option></select></div>
+              <div class="field"><label>Точность</label><select id="nutritionAccuracyMode" onchange="updateNutritionSettings()"><option value="approximate">Приблизительный</option><option value="strict">Только связанные данные</option></select></div>
+            </div>
+            <div class="notice mt-3" id="nutritionSummaryNotice">Пищевая ценность приблизительна и зависит от базы данных.</div>
+            <table class="data-table" style="margin-top:12px">
+              <thead><tr><th>Питательное вещество</th><th>Значение</th></tr></thead>
+              <tbody id="nutritionSummaryTable"></tbody>
+            </table>
+            <div class="mt-3">
+              <h4 style="margin:0 0 8px;font-size:13px;color:var(--tg-text-secondary)">Включённые ингредиенты</h4>
+              <div id="nutritionIncludedIngredients" class="text-muted" style="font-size:12px"></div>
+            </div>
+            <div class="mt-3">
+              <h4 style="margin:0 0 8px;font-size:13px;color:var(--tg-text-secondary)">Отсутствующие связи</h4>
+              <div id="nutritionMissingIngredients" class="text-muted" style="font-size:12px"></div>
+            </div>
+            <div class="mt-3">
+              <h4 style="margin:0 0 8px;font-size:13px;color:var(--tg-text-secondary)">Примечания</h4>
+              <div id="nutritionNotesBox" class="text-muted" style="font-size:12px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="home" onclick="switchTab('home')">
+      <span class="nav-icon">🏠</span>
+      <span>Главная</span>
+    </button>
+    <button class="nav-item" data-tab="profile" onclick="switchTab('profile')">
+      <span class="nav-icon">👤</span>
+      <span>Профиль</span>
+    </button>
+    <button class="nav-item" data-tab="labs" onclick="switchTab('labs')">
+      <span class="nav-icon">🧪</span>
+      <span>Анализы</span>
+    </button>
+    <button class="nav-item" data-tab="symptoms" onclick="switchTab('symptoms')">
+      <span class="nav-icon">🩺</span>
+      <span>Симптомы</span>
+    </button>
+    <button class="nav-item" data-tab="stack" onclick="switchTab('stack')">
+      <span class="nav-icon">💉</span>
+      <span>Стек</span>
+    </button>
+    <button class="nav-item" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <span class="nav-icon">📊</span>
+      <span>Риски</span>
+      <span class="nav-badge" id="riskBadge" style="display:none">!</span>
+    </button>
+  </nav>
+
+  <!-- Modal -->
+  <div id="drugDetailModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle"></h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Inline JS for UI interactions -->
+  <script>
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const section = document.getElementById('section-' + tabName);
+      const navItem = document.querySelector('.nav-item[data-tab="' + tabName + '"]');
+      if (section) section.classList.add('active');
+      if (navItem) navItem.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Card toggle
+    function toggleCard(header) {
+      const card = header.closest('.card');
+      card.classList.toggle('expanded');
+    }
+
+    // Lab toggle
+    function toggleLab(header) {
+      const item = header.closest('.lab-item');
+      item.classList.toggle('expanded');
+    }
+
+    // Toast
+    function showToast(message, type) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + (type || '');
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Modal
+    function closeModal() {
+      document.getElementById('drugDetailModal').classList.remove('active');
+    }
+
+    // Calculate all placeholder
+    function calculateAll() {
+      showToast('Расчёт выполнен!', 'success');
+      // Update hero
+      document.getElementById('heroTotalDry').textContent = '42%';
+      document.getElementById('dashTotalDry').textContent = '42%';
+      document.getElementById('dashTotalSupp').textContent = '28%';
+      // Update mini tiles
+      document.getElementById('miniTotalDry').textContent = '42%';
+      document.getElementById('miniTotalSupp').textContent = '28%';
+      document.getElementById('miniCvDry').textContent = '35%';
+      document.getElementById('miniHepDry').textContent = '18%';
+      document.getElementById('miniNephroDry').textContent = '12%';
+      document.getElementById('miniLeydigDry').textContent = '65%';
+      // Update dashboard tiles
+      document.getElementById('totaldry').textContent = '42%';
+      document.getElementById('totalsupp').textContent = '28%';
+      document.getElementById('cvdry').textContent = '35%';
+      document.getElementById('cvsupp').textContent = '22%';
+      document.getElementById('hepriskdry').textContent = '18%';
+      document.getElementById('heprisksupp').textContent = '12%';
+      document.getElementById('neurodry').textContent = '25%';
+      document.getElementById('neurosupp').textContent = '18%';
+      document.getElementById('hemodry').textContent = '30%';
+      document.getElementById('hemosupp').textContent = '20%';
+      document.getElementById('cardiodry').textContent = '28%';
+      document.getElementById('cardiosupp').textContent = '18%';
+      document.getElementById('hepdry').textContent = '18%';
+      document.getElementById('hepsupp').textContent = '12%';
+      document.getElementById('nephrodry').textContent = '12%';
+      document.getElementById('nephrosupp').textContent = '8%';
+      document.getElementById('lipiddry').textContent = '22%';
+      document.getElementById('lipidsupp').textContent = '15%';
+      document.getElementById('leydigdry').textContent = '65%';
+      document.getElementById('leydigsupp').textContent = '45%';
+      document.getElementById('gutdry').textContent = '10%';
+      document.getElementById('gutsupp').textContent = '6%';
+      document.getElementById('pancreasdry').textContent = '8%';
+      document.getElementById('pancreassupp').textContent = '5%';
+      document.getElementById('thyroiddry').textContent = '5%';
+      document.getElementById('thyroidsupp').textContent = '3%';
+      document.getElementById('bonedry').textContent = '7%';
+      document.getElementById('bonesupp').textContent = '4%';
+      document.getElementById('eyedry').textContent = '4%';
+      document.getElementById('eyesupp').textContent = '2%';
+      document.getElementById('immunedry').textContent = '6%';
+      document.getElementById('immunesupp').textContent = '3%';
+      // Show badge
+      document.getElementById('riskBadge').style.display = 'flex';
+    }
+
+    // Set all no data
+    function setAllNoData() {
+      document.querySelectorAll('.no-data-check').forEach(cb => cb.checked = true);
+      showToast('Режим "Нет анализов" активирован', 'success');
+    }
+
+    // Symptom toggle
+    document.querySelectorAll('.symptom-item').forEach(item => {
+      item.addEventListener('click', function() {
+        this.classList.toggle('selected');
+      });
+    });
+
+    // Placeholder functions for external JS
+    function addDrugToStack() { showToast('Добавлено в стек', 'success'); }
+    function calculatePCT() { showToast('ПКТ рассчитан', 'success'); }
+    function applySupportPreset(preset) { 
+      document.getElementById('supportstrategy').value = preset;
+      const names = {basic: 'Базовый минимум', mid: 'Рабочий середнячок', max: 'Умный максимум'};
+      document.getElementById('activeSupportDisplay').textContent = names[preset] + ' активирован';
+      showToast(names[preset] + ' активирован', 'success');
+    }
+    function updateChart() { showToast('График обновлён', 'success'); }
+    function exportChart() { showToast('Экспорт PNG...', 'success'); }
+    function updateOriginalChart() { showToast('График обновлён', 'success'); }
+    function calculateMacrocycle() { showToast('Макроцикл рассчитан', 'success'); }
+    function runCoachRecommendations() { 
+      document.getElementById('coachOutput').innerHTML = '<div class="notice">Программа сгенерирована! Проверьте раздел тренировок.</div>';
+      showToast('Программа готова!', 'success'); 
+    }
+    function renderJointModule() { showToast('Блок обновлён', 'success'); }
+    function saveProgramToLocalStorage() { showToast('Сохранено', 'success'); }
+    function loadProgramFromLocalStorage() { showToast('Загружено', 'success'); }
+    function exportFullProgramToPDF() { showToast('PDF экспорт...', 'success'); }
+    function addIngredient() { showToast('Ингредиент добавлен', 'success'); }
+    function updateNutritionSettings() { showToast('Настройки обновлены', 'success'); }
+
+    // Close modal on backdrop click
+    document.getElementById('drugDetailModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+
+  <!-- External scripts -->
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/profile.js"></script>
+  <script src="assets/js/nutrition.js"></script>
+  <script src="assets/js/training.js"></script>
+  <script src="assets/js/labs.js"></script>
+  <script src="assets/js/symptoms.js"></script>
+  <script src="assets/js/stack.js"></script>
+  <script src="assets/js/pct.js"></script>
+  <script src="assets/js/support.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/coach.js"></script>
+  <script src="assets/js/joints.js"></script>
+  <script src="assets/js/recipe.js"></script>
+</body>
+</html>

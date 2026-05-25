@@ -1,0 +1,41 @@
+<h2 class="section-title">📊 Дашборд рисков</h2>
+<p class="muted">Кумулятивный индекс и органные риски по текущим данным.</p>
+
+<div class="field-grid">
+  <div class="field"><label>Возраст</label><input id="age" type="number" value="30"></div>
+  <div class="field"><label>Стресс</label><input id="stress" type="number" value="5"></div>
+  <div class="field"><label>Сон</label><input id="sleep" type="number" value="7"></div>
+  <div class="field"><label>ЛПНП</label><input id="ldl" type="number" value="3"></div>
+  <div class="field"><label>ЛПВП</label><input id="hdl" type="number" value="1.2"></div>
+  <div class="field"><label>АЛТ</label><input id="alt" type="number" value="25"></div>
+  <div class="field"><label>АСТ</label><input id="ast" type="number" value="25"></div>
+  <div class="field"><label>Hct</label><input id="hct" type="number" value="45"></div>
+  <div class="field"><label>Глюкоза</label><input id="glucose" type="number" value="5"></div>
+  <div class="field"><label>Инсулин</label><input id="insulin" type="number" value="10"></div>
+  <div class="field"><label>Витамин D</label><input id="vitd" type="number" value="30"></div>
+  <div class="field"><label>Сист. АД</label><input id="bpSys" type="number" value="120"></div>
+  <div class="field"><label>CRP</label><input id="crp" type="number" value="1"></div>
+  <div class="field"><label>Доля оральных</label><input id="oralShare" type="number" value="0"></div>
+</div>
+
+<div class="topbar-actions" style="margin-top:12px">
+  <button class="btn btn-primary" id="dashboard-recalc">Рассчитать риски</button>
+</div>
+
+<div class="chips" style="margin-top:14px">
+  <span class="chip">Кумулятивный: <b id="dash-cumulative">0%</b></span>
+  <span class="chip">CV: <b id="dash-cv">0%</b></span>
+  <span class="chip">Hep: <b id="dash-hep">0%</b></span>
+  <span class="chip">Нейро: <b id="dash-neuro">0%</b></span>
+  <span class="chip">Кровь: <b id="dash-blood">0%</b></span>
+  <span class="chip">Кардио: <b id="dash-cardio">0%</b></span>
+  <span class="chip">Почки: <b id="dash-kidney">0%</b></span>
+  <span class="chip">Липиды: <b id="dash-lipids">0%</b></span>
+  <span class="chip">Яички: <b id="dash-testis">100%</b></span>
+  <span class="chip">ЖКТ: <b id="dash-gi">0%</b></span>
+  <span class="chip">Поджелудочная: <b id="dash-pancreas">0%</b></span>
+  <span class="chip">Щитовидная: <b id="dash-thyroid">0%</b></span>
+  <span class="chip">Кости: <b id="dash-bones">0%</b></span>
+  <span class="chip">Глаза: <b id="dash-eyes">0%</b></span>
+  <span class="chip">Иммунитет: <b id="dash-immunity">0%</b></span>
+</div>

@@ -1,0 +1,8 @@
+{
+  "enanthate": { "name": "Enanthate", "hl": 7.0, "key": 0.72 },
+  "cypionate": { "name": "Cypionate", "hl": 8.0, "key": 0.70 },
+  "propionate": { "name": "Propionate", "hl": 1.5, "key": 0.83 },
+  "acetate": { "name": "Acetate", "hl": 1.0, "key": 0.87 },
+  "decanoate": { "name": "Decanoate", "hl": 15.0, "key": 0.64 },
+  "oral": { "name": "Oral", "hl": 0.4, "key": 1.0 }
+}

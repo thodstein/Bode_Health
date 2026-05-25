@@ -1,0 +1,8 @@
+{
+  "testosterone": { "name": "Testosterone", "oral": false, "halfLife": 7, "hemo": 2.2, "cardio": 3.5, "neuro": 2.0, "hep": 0.0, "nephro": 2.5, "lipid": 3.0, "gut": 0.5, "pancreas": 1.0, "thyroid": 0.5, "bone": 0.5, "eye": 0.2, "immune": 0.5 },
+  "trenbolone": { "name": "Trenbolone", "oral": false, "halfLife": 2, "hemo": 6.5, "cardio": 9.0, "neuro": 10.0, "hep": 3.0, "nephro": 9.5, "lipid": 8.5, "gut": 2.0, "pancreas": 2.0, "thyroid": 1.5, "bone": -1.0, "eye": 1.0, "immune": 2.0 },
+  "boldenone": { "name": "Boldenone", "oral": false, "halfLife": 14, "hemo": 10.0, "cardio": 3.0, "neuro": 2.5, "hep": 0.0, "nephro": 4.5, "lipid": 4.0, "gut": 0.5, "pancreas": 0.5, "thyroid": 0.5, "bone": 0.5, "eye": 0.2, "immune": 0.5 },
+  "nandrolone": { "name": "Nandrolone", "oral": false, "halfLife": 12, "hemo": 4.5, "cardio": 5.0, "neuro": 6.0, "hep": 1.2, "nephro": 3.5, "lipid": 5.0, "gut": 0.5, "pancreas": 1.0, "thyroid": 0.5, "bone": 2.0, "eye": 0.5, "immune": 1.0 },
+  "drostanolone": { "name": "Drostanolone", "oral": false, "halfLife": 2, "hemo": 3.0, "cardio": 4.5, "neuro": 3.5, "hep": 0.0, "nephro": 2.5, "lipid": 5.5, "gut": 0.2, "pancreas": 0.5, "thyroid": 0.2, "bone": -0.5, "eye": 0.2, "immune": 0.5 },
+  "metandienone": { "name": "Metandienone", "oral": true, "halfLife": 0.25, "hemo": 5.0, "cardio": 7.5, "neuro": 4.0, "hep": 9.0, "nephro": 5.0, "lipid": 8.0, "gut": 1.5, "pancreas": 2.0, "thyroid": 1.0, "bone": 0.5, "eye": 0.5, "immune": 1.5 }
+}
