@@ -1,55 +1,38 @@
 // Глобальный объект приложения
 const App = {
-    state: {
-        stack: [],
-        plan: [],
-        wIdx: 0,
-        xp: 0,
-        charts: { liver: true, cardio: true, hemato: true, kidney: false, neuro: false, endo: false, repro: false }
-    },
-
+    state: { stack:[], plan:[], wIdx:0, xp:0, charts:{liver:true, cardio:true, hemato:true, kidney:false, neuro:false, endo:false, repro:false} },
+    
     init: function() {
-        // Заполнение селекта веществ
+        // Заполняем селект веществ
         const sel = document.getElementById('sub-select');
-        if (sel) {
+        if(sel) {
             sel.innerHTML = '';
             DB.substances.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name;
-                sel.appendChild(opt);
+                let o = document.createElement('option'); o.value=s.id; o.innerText=s.name; sel.appendChild(o);
             });
         }
         this.renderSupport();
         this.renderArticles();
         this.renderShop();
         this.renderGlossary();
-        this.renderChartControls();
+        this.renderControls();
+        console.log("App initialized");
     },
 
     // Переключение вкладок
     switchTab: function(tabId) {
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        
         document.getElementById(tabId).classList.add('active');
-        // Находим кнопку и активируем её (простой перебор)
+        // Находим кнопку и делаем активной (простой хак)
         const btns = document.querySelectorAll('.tab-btn');
-        if(tabId === 'dashboard') btns[0].classList.add('active');
-        if(tabId === 'stack') btns[1].classList.add('active');
-        if(tabId === 'risks') {
-            btns[2].classList.add('active');
-            setTimeout(() => {
-                if (this.state.plan.length) {
-                    this.renderChart();
-                    this.renderHeatmap();
-                }
-            }, 100);
-        }
-        if(tabId === 'support') btns[3].classList.add('active');
-        if(tabId === 'labs') btns[4].classList.add('active');
-        if(tabId === 'articles') btns[5].classList.add('active');
-        if(tabId === 'shop') btns[6].classList.add('active');
+        if(tabId==='dashboard') btns[0].classList.add('active');
+        if(tabId==='stack') btns[1].classList.add('active');
+        if(tabId==='risks') { btns[2].classList.add('active'); setTimeout(()=>this.renderChart(), 100); }
+        if(tabId==='support') btns[3].classList.add('active');
+        if(tabId==='labs') btns[4].classList.add('active');
+        if(tabId==='articles') btns[5].classList.add('active');
+        if(tabId==='shop') btns[6].classList.add('active');
     },
 
     // Загрузка эфиров
@@ -58,18 +41,12 @@ const App = {
         const estSel = document.getElementById('est-select');
         estSel.innerHTML = '';
         const list = DB.esters[subId];
-        
-        if (list && list.length > 0) {
+        if(list && list.length) {
             estSel.disabled = false;
             list.forEach(e => {
-                const opt = document.createElement('option');
-                opt.value = e.id;
-                opt.textContent = e.name + ' (T1/2: ' + e.hl + ' дн.)';
-                estSel.appendChild(opt);
+                let o = document.createElement('option'); o.value=e.id; o.innerText=e.name+' ('+e.hl+' дн.)'; estSel.appendChild(o);
             });
-        } else {
-            estSel.disabled = true;
-        }
+        } else { estSel.disabled = true; }
     },
 
     // Добавление препарата
@@ -79,154 +56,95 @@ const App = {
         const dose = parseFloat(document.getElementById('in-dose').value);
         const start = parseInt(document.getElementById('in-start').value);
         const end = parseInt(document.getElementById('in-end').value);
-
-        if (!dose || start >= end) {
-            alert('Проверьте дозировку и недели (Старт < Финиш)!');
-            return;
-        }
-
-        this.state.stack.push({ sub, est, dose, start, end });
-        this.renderStack();
         
-        // Сброс формы
+        if(!dose || start>=end) return alert('Проверьте дозу и недели!');
+        
+        this.state.stack.push({sub, est, dose, start, end});
+        this.renderStack();
         document.getElementById('in-dose').value = '';
-        document.getElementById('in-start').value = '1';
-        document.getElementById('in-end').value = '8';
     },
 
     renderStack: function() {
         const div = document.getElementById('stack-list');
         div.innerHTML = '';
-        this.state.stack.forEach((item, idx) => {
-            const s = DB.substances.find(x => x.id === item.sub);
-            const e = DB.esters[item.sub] ? DB.esters[item.sub].find(x => x.id === item.est) : null;
-            
-            const html = `
-                <div class="item">
-                    <div>
-                        <b>${s.name}</b> ${e ? '(' + e.name + ')' : ''}<br>
-                        <small>${item.dose} мг/нед | Недели ${item.start}–${item.end}</small>
-                    </div>
-                    <button class="btn-del" onclick="App.removeDrug(${idx})">✕</button>
-                </div>
-            `;
-            div.innerHTML += html;
+        this.state.stack.forEach((it, idx) => {
+            const s = DB.substances.find(x=>x.id===it.sub);
+            const e = DB.esters[it.sub]?.find(x=>x.id===it.est);
+            div.innerHTML += `<div class="item"><div><b>${s.name}</b> ${e?'('+e.name+')':''}<br><small>${it.dose}мг | Нед ${it.start}-${it.end}</small></div><button class="btn-del" onclick="App.state.stack.splice(${idx},1);App.renderStack()">✕</button></div>`;
         });
-    },
-
-    removeDrug: function(idx) {
-        this.state.stack.splice(idx, 1);
-        this.renderStack();
     },
 
     // Расчет плана
     calcPlan: function() {
-        if (this.state.stack.length === 0) {
-            alert('Сначала добавьте препараты в стек!');
-            return;
-        }
+        if(!this.state.stack.length) return alert('Добавьте препараты!');
         this.state.plan = Engine.generatePlan(this.state.stack);
         this.state.wIdx = 0;
-        
         this.renderHeatmap();
         this.renderChart();
-        
-        const msg = document.getElementById('plan-msg');
-        msg.textContent = `✅ Расчет выполнен на ${this.state.plan.length} недель!`;
-        msg.style.color = 'var(--sec)';
-        
+        document.getElementById('plan-msg').innerText = `Расчет на ${this.state.plan.length} недель выполнен!`;
         this.state.xp += 100;
-        document.getElementById('xp-display').textContent = 'XP: ' + this.state.xp;
-
-        // Обновление дэшборда
-        const firstWeek = this.state.plan[0];
-        let sum = 0, cnt = 0;
-        for(let sys in firstWeek.r) {
-            for(let k in firstWeek.r[sys]) { sum += firstWeek.r[sys][k]; cnt++; }
-        }
-        const avg = Math.round(sum / cnt);
-        document.getElementById('d-risk').textContent = avg + '%';
-        document.getElementById('d-readiness').textContent = Math.max(10, 100 - avg);
+        document.getElementById('xp-display').innerText = 'XP: '+this.state.xp;
+        
+        const avg = Object.values(this.state.plan[0].r).reduce((a,b)=>a+Object.values(b).reduce((x,y)=>x+y,0),0) / 49;
+        document.getElementById('d-risk').innerText = Math.round(avg)+'%';
+        document.getElementById('d-readiness').innerText = Math.max(10, 100-Math.round(avg));
     },
 
-    // Навигация по неделям
     changeWeek: function(dir) {
-        if (!this.state.plan.length) return;
+        if(!this.state.plan.length) return;
         this.state.wIdx += dir;
-        if (this.state.wIdx < 0) this.state.wIdx = 0;
-        if (this.state.wIdx >= this.state.plan.length) this.state.wIdx = this.state.plan.length - 1;
+        if(this.state.wIdx<0) this.state.wIdx=0;
+        if(this.state.wIdx>=this.state.plan.length) this.state.wIdx=this.state.plan.length-1;
         this.renderHeatmap();
     },
 
-    // Рендер Heatmap
     renderHeatmap: function() {
-        if (!this.state.plan.length) return;
+        if(!this.state.plan.length) return;
         const data = this.state.plan[this.state.wIdx];
-        document.getElementById('week-label').textContent = 'Неделя ' + data.w;
+        document.getElementById('week-label').innerText = 'Неделя '+data.w;
+        const div = document.getElementById('heatmap');
+        div.innerHTML = '';
         
-        const container = document.getElementById('heatmap');
-        container.innerHTML = '';
-
-        for (let sys in DB.risks) {
-            // Заголовок системы
-            container.innerHTML += `<div style="grid-column: 1 / -1; color: var(--pri); font-weight: bold; margin-top: 10px; text-transform: uppercase;">${sys}</div>`;
-            
+        for(let sys in DB.risks) {
+            div.innerHTML += `<div style="grid-column:1/-1; color:var(--pri); font-weight:bold; margin-top:10px">${sys.toUpperCase()}</div>`;
             DB.risks[sys].forEach(m => {
-                const val = data.r[sys][m.id] || 0;
-                const color = Engine.getRiskColor(val);
-                const txtColor = val > 50 ? '#000' : '#fff';
-                
-                const cell = document.createElement('div');
-                cell.className = 'hm-cell';
-                cell.style.backgroundColor = color;
-                cell.style.color = txtColor;
-                cell.innerHTML = `<b>${m.n}</b><br>${val}%`;
-                container.appendChild(cell);
+                const val = data.r[sys][m.id]||0;
+                let col = Engine.getColor(val);
+                let txt = val>50?'#000':'#fff';
+                let el = document.createElement('div');
+                el.className = 'hm-cell';
+                el.style.background = col; el.style.color = txt;
+                el.innerHTML = `<b>${m.n}</b><br>${val}%`;
+                div.appendChild(el);
             });
         }
     },
 
-    // Рендер графика
     renderChart: function() {
         const ctx = document.getElementById('trend-chart');
-        if (!ctx) return;
+        if(!ctx) return;
+        if(window.myChart) window.myChart.destroy();
         
-        if (window.myChart) window.myChart.destroy();
-
-        const labels = this.state.plan.map(p => 'W' + p.w);
+        const labels = this.state.plan.map(p=>'W'+p.w);
         const datasets = [];
-        const colors = { liver: '#ff6384', cardio: '#36a2eb', hemato: '#ff9f40', kidney: '#4bc0c0', neuro: '#9966ff', endo: '#c9cbcf', repro: '#e7e9ed' };
-
-        for (let sys in this.state.charts) {
-            if (this.state.charts[sys]) {
-                const dataPoints = this.state.plan.map(p => {
-                    let sum = 0, cnt = 0;
-                    for (let k in p.r[sys]) { sum += p.r[sys][k]; cnt++; }
-                    return cnt ? Math.round(sum / cnt) : 0;
+        const colors = {liver:'#ff6384', cardio:'#36a2eb', hemato:'#ff9f40', kidney:'#4bc0c0', neuro:'#9966ff', endo:'#c9cbcf', repro:'#e7e9ed'};
+        
+        for(let sys in this.state.charts) {
+            if(this.state.charts[sys]) {
+                const d = this.state.plan.map(p => {
+                    let sum=0, cnt=0;
+                    for(let k in p.r[sys]){sum+=p.r[sys][k];cnt++;}
+                    return cnt?Math.round(sum/cnt):0;
                 });
-                datasets.push({
-                    label: sys.toUpperCase(),
-                    data: dataPoints,
-                    borderColor: colors[sys],
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.4
-                });
+                datasets.push({label:sys.toUpperCase(), data:d, borderColor:colors[sys], borderWidth:2, fill:false, tension:0.4});
             }
         }
-
+        
         window.myChart = new Chart(ctx.getContext('2d'), {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                responsive: true,
-                plugins: { legend: { labels: { color: '#aaa' } } },
-                scales: {
-                    y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } },
-                    x: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
-                }
-            }
-        });
+            type:'line',
+            data: {labels, datasets},
+            options:{responsive:true, plugins:{legend:{labels:{color:'#aaa'}}}, scales:{y:{beginAtZero:true, max:100, ticks:{color:'#aaa'},grid:{color:'#333'}}, x:{ticks:{color:'#aaa'},grid:{color:'#333'}}}}
+        );
     },
 
     toggleChart: function(sys) {
@@ -234,68 +152,55 @@ const App = {
         this.renderChart();
     },
 
-    renderChartControls: function() {
+    renderControls: function() {
         const div = document.getElementById('chart-controls');
-        const names = { liver: 'Печень', cardio: 'Сердце', hemato: 'Кровь', kidney: 'Почки', neuro: 'Невро', endo: 'Эндо', repro: 'Репро' };
+        if(!div) return;
+        const names = {liver:'Печень', cardio:'Сердце', hemato:'Кровь', kidney:'Почки', neuro:'Невро', endo:'Эндо', repro:'Репро'};
         div.innerHTML = '';
-        for (let k in names) {
-            const checked = this.state.charts[k] ? 'checked' : '';
-            div.innerHTML += `<label><input type="checkbox" ${checked} onchange="App.toggleChart('${k}')"> ${names[k]}</label>`;
+        for(let k in names) {
+            div.innerHTML += `<label><input type="checkbox" ${this.state.charts[k]?'checked':''} onchange="App.toggleChart('${k}')"> ${names[k]}</label>`;
         }
     },
 
-    // Рендер поддержки
     renderSupport: function() {
         const div = document.getElementById('support-list');
-        div.innerHTML = '';
-        DB.support.forEach(block => {
-            let itemsHtml = block.items.map(i => `
-                <div class="item" style="margin: 5px 0; padding: 10px; border-left-color: var(--pri);">
-                    <div><b>${i.n}</b> ${i.d}<br><small>${i.m}</small></div>
-                </div>
-            `).join('');
-            
-            div.innerHTML += `<div class="time-block"><h3>${block.t}</h3>${itemsHtml}</div>`;
+        if(!div) return;
+        DB.support.forEach(b => {
+            div.innerHTML += `<div class="time-block"><h3>${b.t}</h3>` + b.items.map(i=>`<div class="item" style="margin:5px 0; padding:10px"><div><b>${i.n}</b> ${i.d}<br><small>${i.m}</small></div></div>`).join('') + `</div>`;
         });
     },
 
-    // Фертильность
     calcFert: function() {
-        const v = parseFloat(document.getElementById('lab-vol').value) || 0;
-        const c = parseFloat(document.getElementById('lab-conc').value) || 0;
-        const res = Math.round((v / 1.5) * 20 + (c / 16) * 30);
-        const color = res > 50 ? 'var(--sec)' : 'var(--err)';
-        document.getElementById('fert-res').innerHTML = `<span style="color:${color}">IF: ${res}/100</span>`;
+        const v = parseFloat(document.getElementById('lab-vol').value)||0;
+        const c = parseFloat(document.getElementById('lab-conc').value)||0;
+        const res = Math.round((v/1.5)*20 + (c/16)*30);
+        const el = document.getElementById('fert-res');
+        if(el) el.innerHTML = `<span style="color:${res>50?'var(--sec)':'var(--err)'}">IF: ${res}/100</span>`;
     },
 
     renderArticles: function() {
         const div = document.getElementById('articles-list');
-        div.innerHTML = '';
-        DB.articles.forEach(a => {
-            div.innerHTML += `<div class="item"><div><b>${a.t}</b><br><small>${a.c} | 👁 ${a.v}</small></div></div>`;
-        });
+        if(!div) return;
+        DB.articles.forEach(a => div.innerHTML += `<div class="item"><div><b>${a.t}</b><br><small>${a.c} | 👁${a.v}</small></div></div>`);
     },
 
     renderShop: function() {
         const div = document.getElementById('shop-list');
-        div.innerHTML = '';
-        for (let k in DB.shop) {
-            DB.shop[k].forEach(i => {
-                div.innerHTML += `<div class="item"><div><b>${k.toUpperCase()}</b><br>${i.p}</div><div style="color:var(--sec)">${i.pr}</div></div>`;
-            });
+        if(!div) return;
+        for(let k in DB.shop) {
+            DB.shop[k].forEach(i => div.innerHTML += `<div class="item"><div><b>${k.toUpperCase()}</b><br>${i.p}</div><div style="color:var(--sec)">${i.pr}</div></div>`);
         }
     },
 
     renderGlossary: function() {
         const div = document.getElementById('glossary-list');
-        div.innerHTML = '';
-        for (let k in DB.glossary) {
-            div.innerHTML += `<div class="item"><b>${k}</b><br><small>${DB.glossary[k]}</small></div>`;
-        }
+        if(!div) return;
+        for(let k in DB.glossary) div.innerHTML += `<div class="item"><b>${k}</b><br><small>${DB.glossary[k]}</small></div>`;
     }
 };
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
+// Автозапуск
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM Loaded, initializing App...");
     App.init();
 });
