@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0</title>
+    <title>Bode Health v11.0 Ultimate</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,161 +18,166 @@
             </div>
             <div class="status-bar">
                 <span id="trust-score">Trust: 0</span>
-                <span id="connection-status">🟢 Online</span>
             </div>
         </header>
 
-        <!-- Навигация: 8 вкладок строго по ТЗ -->
+        <!-- НАВИГАЦИЯ (9 ВКЛАДОК ПО ТЗ) -->
         <nav class="tabs">
             <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
-            <button class="tab-btn" data-tab="stack">💉 Стек</button>
+            <button class="tab-btn" data-tab="stack">💉 Стек (Ввод)</button>
             <button class="tab-btn" data-tab="support">💊 Поддержка</button>
             <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
             <button class="tab-btn" data-tab="nutrition">🍎 Питание</button>
             <button class="tab-btn" data-tab="training">🏋️ Тренировки</button>
             <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
-            <button class="tab-btn" data-tab="profile">⚙️ Профиль</button>
+            <button class="tab-btn" data-tab="reports">📑 Отчеты</button>
+            <button class="tab-btn" data-tab="articles">📚 Статьи/Магазин</button>
         </nav>
 
         <main>
             <!-- 1. ГЛАВНАЯ -->
             <section id="dashboard" class="tab-content active">
-                <h2>Сводка состояния</h2>
                 <div class="cards-grid">
-                    <div class="card">
-                        <h3>Readiness</h3>
-                        <div class="big-value" id="dash-readiness">--</div>
-                    </div>
-                    <div class="card">
-                        <h3>Fatigue</h3>
-                        <div class="big-value" id="dash-fatigue">--</div>
-                    </div>
-                    <div class="card">
-                        <h3>Интегральный риск</h3>
-                        <div class="big-value" id="dash-risk">--</div>
-                    </div>
+                    <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
+                    <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
+                    <div class="card"><h3>Integr. Risk</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
-                <div class="alert-box" id="daily-alert">Загрузка данных...</div>
-                <div class="forecast-block">
-                    <h3>📈 Прогноз на 7 дней</h3>
-                    <div id="forecast-content">Добавьте данные для прогноза</div>
-                </div>
+                <div id="weekly-alert" class="alert-box"></div>
             </section>
 
-            <!-- 2. СТЕК -->
+            <!-- 2. СТЕК (ДЕТАЛЬНЫЙ ВВОД) -->
             <section id="stack" class="tab-content">
-                <h2>Фармакологический стек</h2>
-                <form id="add-drug-form" class="input-group">
-                    <select id="drug-select" required><option value="">Выберите препарат...</option></select>
-                    <input type="number" id="drug-dose" placeholder="Доза (мг/ЕД)" required>
-                    <input type="text" id="drug-freq" placeholder="Частота (напр. 2р/нед)" required>
-                    <button type="submit" class="btn-primary">Добавить</button>
+                <h2>Добавить препарат в курс</h2>
+                <form id="add-drug-form" class="form-detailed">
+                    <label>Препарат:</label>
+                    <select id="drug-select" required></select>
+                    
+                    <label>Эфир (если есть):</label>
+                    <select id="ester-select">
+                        <option value="none">Без эфира / Оральный</option>
+                        <option value="propionate">Пропионат</option>
+                        <option value="enanthate">Энантат</option>
+                        <option value="cypionate">Ципионат</option>
+                        <option value="decanoate">Деканоат</option>
+                        <option value="undecylenate">Ундесиленат</option>
+                        <option value="acetate">Ацетат</option>
+                    </select>
+
+                    <div class="row">
+                        <div><label>Доза (мг/ЕД):</label><input type="number" id="drug-dose" required></div>
+                        <div><label>Частота:</label><input type="text" id="drug-freq" placeholder="напр. 2р/нед" required></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div><label>Длительность (недель):</label><input type="number" id="drug-weeks" value="10" required></div>
+                        <div><label>Старт (неделя):</label><input type="number" id="drug-start" value="1" min="1" required></div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Добавить в схему</button>
                 </form>
+                <h3>Текущий стек:</h3>
                 <div id="stack-list" class="list-container"></div>
             </section>
 
-            <!-- 3. ПОДДЕРЖКА -->
+            <!-- 3. ПОДДЕРЖКА (ПОНЕДЕЛЬНЫЙ ПЛАН) -->
             <section id="support" class="tab-content">
                 <div class="section-header">
                     <h2>Протокол поддержки</h2>
-                    <label class="toggle-switch">
-                        <span>Активен</span>
-                        <input type="checkbox" id="support-toggle" checked>
-                    </label>
+                    <label class="toggle-switch"><span>Активировать расчет Net Risks</span><input type="checkbox" id="support-toggle" checked></label>
+                </div>
+                <div id="week-selector" class="week-nav">
+                    <button onclick="App.setWeek(-1)">⬅️</button>
+                    <span id="current-week-display">Неделя 1</span>
+                    <button onclick="App.setWeek(1)">➡️</button>
                 </div>
                 <div id="support-schedule" class="schedule-container"></div>
             </section>
 
-            <!-- 4. РИСКИ -->
+            <!-- 4. РИСКИ (ДИНАМИКА) -->
             <section id="risks" class="tab-content">
-                <h2>Матрица рисков (Raw vs Net)</h2>
+                <h2>Динамика рисков по неделям курса</h2>
                 <canvas id="risk-chart"></canvas>
                 <div id="risk-details" class="details-list"></div>
-                <div class="what-if-block">
-                    <h3>🔄 What-If Сценарий</h3>
-                    <p>Изменение дозировок для оценки влияния на риски</p>
-                    <button class="btn-secondary" onclick="alert('Функция в разработке: выберите препарат для симуляции')">Запустить симуляцию</button>
-                </div>
             </section>
 
             <!-- 5. ПИТАНИЕ -->
             <section id="nutrition" class="tab-content">
                 <h2>Дневник питания</h2>
-                <div class="voice-input">
-                    <button id="voice-btn" class="btn-icon">🎙️</button>
-                    <span id="voice-status">Нажмите для голосового ввода</span>
-                </div>
+                <button id="voice-btn" class="btn-icon">🎙️</button>
                 <form id="food-form" class="input-group">
-                    <input type="text" id="food-name" placeholder="Продукт" required>
-                    <input type="number" id="food-weight" placeholder="Вес (г)" required>
-                    <button type="submit" class="btn-primary">Добавить</button>
+                    <input type="text" id="food-name" placeholder="Продукт">
+                    <input type="number" id="food-weight" placeholder="Вес (г)">
+                    <button type="submit">Добавить</button>
                 </form>
                 <div id="food-log"></div>
-                <div class="macros-summary">
-                    <h3>КБЖУ за день</h3>
-                    <div id="macros-display">Белки: 0 | Жиры: 0 | Углеводы: 0 | Ккал: 0</div>
-                </div>
             </section>
 
             <!-- 6. ТРЕНИРОВКИ -->
             <section id="training" class="tab-content">
                 <h2>Программа тренировок</h2>
-                <div class="training-controls">
-                    <button class="btn-primary" onclick="alert('Генерация программы на основе Readiness...')">Сгенерировать сплит</button>
-                </div>
-                <div id="workout-plan" class="list-container"></div>
+                <div id="workout-plan"></div>
             </section>
 
             <!-- 7. АНАЛИЗЫ -->
             <section id="labs" class="tab-content">
                 <h2>Лабораторный мониторинг</h2>
-                <button class="btn-secondary" onclick="alert('Загрузка фото (OCR)...')">📷 Загрузить анализ</button>
-                
                 <div class="fertility-block">
                     <h3>Индекс фертильности (WHO 2021)</h3>
                     <div class="input-group">
                         <input type="number" id="semen-vol" placeholder="Объем (мл)">
                         <input type="number" id="semen-conc" placeholder="Конц. (млн/мл)">
-                        <input type="number" id="semen-pr" placeholder="Подвижность PR (%)">
+                        <input type="number" id="semen-pr" placeholder="Подвижность (%)">
                         <input type="number" id="semen-morph" placeholder="Морфология (%)">
                     </div>
                     <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
                     <div id="fertility-result"></div>
                 </div>
-                <div class="labs-history">
-                    <h3>История анализов</h3>
-                    <div id="labs-list"></div>
+            </section>
+
+            <!-- 8. ОТЧЕТЫ -->
+            <section id="reports" class="tab-content">
+                <h2>Экспорт данных</h2>
+                <div class="report-cards">
+                    <div class="card" onclick="App.exportJSON()">
+                        <h3>💾 Полный бэкап (JSON)</h3>
+                        <p>Все данные, настройки, история</p>
+                    </div>
+                    <div class="card" onclick="App.exportPDF()">
+                        <h3>📄 Отчет для врача (PDF)</h3>
+                        <p>Анамнез, риски, лабораторные</p>
+                    </div>
+                    <div class="card" onclick="App.exportCoach()">
+                        <h3>📋 Отчет тренеру</h3>
+                        <p>Тренировки, питание, восстановление</p>
+                    </div>
                 </div>
             </section>
 
-            <!-- 8. ПРОФИЛЬ -->
-            <section id="profile" class="tab-content">
-                <h2>Настройки и Профиль</h2>
-                <div class="profile-section">
-                    <h3>Генетика</h3>
-                    <p>Настройка снипов (MTHFR, COMT, AGTR1)</p>
-                    <button class="btn-secondary" onclick="alert('Редактор генетики')">Редактировать</button>
+            <!-- 9. СТАТЬИ / МАГАЗИН -->
+            <section id="articles" class="tab-content">
+                <h2>База знаний и Магазин</h2>
+                <div class="tabs-sub">
+                    <button class="sub-btn active" onclick="UIRenderer.showSub('wiki')">📚 Статьи</button>
+                    <button class="sub-btn" onclick="UIRenderer.showSub('shop')">🛒 Магазин</button>
                 </div>
-                <div class="profile-section">
-                    <h3>Магазин (Marketplace)</h3>
-                    <p>Рекомендованные препараты поддержки</p>
-                    <button class="btn-secondary" onclick="alert('Переход в магазин')">Открыть витрину</button>
+                <div id="sub-wiki" class="sub-content">
+                    <div class="article-card">
+                        <h4>Кардиопротекция на курсе ААС</h4>
+                        <p>Разбор механизмов гипертрофии ЛЖ и методы профилактики...</p>
+                        <button class="btn-secondary">Читать</button>
+                    </div>
                 </div>
-                <div class="profile-section">
-                    <h3>Статьи</h3>
-                    <p>База знаний и глоссарий</p>
-                    <button class="btn-secondary" onclick="alert('Открытие библиотеки')">Читать статьи</button>
-                </div>
-                <div class="profile-section">
-                    <h3>Данные</h3>
-                    <button class="btn-secondary" onclick="alert('Экспорт JSON...')">Экспорт всех данных (JSON)</button>
-                    <button class="btn-danger" onclick="alert('Очистка данных...')">Сброс профиля</button>
+                <div id="sub-shop" class="sub-content" style="display:none;">
+                    <div class="shop-item">
+                        <h4>Телмисартан (Кардиопротекция)</h4>
+                        <p>Цена: ~500₽ | Наличие: Ozon, Apteka</p>
+                        <button class="btn-primary">Купить</button>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Scripts -->
     <script src="assets/js/core/database.js"></script>
     <script src="assets/js/core/engine.js"></script>
     <script src="assets/js/app.js"></script>
