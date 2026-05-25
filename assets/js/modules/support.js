@@ -1,37 +1,29 @@
 const SupportModule = {
-    init() {
-        this.render();
-    },
-    render() {
-        const container = document.getElementById('supportSchedule');
-        container.innerHTML = '';
-        const times = { morning: '☀️ Утро', lunch: '🍽 Обед', preworkout: '🏋️ Предтреник', intra: '⚡ Интра', evening: '🌙 Вечер' };
-        
-        for(const [time, label] of Object.entries(times)) {
-            const items = SUPPORT_DB.filter(s => s.time === time);
-            if(items.length === 0) continue;
-            
-            const group = document.createElement('div');
-            group.className = 'support-group';
-            group.innerHTML = `<h3>${label}</h3>`;
-            
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'support-item';
-                div.innerHTML = `
-                    <span><strong>${item.name}</strong> <small>(${item.group})</small></span>
-                    <span style="color:var(--accent)">${item.dose}</span>
-                `;
-                group.appendChild(div);
-            });
-            container.appendChild(group);
-        }
-        
-        // Синергия
-        const synergyDiv = document.getElementById('synergyBlock');
-        synergyDiv.innerHTML = '<h3>🔗 Активные синергии</h3><ul>' + 
-            SUPPORT_DB.filter(s => s.synergy.length > 0).map(s => 
-                `<li><strong>${s.name}</strong> усиливает: ${s.synergy.join(', ')}</li>`
-            ).join('') + '</ul>';
-    }
+  render: () => {
+    const container = document.getElementById('supportList');
+    if(!container) return;
+    
+    const protocol = DB.supportProtocols.heavyCycle;
+    const timeLabels = { morning_fast: '🌅 Натощак', morning_food: '☀️ Завтрак', lunch: '🍽 Обед', pre_workout: '💪 Предтреник', intra_workout: '🔄 Во время тренировки', evening: '🌙 Вечер', extra: '💉 Дополнительно' };
+    
+    let html = '';
+    protocol.forEach(slot => {
+      html += `<div class="card"><h3>${timeLabels[slot.time]}</h3>`;
+      slot.items.forEach(itemId => {
+        // Поиск препарата в базе по ID (упрощенно)
+        const item = DB.drugs.find(d => d.id === itemId) || { name: itemId, type: 'unknown' };
+        html += `
+          <div class="support-item">
+            <div>
+              <strong>${item.name}</strong>
+              <span class="badge">${item.type}</span>
+            </div>
+            <button class="btn btn-success btn-sm">Купить</button>
+          </div>
+        `;
+      });
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  }
 };

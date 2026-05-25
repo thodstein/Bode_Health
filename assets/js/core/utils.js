@@ -1,5 +1,5 @@
 const Utils = {
-    sum: arr => arr.reduce((a, b) => a + b, 0),
-    avg: arr => arr.length ? Utils.sum(arr) / arr.length : 0,
-    clamp: (val, min, max) => Math.min(Math.max(val, min), max)
+  generateId: () => '_' + Math.random().toString(36).substr(2, 9),
+  formatDate: (date) => new Date(date).toLocaleDateString('ru-RU'),
+  clamp: (num, min, max) => Math.min(Math.max(num, min), max)
 };
