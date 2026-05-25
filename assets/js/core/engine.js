@@ -11,13 +11,18 @@ const Engine = {
         const plan = [];
         for(let w=1; w<=total; w++) {
             let r = {};
-            for(let sys in DB.risks) { r[sys]={}; DB.risks[sys].forEach(m => r[sys][m.id]=0); }
+            for(let sys in DB.risks) { 
+                r[sys]={}; 
+                DB.risks[sys].forEach(m => r[sys][m.id]=0); 
+            }
             stack.forEach(it => {
-                const ester = DB.esters[it.sub]?.find(x=>x.id===it.est);
+                const ester = DB.esters[it.sub] ? DB.esters[it.sub].find(x=>x.id===it.est) : null;
                 const hl = ester ? ester.hl : 1;
                 const conc = this.calcConc(hl, it.start, it.end, w);
                 if(conc > 0.05) {
-                    const t = DB.substances.find(x=>x.id===it.sub).tox;
+                    const subObj = DB.substances.find(x=>x.id===it.sub);
+                    if(!subObj) return;
+                    const t = subObj.tox;
                     const load = conc * (it.dose/100);
                     r.liver.chol += t.liver*3*load; r.liver.cyt += t.liver*2*load;
                     r.cardio.lip += t.lipid*3*load; r.cardio.htn += t.lipid*1.5*load;
@@ -28,12 +33,20 @@ const Engine = {
                     r.repro.sup += t.repro*5*load; r.repro.atr += t.repro*4*load;
                 }
             });
-            for(let sys in r) for(let k in r[sys]) r[sys][k] = Math.min(100, Math.round(r[sys][k]));
+            for(let sys in r) {
+                for(let k in r[sys]) {
+                    r[sys][k] = Math.min(100, Math.round(r[sys][k]));
+                }
+            }
             plan.push({w, r});
         }
         return plan;
     },
     getColor: function(v) {
-        if(v<20) return '#4caf50'; if(v<40) return '#8bc34a'; if(v<60) return '#ffeb3b'; if(v<80) return '#ff9800'; return '#f44336';
+        if(v<20) return '#4caf50'; 
+        if(v<40) return '#8bc34a'; 
+        if(v<60) return '#ffeb3b'; 
+        if(v<80) return '#ff9800'; 
+        return '#f44336';
     }
 };
