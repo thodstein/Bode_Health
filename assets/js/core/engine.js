@@ -3,10 +3,12 @@ const Engine = {
         if (currentWeek < startWeek) return 0;
         const weeksOnDrug = currentWeek - startWeek;
         if (currentWeek <= endWeek) {
-            return Math.min(1, weeksOnDrug / (halfLife / 7));
+            const riseFactor = Math.min(1, weeksOnDrug / (halfLife / 7));
+            return riseFactor;
         } else {
             const weeksOff = currentWeek - endWeek;
-            return Math.max(0, Math.exp(-0.693 * weeksOff / (halfLife / 7)));
+            const decay = Math.exp(-0.693 * weeksOff / (halfLife / 7));
+            return Math.max(0, decay);
         }
     },
     generateWeeklyPlan(stack, totalWeeksForecast) {
@@ -26,12 +28,14 @@ const Engine = {
                 risks[sys] = {};
                 DB.riskMatrix[sys].mechanisms.forEach(m => risks[sys][m.id] = 0);
             }
+            let activeDrugs = [];
             stack.forEach(item => {
                 const conc = this.calculateConcentration(
                     (DB.esters[item.substanceId]?.find(e => e.id === item.esterId)?.halfLife) || 1,
                     item.startWeek, item.endWeek, w
                 );
                 if (conc > 0.01) {
+                    activeDrugs.push({ ...item, conc });
                     const sub = DB.substances.find(s => s.id === item.substanceId);
                     if (!sub) return;
                     const tox = sub.baseTox;
@@ -40,15 +44,23 @@ const Engine = {
                     risks.liver.cytolysis += (tox.liver * 2) * load;
                     risks.cardio.lipids += (tox.lipid * 3) * load;
                     risks.cardio.htn += (tox.lipid * 1.5) * load;
+                    risks.cardio.thrombo += (tox.lipid * 1) * load;
                     risks.hemato.erythrocytosis += (tox.hct * 4) * load;
+                    risks.hemato.viscosity += (tox.hct * 3) * load;
                     risks.neuro.dopamine += (tox.neuro * 5) * load;
                     risks.kidney.hyperfiltration += (tox.kidney * 3) * load;
                     risks.endo.insulin_res += (tox.endo * 3) * load;
+                    risks.endo.estrogen += (tox.endo * 2) * load;
                     risks.repro.suppression += (tox.repro * 5) * load;
+                    risks.repro.atrophy += (tox.repro * 4) * load;
                 }
             });
-            for (let sys in risks) for (let m in risks[sys]) risks[sys][m] = Math.min(100, Math.round(risks[sys][m]));
-            weeks.push({ week: w, risks });
+            for (let sys in risks) {
+                for (let m in risks[sys]) {
+                    risks[sys][m] = Math.min(100, Math.round(risks[sys][m]));
+                }
+            }
+            weeks.push({ week: w, risks, activeDrugsCount: activeDrugs.length });
         }
         return weeks;
     },

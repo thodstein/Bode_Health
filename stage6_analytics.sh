@@ -1,8 +1,8 @@
 #!/bin/bash
-echo "🚀 STAGE 6: Advanced Analytics, Heatmaps, Flexible Course Planning, New Hormones"
+echo "🚀 STAGE 6: Advanced Analytics & Visualization"
 
-# 1. Update Database (New Hormones, Full Risk Matrix Definitions)
-echo "💾 Updating DB with IGFs, Long Insulin & Full Risk Definitions..."
+# 1. Update Database
+echo "💾 Updating DB..."
 cat > assets/js/core/database.js << 'DBEOF'
 const DB = {
     substances: [
@@ -21,7 +21,6 @@ const DB = {
         { id: 'igf1', name: 'IGF-1', class: 'Peptide', baseTox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kidney: 2, endo: 4, repro: 0 } },
         { id: 'mgf', name: 'MGF / PEG-MGF', class: 'Peptide', baseTox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kidney: 1, endo: 2, repro: 0 } }
     ],
-
     esters: {
         'test': [
             { id: 'test_p', name: 'Пропионат', halfLife: 2.0 },
@@ -45,7 +44,7 @@ const DB = {
             { id: 'masteron_e', name: 'Энантат', halfLife: 7.0 }
         ],
         'primobolan': [{ id: 'primobolan_e', name: 'Энантат', halfLife: 10.0 }],
-        'stanozolol': [{ id: 'stanozolol_susp', name: 'Суспензия', halfLife: 24.0 }], // Условно
+        'stanozolol': [{ id: 'stanozolol_susp', name: 'Суспензия', halfLife: 24.0 }],
         'gh': [
             { id: 'gh_short', name: 'Ежедневно', halfLife: 0.1 },
             { id: 'gh_long', name: 'Пролонг (Weekly)', halfLife: 168.0 }
@@ -63,89 +62,72 @@ const DB = {
             { id: 'peg_mgf', name: 'PEG-MGF', halfLife: 48.0 }
         ]
     },
-
-    // Полная матрица 7x7 с описаниями
     riskMatrix: {
-        liver: {
-            mechanisms: [
-                { id: 'cholestasis', name: 'Холестаз', desc: 'Застой желчи' },
-                { id: 'oxidative', name: 'Окс. стресс', desc: 'Свободные радикалы' },
-                { id: 'cytolysis', name: 'Цитолиз', desc: 'Разрушение клеток (ALT/AST)' },
-                { id: 'fibrosis', name: 'Фиброз', desc: 'Рубцевание ткани' },
-                { id: 'mito', name: 'Митохондрии', desc: 'Энергодефицит' },
-                { id: 'methylation', name: 'Метилирование', desc: 'Дефицит метил-групп' },
-                { id: 'apoptosis', name: 'Апоптоз', desc: 'Гибель клеток' }
-            ]
-        },
-        cardio: {
-            mechanisms: [
-                { id: 'htn', name: 'Гипертония', desc: 'Высокое АД' },
-                { id: 'tachycardia', name: 'Тахикардия', desc: 'Высокий пульс' },
-                { id: 'lipids', name: 'Дислипидемия', desc: 'ЛПНП↑ / ЛПВП↓' },
-                { id: 'thrombo', name: 'Тромбоз', desc: 'Сгущение крови' },
-                { id: 'lvh', name: 'Гипертрофия', desc: 'Утолщение стенок' },
-                { id: 'endo', name: 'Эндотелий', desc: 'Дисфункция сосудов' },
-                { id: 'arrhythmia', name: 'Аритмия', desc: 'Сбой ритма' }
-            ]
-        },
-        kidney: {
-            mechanisms: [
-                { id: 'hyperfiltration', name: 'Гиперфильтрация', desc: 'Перегрузка клубочков' },
-                { id: 'fibrosis_k', name: 'Фиброз почек', desc: 'Рубцевание' },
-                { id: 'electrolytes', name: 'Электролиты', desc: 'Дисбаланс K/Na' },
-                { id: 'proteinuria', name: 'Протеинурия', desc: 'Белок в моче' },
-                { id: 'stones', name: 'Камни', desc: 'Нефролитиаз' },
-                { id: 'tubular', name: 'Тубулярный некроз', desc: 'Отмирание канальцев' },
-                { id: 'gfr_drop', name: 'Падение СКФ', desc: 'Снижение функции' }
-            ]
-        },
-        neuro: {
-            mechanisms: [
-                { id: 'dopamine', name: 'Дофамин', desc: 'Дисбаланс (агрессия/апатия)' },
-                { id: 'glutamate', name: 'Глутамат', desc: 'Эксайтотоксичность' },
-                { id: 'gaba', name: 'ГАМК', desc: 'Тревожность/Бессонница' },
-                { id: 'serotonin', name: 'Серотонин', desc: 'Перепады настроения' },
-                { id: 'inflammation', name: 'Нейровоспаление', desc: 'Микроглия' },
-                { id: 'cognitive', name: 'Когнитивный спад', desc: 'Память/Фокус' },
-                { id: 'addiction', name: 'Зависимость', desc: 'Дофаминовая яма' }
-            ]
-        },
-        hemato: {
-            mechanisms: [
-                { id: 'erythrocytosis', name: 'Эритроцитоз', desc: 'Высокий гематокрит' },
-                { id: 'viscosity', name: 'Вязкость', desc: 'Густая кровь' },
-                { id: 'coagulation', name: 'Коагуляция', desc: 'Свертываемость' },
-                { id: 'anemia', name: 'Анемия', desc: 'Дефицит железа/B12' },
-                { id: 'leukocytosis', name: 'Лейкоцитоз', desc: 'Воспаление' },
-                { id: 'platelets', name: 'Тромбоциты', desc: 'Агрегация' },
-                { id: 'hemolysis', name: 'Гемолиз', desc: 'Разрушение эритроцитов' }
-            ]
-        },
-        endo: {
-            mechanisms: [
-                { id: 'insulin_res', name: 'Инсулинорезистентность', desc: 'Рост сахара' },
-                { id: 'estrogen', name: 'Эстроген', desc: 'Гинекомастия/Отеки' },
-                { id: 'prolactin', name: 'Пролактин', desc: 'Либидо↓/Потенция' },
-                { id: 'thyroid', name: 'Щитовидка', desc: 'Снижение Т3/Т4' },
-                { id: 'cortisol', name: 'Кортизол', desc: 'Катаболизм/Стресс' },
-                { id: 'gh_axis', name: 'Ось ГР', desc: 'Снижение собственного' },
-                { id: 'adrenal', name: 'Надпочечники', desc: 'Истощение' }
-            ]
-        },
-        repro: {
-            mechanisms: [
-                { id: 'atrophy', name: 'Атрофия', desc: 'Уменьшение тестикул' },
-                { id: 'suppression', name: 'Подавление оси', desc: 'Нет своего Тестостерона' },
-                { id: 'sperm', name: 'Спермогенез', desc: 'Качество спермы↓' },
-                { id: 'libido', name: 'Либидо', desc: 'Падение влечения' },
-                { id: 'erectile', name: 'Эрекция', desc: 'ЭД' },
-                { id: 'gyno', name: 'Гинекомастия', desc: 'Рост груди' },
-                { id: 'infertility', name: 'Бесплодие', desc: 'Невозможность зачатия' }
-            ]
-        }
+        liver: { mechanisms: [
+            { id: 'cholestasis', name: 'Холестаз', desc: 'Застой желчи' },
+            { id: 'oxidative', name: 'Окс. стресс', desc: 'Свободные радикалы' },
+            { id: 'cytolysis', name: 'Цитолиз', desc: 'Разрушение клеток' },
+            { id: 'fibrosis', name: 'Фиброз', desc: 'Рубцевание' },
+            { id: 'mito', name: 'Митохондрии', desc: 'Энергодефицит' },
+            { id: 'methylation', name: 'Метилирование', desc: 'Дефицит метил-групп' },
+            { id: 'apoptosis', name: 'Апоптоз', desc: 'Гибель клеток' }
+        ]},
+        cardio: { mechanisms: [
+            { id: 'htn', name: 'Гипертония', desc: 'Высокое АД' },
+            { id: 'tachycardia', name: 'Тахикардия', desc: 'Высокий пульс' },
+            { id: 'lipids', name: 'Дислипидемия', desc: 'ЛПНП↑ / ЛПВП↓' },
+            { id: 'thrombo', name: 'Тромбоз', desc: 'Сгущение крови' },
+            { id: 'lvh', name: 'Гипертрофия', desc: 'Утолщение стенок' },
+            { id: 'endo', name: 'Эндотелий', desc: 'Дисфункция сосудов' },
+            { id: 'arrhythmia', name: 'Аритмия', desc: 'Сбой ритма' }
+        ]},
+        kidney: { mechanisms: [
+            { id: 'hyperfiltration', name: 'Гиперфильтрация', desc: 'Перегрузка' },
+            { id: 'fibrosis_k', name: 'Фиброз почек', desc: 'Рубцевание' },
+            { id: 'electrolytes', name: 'Электролиты', desc: 'Дисбаланс K/Na' },
+            { id: 'proteinuria', name: 'Протеинурия', desc: 'Белок в моче' },
+            { id: 'stones', name: 'Камни', desc: 'Нефролитиаз' },
+            { id: 'tubular', name: 'Тубулярный некроз', desc: 'Отмирание канальцев' },
+            { id: 'gfr_drop', name: 'Падение СКФ', desc: 'Снижение функции' }
+        ]},
+        neuro: { mechanisms: [
+            { id: 'dopamine', name: 'Дофамин', desc: 'Дисбаланс' },
+            { id: 'glutamate', name: 'Глутамат', desc: 'Эксайтотоксичность' },
+            { id: 'gaba', name: 'ГАМК', desc: 'Тревожность' },
+            { id: 'serotonin', name: 'Серотонин', desc: 'Перепады настроения' },
+            { id: 'inflammation', name: 'Нейровоспаление', desc: 'Микроглия' },
+            { id: 'cognitive', name: 'Когнитивный спад', desc: 'Память/Фокус' },
+            { id: 'addiction', name: 'Зависимость', desc: 'Дофаминовая яма' }
+        ]},
+        hemato: { mechanisms: [
+            { id: 'erythrocytosis', name: 'Эритроцитоз', desc: 'Высокий гематокрит' },
+            { id: 'viscosity', name: 'Вязкость', desc: 'Густая кровь' },
+            { id: 'coagulation', name: 'Коагуляция', desc: 'Свертываемость' },
+            { id: 'anemia', name: 'Анемия', desc: 'Дефицит железа' },
+            { id: 'leukocytosis', name: 'Лейкоцитоз', desc: 'Воспаление' },
+            { id: 'platelets', name: 'Тромбоциты', desc: 'Агрегация' },
+            { id: 'hemolysis', name: 'Гемолиз', desc: 'Разрушение эритроцитов' }
+        ]},
+        endo: { mechanisms: [
+            { id: 'insulin_res', name: 'Инсулинорезистентность', desc: 'Рост сахара' },
+            { id: 'estrogen', name: 'Эстроген', desc: 'Гинекомастия' },
+            { id: 'prolactin', name: 'Пролактин', desc: 'Либидо↓' },
+            { id: 'thyroid', name: 'Щитовидка', desc: 'Снижение Т3/Т4' },
+            { id: 'cortisol', name: 'Кортизол', desc: 'Катаболизм' },
+            { id: 'gh_axis', name: 'Ось ГР', desc: 'Снижение своего' },
+            { id: 'adrenal', name: 'Надпочечники', desc: 'Истощение' }
+        ]},
+        repro: { mechanisms: [
+            { id: 'atrophy', name: 'Атрофия', desc: 'Уменьшение тестикул' },
+            { id: 'suppression', name: 'Подавление оси', desc: 'Нет своего Т' },
+            { id: 'sperm', name: 'Спермогенез', desc: 'Качество спермы↓' },
+            { id: 'libido', name: 'Либидо', desc: 'Падение влечения' },
+            { id: 'erectile', name: 'Эрекция', desc: 'ЭД' },
+            { id: 'gyno', name: 'Гинекомастия', desc: 'Рост груди' },
+            { id: 'infertility', name: 'Бесплодие', desc: 'Невозможность зачатия' }
+        ]}
     },
-
-    supportProtocol: [ /* ... (сокращено для бревитии, остается как в Stage 3) ... */ 
+    supportProtocol: [
         { timeId: 'morning_empty', title: '☀️ Натощак', items: [
             { name: 'Iron Guard', dose: '2 капс', mechanism: 'Гемоглобин', risks: ['hemato_anemia'] },
             { name: 'Цитиколин', dose: '500 мг', mechanism: 'Нейропротекция', risks: ['neuro_cognitive'] },
@@ -178,7 +160,12 @@ const DB = {
             { name: 'Гормон Роста', dose: '5 ЕД', mechanism: 'Рост', risks: ['endo_gh_axis'], note: 'Инъекция' }
         ]}
     ],
-    
+    shopItems: {
+        'udca': [{ platform: 'Ozon', price: '1500 ₽', url: '#' }],
+        'telmisartan': [{ platform: 'Apteka.ru', price: '600 ₽', url: '#' }],
+        'nebivolol': [{ platform: 'Ozon', price: '400 ₽', url: '#' }],
+        'berberine': [{ platform: 'iHerb', price: '$20', url: '#' }]
+    },
     glossary: {
         'Raw Risk': 'Исходный риск без поддержки.',
         'Net Risk': 'Риск после применения протокола.',
@@ -192,32 +179,24 @@ const DB = {
 };
 DBEOF
 
-# 2. Update Engine (Flexible Weeks, Heatmap Data)
-echo "⚙️ Updating Engine with Flexible Weeks & Heatmap Logic..."
+# 2. Update Engine
+echo "⚙️ Updating Engine..."
 cat > assets/js/core/engine.js << 'ENGINEEOF'
 const Engine = {
     calculateConcentration(halfLife, startWeek, endWeek, currentWeek) {
         if (currentWeek < startWeek) return 0;
-        
-        const duration = endWeek - startWeek;
         const weeksOnDrug = currentWeek - startWeek;
-        
-        // Фаза приема
         if (currentWeek <= endWeek) {
-            const riseFactor = Math.min(1, weeksOnDrug / (halfLife / 7)); // Плавный вход
+            const riseFactor = Math.min(1, weeksOnDrug / (halfLife / 7));
             return riseFactor;
-        } 
-        // Фаза выведения (после курса)
-        else {
+        } else {
             const weeksOff = currentWeek - endWeek;
             const decay = Math.exp(-0.693 * weeksOff / (halfLife / 7));
             return Math.max(0, decay);
         }
     },
-
     generateWeeklyPlan(stack, totalWeeksForecast) {
         const weeks = [];
-        // Прогноз длится до конца самого длинного курса + 5 периодов полувыведения самого длинного эфира
         let maxEnd = 0;
         stack.forEach(s => { if (s.endWeek > maxEnd) maxEnd = s.endWeek; });
         const longestHalfLife = Math.max(...stack.map(s => {
@@ -229,77 +208,58 @@ const Engine = {
 
         for (let w = 1; w <= finalDuration; w++) {
             let risks = {};
-            // Инициализация всех 49 механизмов нулями
             for (let sys in DB.riskMatrix) {
                 risks[sys] = {};
                 DB.riskMatrix[sys].mechanisms.forEach(m => risks[sys][m.id] = 0);
             }
-
             let activeDrugs = [];
             stack.forEach(item => {
                 const conc = this.calculateConcentration(
                     (DB.esters[item.substanceId]?.find(e => e.id === item.esterId)?.halfLife) || 1,
-                    item.startWeek,
-                    item.endWeek,
-                    w
+                    item.startWeek, item.endWeek, w
                 );
-
                 if (conc > 0.01) {
                     activeDrugs.push({ ...item, conc });
                     const sub = DB.substances.find(s => s.id === item.substanceId);
                     if (!sub) return;
-
                     const tox = sub.baseTox;
                     const load = conc * (item.dose / 100);
-
-                    // Распределение базовой токсичности по механизмам (упрощенно)
-                    // В полной версии тут нужна карта влияния substance -> mechanism
                     risks.liver.cholestasis += (tox.liver * 3) * load;
                     risks.liver.cytolysis += (tox.liver * 2) * load;
-                    
                     risks.cardio.lipids += (tox.lipid * 3) * load;
                     risks.cardio.htn += (tox.lipid * 1.5) * load;
                     risks.cardio.thrombo += (tox.lipid * 1) * load;
-
                     risks.hemato.erythrocytosis += (tox.hct * 4) * load;
                     risks.hemato.viscosity += (tox.hct * 3) * load;
-
                     risks.neuro.dopamine += (tox.neuro * 5) * load;
-                    
                     risks.kidney.hyperfiltration += (tox.kidney * 3) * load;
-                    
                     risks.endo.insulin_res += (tox.endo * 3) * load;
-                    risks.endo.estrogen += (tox.endo * 2) * load; // Условно
-                    
+                    risks.endo.estrogen += (tox.endo * 2) * load;
                     risks.repro.suppression += (tox.repro * 5) * load;
                     risks.repro.atrophy += (tox.repro * 4) * load;
                 }
             });
-
-            // Нормализация до 100%
             for (let sys in risks) {
                 for (let m in risks[sys]) {
                     risks[sys][m] = Math.min(100, Math.round(risks[sys][m]));
                 }
             }
-
             weeks.push({ week: w, risks, activeDrugsCount: activeDrugs.length });
         }
         return weeks;
     },
-
     getRiskColor(value) {
-        if (value < 20) return '#4caf50'; // Green
-        if (value < 40) return '#8bc34a'; // Light Green
-        if (value < 60) return '#ffeb3b'; // Yellow
-        if (value < 80) return '#ff9800'; // Orange
-        return '#f44336'; // Red
+        if (value < 20) return '#4caf50';
+        if (value < 40) return '#8bc34a';
+        if (value < 60) return '#ffeb3b';
+        if (value < 80) return '#ff9800';
+        return '#f44336';
     }
 };
 ENGINEEOF
 
-# 3. Update UI (Heatmap, Charts, Inputs)
-echo "🎨 Updating UI with Heatmap, Flexible Inputs & Interactive Charts..."
+# 3. Update UI
+echo "🎨 Updating UI..."
 cat > index.html << 'HTMLEOF'
 <!DOCTYPE html>
 <html lang="ru">
@@ -318,7 +278,6 @@ cat > index.html << 'HTMLEOF'
             <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Advanced Analytics</p></div>
             <div class="status-bar"><span id="xp-display">XP: 0</span></div>
         </header>
-
         <nav class="tabs">
             <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
             <button class="tab-btn" data-tab="stack">💉 Стек</button>
@@ -328,9 +287,7 @@ cat > index.html << 'HTMLEOF'
             <button class="tab-btn" data-tab="reports">📑 Отчеты</button>
             <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
         </nav>
-
         <main>
-            <!-- Dashboard -->
             <section id="dashboard" class="tab-content active">
                 <div class="cards-grid">
                     <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
@@ -338,20 +295,12 @@ cat > index.html << 'HTMLEOF'
                     <div class="card"><h3>Avg Risk</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
             </section>
-
-            <!-- Stack (Flexible Input) -->
             <section id="stack" class="tab-content">
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
-                    <label>Вещество:</label>
-                    <select id="drug-substance" onchange="App.loadEsters()"></select>
-                    
-                    <label>Эфир:</label>
-                    <select id="drug-ester" disabled></select>
-                    
-                    <div class="row">
-                        <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
-                    </div>
+                    <label>Вещество:</label><select id="drug-substance" onchange="App.loadEsters()"></select>
+                    <label>Эфир:</label><select id="drug-ester" disabled></select>
+                    <div class="row"><input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required></div>
                     <div class="row">
                         <input type="number" id="drug-start" placeholder="Старт (неделя)" value="1" min="1" required>
                         <input type="number" id="drug-end" placeholder="Финиш (неделя)" value="8" min="1" required>
@@ -359,11 +308,9 @@ cat > index.html << 'HTMLEOF'
                     <button type="submit" class="btn-primary">Добавить в курс</button>
                 </form>
                 <div id="stack-list" class="list-container"></div>
-                <button onclick="App.generatePlan()" class="btn-success">Рассчитать динамику курса</button>
+                <button id="calc-plan-btn" class="btn-success">Рассчитать динамику курса</button>
                 <div id="weekly-plan-output"></div>
             </section>
-
-            <!-- Risks (Heatmap + Charts) -->
             <section id="risks" class="tab-content">
                 <h2>Динамика рисков</h2>
                 <div class="chart-controls">
@@ -376,49 +323,26 @@ cat > index.html << 'HTMLEOF'
                     <label><input type="checkbox" onchange="App.toggleChart('repro')"> Репро</label>
                 </div>
                 <canvas id="risk-trend-chart"></canvas>
-
                 <h2>Матрица рисков (Heatmap)</h2>
                 <div class="week-selector">
-                    <button onclick="App.changeWeek(-1)">◀</button>
+                    <button id="prev-week-btn">◀</button>
                     <span id="current-week-display">Неделя 1</span>
-                    <button onclick="App.changeWeek(1)">▶</button>
+                    <button id="next-week-btn">▶</button>
                 </div>
                 <div id="heatmap-container" class="heatmap-grid"></div>
             </section>
-
-            <!-- Support -->
-            <section id="support" class="tab-content">
-                <h2>Протокол поддержки</h2>
-                <div id="support-schedule" class="schedule-container"></div>
-            </section>
-
-            <!-- Labs -->
+            <section id="support" class="tab-content"><h2>Протокол поддержки</h2><div id="support-schedule" class="schedule-container"></div></section>
             <section id="labs" class="tab-content">
                 <h2>Фертильность (WHO 2021)</h2>
                 <div class="input-group">
-                    <input type="number" id="semen-vol" placeholder="Объем">
-                    <input type="number" id="semen-conc" placeholder="Конц.">
-                    <input type="number" id="semen-pr" placeholder="PR%">
-                    <input type="number" id="semen-morph" placeholder="Morph%">
+                    <input type="number" id="semen-vol" placeholder="Объем"><input type="number" id="semen-conc" placeholder="Конц.">
+                    <input type="number" id="semen-pr" placeholder="PR%"><input type="number" id="semen-morph" placeholder="Morph%">
                 </div>
-                <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
+                <button id="calc-fert-btn" class="btn-primary">Рассчитать IF</button>
                 <div id="fertility-result"></div>
             </section>
-
-            <!-- Reports -->
-            <section id="reports" class="tab-content">
-                <h2>Отчеты</h2>
-                <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
-                <div id="report-preview"></div>
-            </section>
-
-            <!-- Shop (Last) -->
-            <section id="shop" class="tab-content">
-                <h2>Магазин</h2>
-                <div id="shop-list" class="list-container"></div>
-                <h2>Глоссарий</h2>
-                <div id="glossary-list"></div>
-            </section>
+            <section id="reports" class="tab-content"><h2>Отчеты</h2><button id="export-json-btn" class="btn-secondary">💾 Экспорт JSON</button><div id="report-preview"></div></section>
+            <section id="shop" class="tab-content"><h2>Магазин</h2><div id="shop-list" class="list-container"></div><h2>Глоссарий</h2><div id="glossary-list"></div></section>
         </main>
     </div>
     <script src="assets/js/core/database.js"></script>
@@ -428,14 +352,12 @@ cat > index.html << 'HTMLEOF'
 </html>
 HTMLEOF
 
-# 4. App Logic (Heatmap Render, Chart Toggles)
+# 4. App Logic
 cat > assets/js/app.js << 'APPEOF'
 document.addEventListener('DOMContentLoaded', () => {
     if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
+    const state = { stack: [], plan: [], currentWeekIdx: 0, chartVisibility: { liver:true, cardio:true, hemato:true, neuro:false, kidney:false, endo:false, repro:false }, xp: 0 };
 
-    const state = { stack: [], plan: [], currentWeekIdx: 0, chartVisibility: { liver:true, cardio:true, hemato:true, neuro:false, kidney:false, endo:false, repro:false } };
-
-    // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -445,12 +367,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Init Substance Select
     const subSelect = document.getElementById('drug-substance');
     DB.substances.forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = s.name;
+        opt.value = s.id; opt.textContent = s.name;
         subSelect.appendChild(opt);
     });
 
@@ -464,13 +384,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 estSelect.disabled = false;
                 esters.forEach(e => {
                     const opt = document.createElement('option');
-                    opt.value = e.id;
-                    opt.textContent = `${e.name} (T1/2: ${e.halfLife} дн.)`;
+                    opt.value = e.id; opt.textContent = `${e.name} (T1/2: ${e.halfLife} дн.)`;
                     estSelect.appendChild(opt);
                 });
-            } else {
-                estSelect.disabled = true;
-            }
+            } else { estSelect.disabled = true; }
         },
         addDrug: (e) => {
             e.preventDefault();
@@ -479,9 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dose = parseFloat(document.getElementById('drug-dose').value);
             const start = parseInt(document.getElementById('drug-start').value);
             const end = parseInt(document.getElementById('drug-end').value);
-            
             if (start >= end) return alert('Неделя финиша должна быть больше старта!');
-            
             state.stack.push({ substanceId: subId, esterId, dose, startWeek: start, endWeek: end });
             App.renderStack();
             e.target.reset();
@@ -497,10 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
                 const div = document.createElement('div');
                 div.className = 'drug-card';
-                div.innerHTML = `
-                    <div><strong>${sub.name}</strong> ${ester? '('+ester.name+')':''}<br><small>${item.dose}мг | Недели ${item.startWeek}-${item.endWeek}</small></div>
-                    <button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack()">✕</button>
-                `;
+                div.innerHTML = `<div><strong>${sub.name}</strong> ${ester? '('+ester.name+')':''}<br><small>${item.dose}мг | Недели ${item.startWeek}-${item.endWeek}</small></div><button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack()">✕</button>`;
                 list.appendChild(div);
             });
         },
@@ -528,32 +440,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!state.plan.length) return;
             const weekData = state.plan[state.currentWeekIdx];
             document.getElementById('current-week-display').textContent = `Неделя ${weekData.week}`;
-            
             const container = document.getElementById('heatmap-container');
             container.innerHTML = '';
             container.style.display = 'grid';
             container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(100px, 1fr))';
             container.style.gap = '5px';
-
             for (let sys in DB.riskMatrix) {
                 const sysDiv = document.createElement('div');
-                sysDiv.style.gridColumn = '1 / -1';
-                sysDiv.style.marginTop = '10px';
-                sysDiv.style.color = '#bb86fc';
-                sysDiv.style.fontWeight = 'bold';
+                sysDiv.style.gridColumn = '1 / -1'; sysDiv.style.marginTop = '10px';
+                sysDiv.style.color = '#bb86fc'; sysDiv.style.fontWeight = 'bold';
                 sysDiv.textContent = sys.toUpperCase();
                 container.appendChild(sysDiv);
-
                 DB.riskMatrix[sys].mechanisms.forEach(mech => {
                     const val = weekData.risks[sys][mech.id] || 0;
                     const cell = document.createElement('div');
                     cell.className = 'heatmap-cell';
                     cell.style.backgroundColor = Engine.getRiskColor(val);
-                    cell.style.padding = '10px';
-                    cell.style.borderRadius = '4px';
+                    cell.style.padding = '10px'; cell.style.borderRadius = '4px';
                     cell.style.color = val > 50 ? '#000' : '#fff';
-                    cell.style.textAlign = 'center';
-                    cell.style.fontSize = '0.8em';
+                    cell.style.textAlign = 'center'; cell.style.fontSize = '0.8em';
                     cell.innerHTML = `<div>${mech.name}</div><div style="font-weight:bold">${val}%</div>`;
                     cell.title = mech.desc;
                     container.appendChild(cell);
@@ -564,11 +469,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const ctx = document.getElementById('risk-trend-chart');
             if (!ctx || !state.plan.length) return;
             if (window.trendChart) window.trendChart.destroy();
-
             const labels = state.plan.map(p => `W${p.week}`);
             const datasets = [];
             const colors = { liver: '#ff6384', cardio: '#36a2eb', hemato: '#ff9f40', neuro: '#9966ff', kidney: '#4bc0c0', endo: '#c9cbcf', repro: '#e7e9ed' };
-
             for (let sys in state.chartVisibility) {
                 if (state.chartVisibility[sys]) {
                     const data = state.plan.map(p => {
@@ -576,29 +479,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         for(let m in p.risks[sys]) { sum += p.risks[sys][m]; cnt++; }
                         return cnt ? Math.round(sum/cnt) : 0;
                     });
-                    datasets.push({
-                        label: sys.toUpperCase(),
-                        data: data,
-                        borderColor: colors[sys],
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4
-                    });
+                    datasets.push({ label: sys.toUpperCase(), data: data, borderColor: colors[sys], borderWidth: 2, fill: false, tension: 0.4 });
                 }
             }
-
             window.trendChart = new Chart(ctx, {
                 type: 'line',
                  { labels, datasets },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { labels: { color: 'white' } } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } },
-                        x: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
-                    }
-                }
+                options: { responsive: true, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, x: { ticks: { color: '#aaa' }, grid: { color: '#333' } } } }
             });
         },
         calcFertility: () => {
@@ -606,21 +493,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const conc = parseFloat(document.getElementById('semen-conc').value);
             const pr = parseFloat(document.getElementById('semen-pr').value);
             const morph = parseFloat(document.getElementById('semen-morph').value);
-            const ifScore = Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr, morphology: morph }); // Функция должна быть в engine
+            const ifScore = Engine.calculateFertilityIndex ? Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr, morphology: morph }) : 0;
             document.getElementById('fertility-result').innerHTML = `<h3>IF: ${ifScore||0}/100</h3>`;
         },
         exportJSON: () => {
             const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
             const node = document.createElement('a');
-            node.setAttribute("href", dataStr);
-            node.setAttribute("download", "bode_health_course.json");
-            document.body.appendChild(node);
-            node.click();
-            node.remove();
+            node.setAttribute("href", dataStr); node.setAttribute("download", "bode_health_course.json");
+            document.body.appendChild(node); node.click(); node.remove();
         },
         renderShop: () => {
-            const list = document.getElementById('shop-list');
-            list.innerHTML = '';
+            const list = document.getElementById('shop-list'); list.innerHTML = '';
             if(DB.shopItems) {
                 for (const [key, items] of Object.entries(DB.shopItems)) {
                     items.forEach(item => {
@@ -630,25 +513,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         renderGlossary: () => {
-            const list = document.getElementById('glossary-list');
-            list.innerHTML = '';
+            const list = document.getElementById('glossary-list'); list.innerHTML = '';
             for (const [term, def] of Object.entries(DB.glossary || {})) {
                 list.innerHTML += `<div class="drug-card"><strong>${term}</strong><p style="margin:5px 0 0; font-size:0.9em; color:#aaa">${def}</p></div>`;
             }
         }
     };
 
-    // Need to add calculateFertilityIndex to Engine if missing, or mock it here for now
     Engine.calculateFertilityIndex = (d) => d.volume ? Math.round((d.volume/1.5)*20 + (d.conc/16)*30 + (d.pr/30)*30 + (d.morph/4)*20) : 0;
 
     document.getElementById('add-drug-form').addEventListener('submit', App.addDrug);
+    document.getElementById('calc-plan-btn').addEventListener('click', App.generatePlan);
+    document.getElementById('prev-week-btn').addEventListener('click', () => App.changeWeek(-1));
+    document.getElementById('next-week-btn').addEventListener('click', () => App.changeWeek(1));
+    document.getElementById('calc-fert-btn').addEventListener('click', App.calcFertility);
+    document.getElementById('export-json-btn').addEventListener('click', App.exportJSON);
+
     App.renderStack();
     App.renderShop();
     App.renderGlossary();
 });
 APPEOF
 
-# 5. CSS Updates (Heatmap & Controls)
+# 5. CSS
 cat > assets/css/style.css << 'CSSEOF'
 :root { --bg-dark: #121212; --bg-card: #1e1e1e; --primary: #bb86fc; --secondary: #03dac6; --error: #cf6679; --text-main: #fff; --text-sec: #b0b0b0; --border: #333; }
 body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: var(--text-main); padding-bottom: 60px; }
@@ -657,20 +544,16 @@ header { background: var(--bg-card); padding: 20px; border-bottom: 1px solid var
 .version { font-size: 0.6em; color: var(--secondary); }
 .subtitle { margin: 5px 0 0; font-size: 0.9em; color: var(--text-sec); }
 .status-bar { font-size: 0.9em; color: var(--primary); font-weight: bold; }
-
 .tabs { display: flex; overflow-x: auto; background: var(--bg-card); position: sticky; top: 0; z-index: 100; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab-btn { flex: 1; min-width: 100px; padding: 15px 10px; background: none; border: none; color: var(--text-sec); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-
 .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
 .tab-content.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .card { background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
 .big-value { font-size: 2.2em; font-weight: bold; margin-top: 10px; color: var(--secondary); }
-
 .deep-form { background: var(--bg-card); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
 .row { display: flex; gap: 10px; }
 input, select { background: #2c2c2c; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; flex: 1; }
@@ -678,32 +561,26 @@ button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold
 .btn-delete { background: rgba(207, 102, 121, 0.2); color: var(--error); padding: 8px 12px; font-size: 0.9em; }
 .btn-success { background: #03dac6; color: #000; width: 100%; margin-top: 20px; font-size: 1.1em; }
 .btn-secondary { background: #333; color: white; margin-right: 10px; margin-top: 10px; }
-
 .list-container, .schedule-container { display: flex; flex-direction: column; gap: 12px; }
 .drug-card, .support-item { background: var(--bg-card); padding: 15px; border-radius: 8px; border-left: 4px solid var(--secondary); display: flex; justify-content: space-between; align-items: center; }
 .support-item { flex-direction: column; align-items: flex-start; border-left-color: var(--primary); }
 .time-block { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 .time-block h3 { color: var(--primary); margin: 0 0 10px; font-size: 0.9em; text-transform: uppercase; }
-
-/* Heatmap Styles */
 .heatmap-grid { display: grid; gap: 5px; margin-top: 15px; }
 .heatmap-cell { transition: transform 0.2s; cursor: help; }
 .heatmap-cell:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-
-/* Chart Controls */
 .chart-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--bg-card); padding: 10px; border-radius: 8px; }
 .chart-controls label { display: flex; align-items: center; gap: 5px; font-size: 0.9em; cursor: pointer; }
 .week-selector { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 20px 0; }
 .week-selector button { padding: 5px 15px; font-size: 1.2em; }
 #current-week-display { font-size: 1.2em; font-weight: bold; color: var(--secondary); min-width: 120px; text-align: center; }
-
 canvas { max-width: 100%; margin: 20px 0; background: var(--bg-card); border-radius: 12px; padding: 10px; }
 CSSEOF
 
-# 6. Git Push
-echo "🚀 Committing and Pushing Stage 6..."
+# 6. Git Push with CORRECT NAME
+echo "🚀 Committing Stage 6: Advanced Analytics & Visualization..."
 git add -A
-git commit -m "Stage 6: Heatmap Risks, Flexible Course Weeks, IGF/Insulin Updates, Interactive Charts"
+git commit -m "Stage 6: Advanced Analytics & Visualization"
 git push origin main --force
 
-echo "✅ Stage 6 Complete! Check Actions."
+echo "✅ Stage 6: Advanced Analytics & Visualization Complete!"
