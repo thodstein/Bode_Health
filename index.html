@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0 Pro</title>
+    <title>Bode Health v11.0</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <header>
-            <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Advanced Analytics</p></div>
-            <div class="status-bar" id="xp-display">Lvl 1 | XP: 0</div>
-        </header>
-
+        <header><h1>Bode Health <span class="version">v11.0</span></h1><div class="status-bar" id="xp-display">XP: 0</div></header>
         <nav class="tabs">
             <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
             <button class="tab-btn" data-tab="stack">💉 Стек</button>
@@ -25,114 +20,54 @@
             <button class="tab-btn" data-tab="reports">📑 Отчеты</button>
             <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
         </nav>
-
         <main>
-            <!-- Dashboard with Predictions -->
             <section id="dashboard" class="tab-content active">
                 <div class="cards-grid">
                     <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
                     <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
                     <div class="card"><h3>Avg Risk</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
-                
-                <div class="prediction-block">
-                    <h3>🔮 Прогноз состояния (7 дней)</h3>
-                    <canvas id="prediction-chart" height="100"></canvas>
-                    <div id="prediction-alerts" style="margin-top:15px; color:#ff9800"></div>
-                </div>
             </section>
-
-            <!-- Stack -->
             <section id="stack" class="tab-content">
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
-                    <label>Вещество:</label>
-                    <select id="drug-substance"></select>
-                    
-                    <label>Эфир:</label>
-                    <select id="drug-ester" disabled></select>
-                    
-                    <div class="row">
-                        <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
-                    </div>
+                    <label>Вещество:</label><select id="drug-substance"></select>
+                    <label>Эфир:</label><select id="drug-ester" disabled></select>
+                    <div class="row"><input type="number" id="drug-dose" placeholder="Доза (мг)" required></div>
                     <div class="row">
                         <input type="number" id="drug-start" placeholder="Старт (нед)" value="1" min="1" required>
                         <input type="number" id="drug-end" placeholder="Финиш (нед)" value="8" min="1" required>
                     </div>
-                    <button type="submit" class="btn-primary">Добавить в курс</button>
+                    <button type="submit" class="btn-primary">Добавить</button>
                 </form>
                 <div id="stack-list" class="list-container"></div>
-                <button class="btn-success">Рассчитать динамику курса</button>
+                <button id="btn-calc" class="btn-success">Рассчитать динамику</button>
                 <div id="weekly-plan-output"></div>
-                
-                <!-- What-If Simulator Placeholder -->
-                <div class="what-if-block" style="margin-top:30px; background:#252525; padding:15px; border-radius:8px;">
-                    <h3>🔄 What-If Симулятор</h3>
-                    <p style="font-size:0.9em; color:#aaa">Измените дозу тестостерона и посмотрите на риск без сохранения:</p>
-                    <div class="row">
-                        <input type="range" min="0" max="1000" value="0" id="whatif-slider" oninput="App.runWhatIf(this.value)">
-                        <span id="whatif-val" style="color:#03dac6; font-weight:bold">0 мг</span>
-                    </div>
-                    <div id="whatif-result" style="margin-top:10px; font-size:0.9em"></div>
-                </div>
             </section>
-
-            <!-- Risks -->
             <section id="risks" class="tab-content">
-                <h2>Динамика рисков</h2>
-                <div class="chart-controls">
-                    <label><input type="checkbox" checked onchange="App.toggleChart('liver')"> Печень</label>
-                    <label><input type="checkbox" checked onchange="App.toggleChart('cardio')"> Сердце</label>
-                    <label><input type="checkbox" checked onchange="App.toggleChart('hemato')"> Кровь</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('neuro')"> Нейро</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('kidney')"> Почки</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('endo')"> Эндо</label>
-                    <label><input type="checkbox" onchange="App.toggleChart('repro')"> Репро</label>
-                </div>
-                <div style="height:300px"><canvas id="risk-trend-chart"></canvas></div>
-
-                <h2>Матрица рисков (Heatmap)</h2>
+                <h2>Динамика</h2>
+                <div class="chart-controls" id="chart-controls"></div>
+                <canvas id="risk-trend-chart"></canvas>
+                <h2>Матрица (Heatmap)</h2>
                 <div class="week-selector">
-                    <button onclick="App.changeWeek(-1)">◀</button>
+                    <button id="btn-prev-week">◀</button>
                     <span id="current-week-display">Неделя 1</span>
-                    <button onclick="App.changeWeek(1)">▶</button>
+                    <button id="btn-next-week">▶</button>
                 </div>
                 <div id="heatmap-container" class="heatmap-grid"></div>
             </section>
-
-            <!-- Support -->
-            <section id="support" class="tab-content">
-                <h2>Протокол поддержки</h2>
-                <div id="support-schedule" class="schedule-container"></div>
-            </section>
-
-            <!-- Labs -->
+            <section id="support" class="tab-content"><h2>Поддержка</h2><div id="support-schedule" class="schedule-container"></div></section>
             <section id="labs" class="tab-content">
-                <h2>Фертильность (WHO 2021)</h2>
+                <h2>Фертильность</h2>
                 <div class="input-group">
-                    <input type="number" id="semen-vol" placeholder="Объем">
-                    <input type="number" id="semen-conc" placeholder="Конц.">
-                    <input type="number" id="semen-pr" placeholder="PR%">
-                    <input type="number" id="semen-morph" placeholder="Morph%">
+                    <input type="number" id="semen-vol" placeholder="Объем"><input type="number" id="semen-conc" placeholder="Конц.">
+                    <input type="number" id="semen-pr" placeholder="PR%"><input type="number" id="semen-morph" placeholder="Morph%">
                 </div>
-                <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
+                <button id="btn-calc-fert" class="btn-primary">Рассчитать IF</button>
                 <div id="fertility-result"></div>
             </section>
-
-            <!-- Reports -->
-            <section id="reports" class="tab-content">
-                <h2>Отчеты</h2>
-                <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
-                <div id="report-preview"></div>
-            </section>
-
-            <!-- Shop -->
-            <section id="shop" class="tab-content">
-                <h2>Магазин</h2>
-                <div id="shop-list" class="list-container"></div>
-                <h2>Глоссарий</h2>
-                <div id="glossary-list"></div>
-            </section>
+            <section id="reports" class="tab-content"><h2>Отчеты</h2><button id="btn-export" class="btn-secondary">Экспорт JSON</button></section>
+            <section id="shop" class="tab-content"><h2>Магазин</h2><div id="shop-list" class="list-container"></div><h2>Глоссарий</h2><div id="glossary-list"></div></section>
         </main>
     </div>
     <script src="assets/js/core/database.js"></script>

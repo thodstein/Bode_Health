@@ -1,379 +1,174 @@
-// Глобальное состояние
-window.AppState = {
-    stack: [],
-    plan: [],
-    currentWeekIdx: 0,
-    xp: 0,
-    level: 1,
-    chartVisibility: { liver:true, cardio:true, hemato:true, neuro:false, kidney:false, endo:false, repro:false },
-    whatIfTempStack: null
-};
-
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("App Initialized");
+    const state = { stack: [], plan: [], currentWeekIdx: 0, chartVisibility: {} };
     
-    // Telegram Init
-    if (window.Telegram && window.Telegram.WebApp) { 
-        window.Telegram.WebApp.ready(); 
-        window.Telegram.WebApp.expand(); 
-    }
-
-    // --- ИНИЦИАЛИЗАЦИЯ UI ---
-    
-    // 1. Табы
+    // Init Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
-            
-            // Если перешли на вкладку рисков, перерисовываем графики (фикс бака с размером canvas)
-            if(tabId === 'risks' && AppState.plan.length > 0) {
-                setTimeout(() => { App.renderTrendChart(); App.renderHeatmap(); }, 100);
-            }
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
         });
     });
 
-    // 2. Выпадающий список веществ
+    // Init Substance Select
     const subSelect = document.getElementById('drug-substance');
-    if(subSelect) {
-        DB.substances.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            subSelect.appendChild(opt);
+    DB.substances.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id; opt.textContent = s.name;
+        subSelect.appendChild(opt);
+    });
+
+    // Chart Controls Init
+    const controlsDiv = document.getElementById('chart-controls');
+    const colors = { liver: '#ff6384', cardio: '#36a2eb', hemato: '#ff9f40', neuro: '#9966ff', kidney: '#4bc0c0', endo: '#c9cbcf', repro: '#e7e9ed' };
+    Object.keys(colors).forEach(sys => {
+        state.chartVisibility[sys] = true; // Default visible
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" checked data-sys="${sys}"> ${sys.toUpperCase()}`;
+        label.style.marginRight = '10px';
+        label.style.color = colors[sys];
+        controlsDiv.appendChild(label);
+    });
+
+    // Event Listeners for Buttons
+    document.getElementById('btn-calc').addEventListener('click', App.generatePlan);
+    document.getElementById('btn-prev-week').addEventListener('click', () => App.changeWeek(-1));
+    document.getElementById('btn-next-week').addEventListener('click', () => App.changeWeek(1));
+    document.getElementById('btn-calc-fert').addEventListener('click', App.calcFertility);
+    document.getElementById('btn-export').addEventListener('click', App.exportJSON);
+    
+    document.querySelectorAll('#chart-controls input').forEach(chk => {
+        chk.addEventListener('change', (e) => {
+            state.chartVisibility[e.target.dataset.sys] = e.target.checked;
+            App.renderTrendChart();
         });
-        subSelect.addEventListener('change', App.loadEsters);
-    }
+    });
 
-    // 3. Форма добавления препарата
-    const form = document.getElementById('add-drug-form');
-    if(form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            App.addDrug();
-        });
-    }
-
-    // 4. Кнопка расчета
-    const calcBtn = document.querySelector('#stack .btn-success');
-    if(calcBtn) calcBtn.addEventListener('click', App.generatePlan);
-
-    // Рендер начальных данных
-    App.renderStack();
-    App.renderShop();
-    App.renderGlossary();
-    App.updateGamificationUI();
-});
-
-// --- ЛОГИКА ПРИЛОЖЕНИЯ (Глобальный объект App) ---
-window.App = {
-    loadEsters: function() {
-        const subId = document.getElementById('drug-substance').value;
-        const estSelect = document.getElementById('drug-ester');
-        estSelect.innerHTML = '';
-        const esters = DB.esters[subId];
-        if (esters) {
-            estSelect.disabled = false;
-            esters.forEach(e => {
-                const opt = document.createElement('option');
-                opt.value = e.id;
-                opt.textContent = `${e.name} (T1/2: ${e.halfLife} дн.)`;
-                estSelect.appendChild(opt);
-            });
-        } else {
-            estSelect.disabled = true;
-            const opt = document.createElement('option');
-            opt.textContent = "Без эфира";
-            estSelect.appendChild(opt);
-        }
-    },
-
-    addDrug: function() {
-        const subId = document.getElementById('drug-substance').value;
-        const esterId = document.getElementById('drug-ester').value;
-        const doseVal = document.getElementById('drug-dose').value;
-        const startVal = document.getElementById('drug-start').value;
-        const endVal = document.getElementById('drug-end').value;
-
-        if(!subId || !doseVal) return alert("Заполните поля!");
-        
-        const dose = parseFloat(doseVal);
-        const start = parseInt(startVal);
-        const end = parseInt(endVal);
-        
-        if (start >= end) return alert('Неделя финиша должна быть больше старта!');
-        
-        AppState.stack.push({ 
-            id: Date.now(), 
-            substanceId: subId, 
-            esterId, 
-            dose, 
-            startWeek: start, 
-            endWeek: end 
-        });
-        
-        this.renderStack();
-        
-        // Сброс формы
-        document.getElementById('drug-dose').value = '';
-        document.getElementById('drug-start').value = '1';
-        document.getElementById('drug-end').value = '8';
-        document.getElementById('drug-ester').disabled = true;
-        
-        // Геймификация
-        this.addXP(50);
-    },
-
-    renderStack: function() {
-        const list = document.getElementById('stack-list');
-        if(!list) return;
-        list.innerHTML = '';
-        if(AppState.stack.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">Стек пуст</div>';
-            return;
-        }
-        
-        AppState.stack.forEach((item, idx) => {
-            const sub = DB.substances.find(s => s.id === item.substanceId);
-            const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
-            const div = document.createElement('div');
-            div.className = 'drug-card';
-            div.innerHTML = `
-                <div>
-                    <strong>${sub ? sub.name : 'Unknown'}</strong> 
-                    ${ester ? '('+ester.name+')':''}
-                    <br><small>${item.dose}мг | Недели ${item.startWeek}-${item.endWeek}</small>
-                </div>
-                <button class="btn-delete" onclick="App.removeDrug(${idx})">✕</button>
-            `;
-            list.appendChild(div);
-        });
-    },
-
-    removeDrug: function(idx) {
-        AppState.stack.splice(idx, 1);
-        this.renderStack();
-        if(AppState.plan.length > 0) this.generatePlan(); // Пересчет если был план
-    },
-
-    generatePlan: function() {
-        if(AppState.stack.length === 0) return alert("Добавьте препараты!");
-        
-        AppState.plan = Engine.generateWeeklyPlan(AppState.stack, 24);
-        AppState.currentWeekIdx = 0;
-        
-        const output = document.getElementById('weekly-plan-output');
-        if(output) {
-            output.innerHTML = `
-                <div style="background:#1e3a3a; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #03dac6">
-                    <h3 style="margin:0; color:#03dac6">✅ План рассчитан</h3>
-                    <p>Длительность: ${AppState.plan.length} недель (вкл. выведение)</p>
-                    <p>Перейдите во вкладку <b>Риски</b> для детального анализа.</p>
-                </div>
-            `;
-        }
-        
-        this.renderHeatmap();
-        this.renderTrendChart();
-        this.addXP(100);
-        
-        // Автопереход на риски (опционально)
-        // document.querySelector('[data-tab="risks"]').click();
-    },
-
-    changeWeek: function(dir) {
-        if (!AppState.plan.length) return;
-        AppState.currentWeekIdx += dir;
-        if (AppState.currentWeekIdx < 0) AppState.currentWeekIdx = 0;
-        if (AppState.currentWeekIdx >= AppState.plan.length) AppState.currentWeekIdx = AppState.plan.length - 1;
-        this.renderHeatmap();
-    },
-
-    toggleChart: function(sys) {
-        AppState.chartVisibility[sys] = !AppState.chartVisibility[sys];
-        this.renderTrendChart();
-    },
-
-    renderHeatmap: function() {
-        if (!AppState.plan.length) return;
-        const weekData = AppState.plan[AppState.currentWeekIdx];
-        const display = document.getElementById('current-week-display');
-        if(display) display.textContent = `Неделя ${weekData.week}`;
-        
-        const container = document.getElementById('heatmap-container');
-        if(!container) return;
-        container.innerHTML = '';
-        container.style.display = 'grid';
-        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(90px, 1fr))';
-        container.style.gap = '8px';
-
-        for (let sys in DB.riskMatrix) {
-            // Заголовок системы
-            const sysDiv = document.createElement('div');
-            sysDiv.style.gridColumn = '1 / -1';
-            sysDiv.style.marginTop = '15px';
-            sysDiv.style.marginBottom = '5px';
-            sysDiv.style.color = '#bb86fc';
-            sysDiv.style.fontWeight = 'bold';
-            sysDiv.style.borderBottom = '1px solid #333';
-            sysDiv.textContent = sys.toUpperCase();
-            container.appendChild(sysDiv);
-
-            // Ячейки механизмов
-            DB.riskMatrix[sys].mechanisms.forEach(mech => {
-                const val = weekData.risks[sys][mech.id] || 0;
-                const cell = document.createElement('div');
-                cell.className = 'heatmap-cell';
-                cell.style.backgroundColor = Engine.getRiskColor(val);
-                cell.style.padding = '8px';
-                cell.style.borderRadius = '6px';
-                cell.style.color = val > 60 ? '#000' : '#fff';
-                cell.style.textAlign = 'center';
-                cell.style.fontSize = '0.75em';
-                cell.style.cursor = 'help';
-                cell.title = `${mech.name}: ${mech.desc}\nРиск: ${val}%`;
-                cell.innerHTML = `<div style="opacity:0.9">${mech.name}</div><div style="font-weight:bold; font-size:1.1em">${val}%</div>`;
-                container.appendChild(cell);
-            });
-        }
-    },
-
-    renderTrendChart: function() {
-        const ctx = document.getElementById('risk-trend-chart');
-        if (!ctx || !AppState.plan.length) return;
-        
-        if (window.trendChartInstance) window.trendChartInstance.destroy();
-
-        const labels = AppState.plan.map(p => `W${p.week}`);
-        const datasets = [];
-        const colors = { 
-            liver: '#ff6384', cardio: '#36a2eb', hemato: '#ff9f40', 
-            neuro: '#9966ff', kidney: '#4bc0c0', endo: '#c9cbcf', repro: '#e7e9ed' 
-        };
-
-        let hasData = false;
-        for (let sys in AppState.chartVisibility) {
-            if (AppState.chartVisibility[sys]) {
-                hasData = true;
-                const data = AppState.plan.map(p => {
-                    let sum = 0, cnt = 0;
-                    for(let m in p.risks[sys]) { sum += p.risks[sys][m]; cnt++; }
-                    return cnt ? Math.round(sum/cnt) : 0;
+    window.App = {
+        loadEsters: () => {
+            const subId = document.getElementById('drug-substance').value;
+            const estSelect = document.getElementById('drug-ester');
+            estSelect.innerHTML = '';
+            const esters = DB.esters[subId];
+            if (esters) {
+                estSelect.disabled = false;
+                esters.forEach(e => {
+                    const opt = document.createElement('option');
+                    opt.value = e.id; opt.textContent = `${e.name} (${e.halfLife}д)`;
+                    estSelect.appendChild(opt);
                 });
-                datasets.push({
-                    label: sys.toUpperCase(),
-                    data: data,
-                    borderColor: colors[sys],
-                    backgroundColor: colors[sys],
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    fill: false,
-                    tension: 0.3
+            } else { estSelect.disabled = true; }
+        },
+        addDrug: (e) => {
+            e.preventDefault();
+            const subId = document.getElementById('drug-substance').value;
+            const esterId = document.getElementById('drug-ester').value;
+            const dose = parseFloat(document.getElementById('drug-dose').value);
+            const start = parseInt(document.getElementById('drug-start').value);
+            const end = parseInt(document.getElementById('drug-end').value);
+            if (start >= end) return alert('Финиш должен быть больше старта!');
+            state.stack.push({ substanceId: subId, esterId, dose, startWeek: start, endWeek: end });
+            App.renderStack();
+            e.target.reset();
+            document.getElementById('drug-ester').disabled = true;
+            document.getElementById('drug-start').value = 1;
+            document.getElementById('drug-end').value = 8;
+        },
+        renderStack: () => {
+            const list = document.getElementById('stack-list');
+            list.innerHTML = '';
+            state.stack.forEach((item, idx) => {
+                const sub = DB.substances.find(s => s.id === item.substanceId);
+                const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
+                const div = document.createElement('div');
+                div.className = 'drug-card';
+                div.innerHTML = `<div><strong>${sub.name}</strong> ${ester?'('+ester.name+')':''}<br><small>${item.dose}мг | ${item.startWeek}-${item.endWeek} нед.</small></div>
+                <button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack()">✕</button>`;
+                list.appendChild(div);
+            });
+        },
+        generatePlan: () => {
+            state.plan = Engine.generateWeeklyPlan(state.stack, 20);
+            state.currentWeekIdx = 0;
+            App.renderHeatmap();
+            App.renderTrendChart();
+            document.getElementById('weekly-plan-output').innerHTML = `<p style="color:#03dac6">Курс рассчитан на ${state.plan.length} недель.</p>`;
+            document.getElementById('xp-display').textContent = `XP: ${parseInt(document.getElementById('xp-display').innerText.split(':')[1])+150}`;
+        },
+        changeWeek: (dir) => {
+            if (!state.plan.length) return;
+            state.currentWeekIdx += dir;
+            if (state.currentWeekIdx < 0) state.currentWeekIdx = 0;
+            if (state.currentWeekIdx >= state.plan.length) state.currentWeekIdx = state.plan.length - 1;
+            App.renderHeatmap();
+        },
+        renderHeatmap: () => {
+            if (!state.plan.length) return;
+            const weekData = state.plan[state.currentWeekIdx];
+            document.getElementById('current-week-display').textContent = `Неделя ${weekData.week}`;
+            const container = document.getElementById('heatmap-container');
+            container.innerHTML = '';
+            for (let sys in DB.riskMatrix) {
+                const sysDiv = document.createElement('div');
+                sysDiv.style.gridColumn = '1 / -1'; sysDiv.style.marginTop = '10px'; sysDiv.style.color = '#bb86fc'; sysDiv.style.fontWeight = 'bold';
+                sysDiv.textContent = sys.toUpperCase(); container.appendChild(sysDiv);
+                DB.riskMatrix[sys].mechanisms.forEach(mech => {
+                    const val = weekData.risks[sys][mech.id] || 0;
+                    const cell = document.createElement('div');
+                    cell.className = 'heatmap-cell';
+                    cell.style.backgroundColor = Engine.getRiskColor(val);
+                    cell.style.padding = '10px'; cell.style.borderRadius = '4px';
+                    cell.style.color = val > 50 ? '#000' : '#fff'; cell.style.textAlign = 'center'; cell.style.fontSize = '0.8em';
+                    cell.innerHTML = `<div>${mech.name}</div><div style="font-weight:bold">${val}%</div>`;
+                    cell.title = mech.desc; container.appendChild(cell);
                 });
             }
-        }
-
-        if(!hasData) {
-            ctx.parentElement.innerHTML += '<p style="text-align:center; color:#666">Выберите хотя бы одну систему для отображения</p>';
-            return;
-        }
-
-        window.trendChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: { 
-                    legend: { labels: { color: '#b0b0b0', font: {size: 10} }, position: 'top' },
-                    tooltip: { mode: 'index', intersect: false }
-                },
-                scales: {
-                    y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } },
-                    x: { ticks: { color: '#aaa', maxRotation: 0 }, grid: { color: '#333' } }
+        },
+        renderTrendChart: () => {
+            const ctx = document.getElementById('risk-trend-chart');
+            if (!ctx || !state.plan.length) return;
+            if (window.trendChart) window.trendChart.destroy();
+            const labels = state.plan.map(p => `W${p.week}`);
+            const datasets = [];
+            const cols = { liver: '#ff6384', cardio: '#36a2eb', hemato: '#ff9f40', neuro: '#9966ff', kidney: '#4bc0c0', endo: '#c9cbcf', repro: '#e7e9ed' };
+            for (let sys in state.chartVisibility) {
+                if (state.chartVisibility[sys]) {
+                    const data = state.plan.map(p => {
+                        let sum = 0, cnt = 0;
+                        for(let m in p.risks[sys]) { sum += p.risks[sys][m]; cnt++; }
+                        return cnt ? Math.round(sum/cnt) : 0;
+                    });
+                    datasets.push({ label: sys.toUpperCase(), data, borderColor: cols[sys], borderWidth: 2, fill: false, tension: 0.4 });
                 }
             }
-        });
-    },
-
-    calcFertility: function() {
-        const vol = parseFloat(document.getElementById('semen-vol').value);
-        const conc = parseFloat(document.getElementById('semen-conc').value);
-        const pr = parseFloat(document.getElementById('semen-pr').value);
-        const morph = parseFloat(document.getElementById('semen-morph').value);
-        
-        if(!vol && !conc) return alert("Введите данные");
-        
-        const score = Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr, morphology: morph });
-        const res = document.getElementById('fertility-result');
-        if(res) {
-            const color = score > 60 ? '#03dac6' : (score > 30 ? '#ff9800' : '#f44336');
-            const text = score > 60 ? 'Норма' : (score > 30 ? 'Умеренное снижение' : 'Критическое');
-            res.innerHTML = `<h3 style="color:${color}">IF: ${score}/100 <small>(${text})</small></h3>`;
+            window.trendChart = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, x: { ticks: { color: '#aaa' }, grid: { color: '#333' } } } } });
+        },
+        calcFertility: () => {
+            const v = parseFloat(document.getElementById('semen-vol').value)||0;
+            const c = parseFloat(document.getElementById('semen-conc').value)||0;
+            const p = parseFloat(document.getElementById('semen-pr').value)||0;
+            const m = parseFloat(document.getElementById('semen-morph').value)||0;
+            const score = v ? Math.round((v/1.5)*20 + (c/16)*30 + (p/30)*30 + (m/4)*20) : 0;
+            document.getElementById('fertility-result').innerHTML = `<h3>IF: ${score}/100</h3>`;
+        },
+        exportJSON: () => {
+            const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const node = document.createElement('a');
+            node.setAttribute("href", dataStr); node.setAttribute("download", "bode_health.json");
+            document.body.appendChild(node); node.click(); node.remove();
         }
-        this.addXP(20);
-    },
+    };
 
-    exportJSON: function() {
-        const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(AppState));
-        const node = document.createElement('a');
-        node.setAttribute("href", dataStr);
-        node.setAttribute("download", "bode_health_backup.json");
-        document.body.appendChild(node);
-        node.click();
-        node.remove();
-    },
-
-    renderShop: function() {
-        const list = document.getElementById('shop-list');
-        if(!list || !DB.shopItems) return;
-        list.innerHTML = '';
-        for (const [key, items] of Object.entries(DB.shopItems)) {
-            items.forEach(item => {
-                list.innerHTML += `
-                    <div class="drug-card">
-                        <div><strong>${key.toUpperCase()}</strong><br><small>${item.platform}</small></div>
-                        <div>
-                            <span style="color:#03dac6; margin-right:10px">${item.price}</span>
-                            <a href="${item.url}" target="_blank" class="btn-primary" style="padding:5px 10px; font-size:0.8em; text-decoration:none;">Buy</a>
-                        </div>
-                    </div>`;
-            });
-        }
-    },
-
-    renderGlossary: function() {
-        const list = document.getElementById('glossary-list');
-        if(!list || !DB.glossary) return;
-        list.innerHTML = '';
-        for (const [term, def] of Object.entries(DB.glossary)) {
-            list.innerHTML += `
-                <div class="drug-card" style="display:block">
-                    <strong style="color:#bb86fc">${term}</strong>
-                    <p style="margin:5px 0 0; font-size:0.9em; color:#aaa">${def}</p>
-                </div>`;
-        }
-    },
-
-    // --- ГАМИФИКАЦИЯ ---
-    addXP: function(amount) {
-        AppState.xp += amount;
-        const newLevel = Math.floor(AppState.xp / 500) + 1;
-        if(newLevel > AppState.level) {
-            AppState.level = newLevel;
-            alert(`🎉 НОВЫЙ УРОВЕНЬ: ${AppState.level}!`);
-        }
-        this.updateGamificationUI();
-    },
-
-    updateGamificationUI: function() {
-        const xpEl = document.getElementById('xp-display');
-        if(xpEl) xpEl.textContent = `Lvl ${AppState.level} | XP: ${AppState.xp}`;
-        
-        // Тут можно добавить прогресс бар и список ачивок
-    }
-};
+    document.getElementById('add-drug-form').addEventListener('submit', App.addDrug);
+    document.getElementById('drug-substance').addEventListener('change', App.loadEsters);
+    
+    // Render Support
+    const supList = document.getElementById('support-schedule');
+    DB.supportProtocol.forEach(b => {
+        const div = document.createElement('div'); div.className = 'time-block';
+        div.innerHTML = `<h3>${b.title}</h3>` + b.items.map(i => `<div class="support-item"><strong>${i.name}</strong> ${i.dose}<br><small>${i.mechanism}</small></div>`).join('');
+        supList.appendChild(div);
+    });
+    App.renderStack();
+});
