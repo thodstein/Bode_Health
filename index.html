@@ -18,85 +18,79 @@
         <nav class="tabs">
             <button class="tab-btn active" data-tab="dashboard">Дашборд</button>
             <button class="tab-btn" data-tab="stack">Стек</button>
-            <button class="tab-btn" data-tab="risks">Риски</button>
             <button class="tab-btn" data-tab="settings">Настройки</button>
         </nav>
 
-        <main>
-            <!-- Вкладка Дашборд -->
-            <section id="dashboard" class="tab-content active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Препаратов</h3>
-                        <span id="total-drugs">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Общий риск</h3>
-                        <span id="total-risk" class="risk-high">0%</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Индекс токсичности</h3>
-                        <span id="toxicity-index">0</span>
-                    </div>
+        <!-- Вкладка Дашборд -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Общая сводка</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Препаратов</h3>
+                    <span id="total-drugs">0</span>
                 </div>
-                <div class="chart-container">
-                    <canvas id="riskChart"></canvas>
+                <div class="stat-card">
+                    <h3>Общий риск</h3>
+                    <span id="total-risk" class="risk-low">0%</span>
                 </div>
-            </section>
+            </div>
+            <div class="chart-container">
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
 
-            <!-- Вкладка Стек -->
-            <section id="stack" class="tab-content">
-                <div class="stack-controls">
-                    <h2>Управление стеком</h2>
-                    <div class="input-group">
-                        <input type="text" id="drug-name" placeholder="Название препарата">
-                        <input type="text" id="drug-dose" placeholder="Дозировка (мг)">
-                        <select id="drug-route">
-                            <option value="oral">Перорально</option>
-                            <option value="inject">Инъекционно</option>
-                            <option value="topical">Местно</option>
-                        </select>
-                        <input type="number" id="drug-duration" placeholder="Дней приема">
-                        <button id="add-drug-btn" class="btn-primary">Добавить</button>
-                    </div>
+        <!-- Вкладка Стек -->
+        <div id="stack" class="tab-content">
+            <h2>Управление стеком</h2>
+            
+            <div class="form-group">
+                <h3>Добавить препарат</h3>
+                <input type="text" id="drug-name" placeholder="Название препарата">
+                <input type="text" id="drug-dose" placeholder="Дозировка (мг/мл)">
+                <select id="drug-route">
+                    <option value="oral">Перорально</option>
+                    <option value="inject">Инъекционно</option>
+                    <option value="topical">Местно</option>
+                </select>
+                <input type="number" id="drug-period" placeholder="Период (дни)" min="1">
+                
+                <h4>Параметры риска (0-10)</h4>
+                <div class="risk-inputs">
+                    <label>CV: <input type="number" id="risk-cv" min="0" max="10" value="0"></label>
+                    <label>Hep: <input type="number" id="risk-hep" min="0" max="10" value="0"></label>
+                    <label>Neuro: <input type="number" id="risk-neuro" min="0" max="10" value="0"></label>
+                    <label>Lipid: <input type="number" id="risk-lipid" min="0" max="10" value="0"></label>
+                    <label>Nephro: <input type="number" id="risk-nephro" min="0" max="10" value="0"></label>
+                    <label>Hemo: <input type="number" id="risk-hemo" min="0" max="10" value="0"></label>
                 </div>
+                <button id="add-drug-btn" class="btn-primary">Добавить в стек</button>
+            </div>
 
-                <div class="stack-list" id="stack-list">
-                    <!-- Сюда добавляются препараты -->
+            <div class="stack-list" id="stack-list">
+                <!-- Сюда добавляются препараты -->
+            </div>
+
+            <div class="actions">
+                <button id="calc-risks-btn" class="btn-success">Рассчитать риски</button>
+                <button id="clear-stack-btn" class="btn-danger">Очистить стек</button>
+            </div>
+
+            <div id="risk-report" class="risk-report" style="display:none;">
+                <h3>Отчет по рискам</h3>
+                <div id="risk-details"></div>
+                <div class="total-toxicity">
+                    <h4>Кумулятивный индекс токсичности: <span id="toxicity-score">0</span></h4>
+                    <div class="progress-bar"><div id="toxicity-bar" style="width: 0%"></div></div>
                 </div>
+            </div>
+        </div>
 
-                <div class="risk-calc-section">
-                    <button id="calc-risks-btn" class="btn-danger">Рассчитать риски</button>
-                    <div id="risk-results" class="risk-results hidden">
-                        <h3>Результаты расчета</h3>
-                        <div class="risk-grid">
-                            <div class="risk-item"><span>Сердечно-сосудистый:</span> <b id="risk-cv">0%</b></div>
-                            <div class="risk-item"><span>Гепатотоксичность:</span> <b id="risk-hep">0%</b></div>
-                            <div class="risk-item"><span>Нейротоксичность:</span> <b id="risk-neuro">0%</b></div>
-                            <div class="risk-item"><span>Липидный профиль:</span> <b id="risk-lipid">0%</b></div>
-                            <div class="risk-item"><span>Нефротоксичность:</span> <b id="risk-nephro">0%</b></div>
-                            <div class="risk-item"><span>Гематология:</span> <b id="risk-hemo">0%</b></div>
-                        </div>
-                        <div class="total-toxicity">
-                            <h4>Кумулятивный индекс токсичности: <span id="cumulative-toxicity">0</span></h4>
-                            <div class="toxicity-bar"><div id="toxicity-fill" style="width: 0%"></div></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Вкладка Риски -->
-            <section id="risks" class="tab-content">
-                <h2>Детальный анализ рисков</h2>
-                <p>Здесь будет подробная информация по каждому параметру.</p>
-            </section>
-
-            <!-- Вкладка Настройки -->
-            <section id="settings" class="tab-content">
-                <h2>Настройки</h2>
-                <p>Настройки профиля и параметров расчета.</p>
-            </section>
-        </main>
+        <!-- Вкладка Настройки -->
+        <div id="settings" class="tab-content">
+            <h2>Настройки</h2>
+            <p>Здесь будут настройки профилей и параметров расчета.</p>
+            <button id="export-data" class="btn-primary">Экспорт данных</button>
+        </div>
     </div>
 
     <script src="assets/js/app.js"></script>

@@ -17,28 +17,39 @@ header p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
 .stat-card { background: #f9fafb; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb; }
 .stat-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b7280; }
 .stat-card span { font-size: 24px; font-weight: bold; }
-.risk-high { color: #ef4444; }
-.risk-med { color: #f59e0b; }
-.risk-low { color: #10b981; }
 
-.input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-input, select { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; flex: 1; min-width: 120px; }
+.chart-container { position: relative; height: 400px; width: 100%; }
+
+.form-group { background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e5e7eb; }
+input, select { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+.risk-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px; }
+.risk-inputs label { font-size: 12px; font-weight: 600; }
+.risk-inputs input { margin: 0; padding: 5px; text-align: center; }
+
 .btn-primary { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 .btn-primary:hover { background: #1d4ed8; }
-.btn-danger { background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
-.btn-danger:hover { background: #dc2626; }
-.btn-remove { background: #fee2e2; color: #ef4444; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+.btn-success { background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-right: 10px; }
+.btn-danger { background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
 
-.drug-item { display: flex; justify-content: space-between; align-items: center; background: #f9fafb; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #2563eb; }
-.drug-info { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-.badge { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+.actions { margin-top: 20px; display: flex; gap: 10px; }
 
-.risk-results { margin-top: 20px; padding: 20px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; }
-.risk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
-.risk-item { display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 4px; }
-.total-toxicity { margin-top: 15px; }
-.toxicity-bar { height: 20px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin-top: 5px; }
-#toxicity-fill { height: 100%; width: 0; transition: width 0.5s, background-color 0.5s; }
+.drug-item { background: white; border: 1px solid #e5e7eb; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+.drug-header { display: flex; gap: 10px; align-items: center; }
+.badge { background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.drug-meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
-.chart-container { position: relative; height: 400px; margin-top: 20px; }
-.hidden { display: none; }
+.risk-report { margin-top: 20px; padding: 20px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; }
+.risk-report ul { list-style: none; padding: 0; }
+.risk-report li { margin-bottom: 8px; display: flex; justify-content: space-between; }
+.risk-high { color: #dc2626; font-weight: bold; }
+.risk-med { color: #d97706; font-weight: bold; }
+.risk-low { color: #059669; font-weight: bold; }
+.warning { color: #d97706; font-weight: bold; font-size: 14px; }
+
+.total-toxicity { margin-top: 20px; }
+.progress-bar { width: 100%; height: 20px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+.progress-bar div { height: 100%; transition: width 0.5s; }
+.bg-success { background: #059669; }
+.bg-warning { background: #d97706; }
+.bg-danger { background: #dc2626; }
