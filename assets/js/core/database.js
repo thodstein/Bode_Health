@@ -16,18 +16,18 @@ const DB = {
         {id:'mgf', name:'MGF', tox:{liver:0, lipid:0, hct:0, neuro:0, kid:1, endo:2, repro:0}}
     ],
     esters: {
-        'test': [{id:'p',name:'Пропионат',hl:2}, {id:'e',name:'Энантат',hl:7}, {id:'c',name:'Ципионат',hl:8}, {id:'s',name:'Сустанон',hl:15}],
-        'nandrolone': [{id:'p',name:'Фенилпропионат',hl:4.5}, {id:'d',name:'Деканоат',hl:14}],
-        'trenbolone': [{id:'a',name:'Ацетат',hl:3}, {id:'e',name:'Энантат',hl:7}, {id:'h',name:'Гекса',hl:10}],
-        'boldenone': [{id:'u',name:'Ундесиленат',hl:14}],
-        'dhb': [{id:'a',name:'Ацетат',hl:10}],
-        'masteron': [{id:'p',name:'Пропионат',hl:2.5}, {id:'e',name:'Энантат',hl:7}],
-        'primobolan': [{id:'e',name:'Энантат',hl:10}],
-        'stanozolol': [{id:'s',name:'Суспензия',hl:24}],
-        'gh': [{id:'d',name:'Ежедневно',hl:0.1}, {id:'l',name:'Пролонг',hl:168}],
-        'insulin': [{id:'r',name:'Короткий',hl:0.1}, {id:'l',name:'Продленный',hl:24}],
-        'igf1': [{id:'lr3',name:'LR3',hl:24}, {id:'des',name:'DES',hl:0.5}],
-        'mgf': [{id:'m',name:'MGF',hl:0.5}, {id:'peg',name:'PEG-MGF',hl:48}]
+        'test': [{id:'p', name:'Пропионат', hl:2}, {id:'e', name:'Энантат', hl:7}, {id:'c', name:'Ципионат', hl:8}, {id:'s', name:'Сустанон', hl:15}],
+        'nandrolone': [{id:'p', name:'Фенилпропионат', hl:4.5}, {id:'d', name:'Деканоат', hl:14}],
+        'trenbolone': [{id:'a', name:'Ацетат', hl:3}, {id:'e', name:'Энантат', hl:7}, {id:'h', name:'Гекса', hl:10}],
+        'boldenone': [{id:'u', name:'Ундесиленат', hl:14}],
+        'dhb': [{id:'a', name:'Ацетат', hl:10}],
+        'masteron': [{id:'p', name:'Пропионат', hl:2.5}, {id:'e', name:'Энантат', hl:7}],
+        'primobolan': [{id:'e', name:'Энантат', hl:10}],
+        'stanozolol': [{id:'s', name:'Суспензия', hl:24}],
+        'gh': [{id:'d', name:'Ежедневно', hl:0.1}, {id:'l', name:'Пролонг', hl:168}],
+        'insulin': [{id:'r', name:'Короткий', hl:0.1}, {id:'l', name:'Продленный', hl:24}],
+        'igf1': [{id:'lr3', name:'LR3', hl:24}, {id:'des', name:'DES', hl:0.5}],
+        'mgf': [{id:'m', name:'MGF', hl:0.5}, {id:'peg', name:'PEG-MGF', hl:48}]
     },
     risks: {
         liver: [{id:'chol',n:'Холестаз'}, {id:'ox',n:'ОксСтресс'}, {id:'cyt',n:'Цитолиз'}, {id:'fib',n:'Фиброз'}, {id:'mito',n:'Митохондрии'}, {id:'met',n:'Метилирование'}, {id:'apo',n:'Апоптоз'}],
@@ -59,9 +59,9 @@ const DB = {
         {t:'Анализ крови', c:'Labs', v:400}
     ],
     glossary: {
-        'Raw Risk':'Риск без защиты',
-        'Net Risk':'Риск с защитой',
-        'Half-life':'Период полувыведения',
-        'Hematocrit':'Густота крови'
+        'Raw Risk': 'Риск без защиты',
+        'Net Risk': 'Риск с защитой',
+        'Half-life': 'Период полувыведения',
+        'Hematocrit': 'Густота крови'
     }
 };

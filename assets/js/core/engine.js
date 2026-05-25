@@ -7,45 +7,41 @@ const Engine = {
     generatePlan: function(stack) {
         let maxW = 12;
         stack.forEach(function(i) { if (i.end > maxW) maxW = i.end; });
-        const total = maxW + 6;
-        const plan = [];
-        for (let w = 1; w <= total; w++) {
-            let r = {};
-            for (let sys in DB.risks) {
+        var total = maxW + 6;
+        var plan = [];
+        for (var w = 1; w <= total; w++) {
+            var r = {};
+            for (var sys in DB.risks) {
                 r[sys] = {};
                 DB.risks[sys].forEach(function(m) { r[sys][m.id] = 0; });
             }
             stack.forEach(function(it) {
-                const esterList = DB.esters[it.sub];
-                let ester = null;
+                var esterList = DB.esters[it.sub];
+                var ester = null;
                 if (esterList) {
-                    for(let k=0; k<esterList.length; k++) {
-                        if(esterList[k].id === it.est) { ester = esterList[k]; break; }
+                    for (var k = 0; k < esterList.length; k++) {
+                        if (esterList[k].id === it.est) { ester = esterList[k]; break; }
                     }
                 }
-                const hl = ester ? ester.hl : 1;
-                const conc = Engine.calcConc(hl, it.start, it.end, w);
+                var hl = ester ? ester.hl : 1;
+                var conc = Engine.calcConc(hl, it.start, it.end, w);
                 if (conc > 0.05) {
-                    const sub = DB.substances.find(function(x) { return x.id === it.sub; });
-                    if (!sub) return;
-                    const t = sub.tox;
-                    const load = conc * (it.dose / 100);
-                    r.liver.chol += t.liver * 3 * load;
-                    r.liver.cyt += t.liver * 2 * load;
-                    r.cardio.lip += t.lipid * 3 * load;
-                    r.cardio.htn += t.lipid * 1.5 * load;
-                    r.hemato.ery += t.hct * 4 * load;
-                    r.hemato.visc += t.hct * 3 * load;
+                    var subList = DB.substances;
+                    var t = null;
+                    for(var s=0; s<subList.length; s++) { if(subList[s].id === it.sub) { t = subList[s].tox; break; } }
+                    if (!t) return;
+                    var load = conc * (it.dose / 100);
+                    r.liver.chol += t.liver * 3 * load; r.liver.cyt += t.liver * 2 * load;
+                    r.cardio.lip += t.lipid * 3 * load; r.cardio.htn += t.lipid * 1.5 * load;
+                    r.hemato.ery += t.hct * 4 * load; r.hemato.visc += t.hct * 3 * load;
                     r.neuro.dop += t.neuro * 5 * load;
                     r.kidney.hyper += t.kid * 3 * load;
-                    r.endo.ins += t.endo * 3 * load;
-                    r.endo.est += t.endo * 2 * load;
-                    r.repro.sup += t.repro * 5 * load;
-                    r.repro.atr += t.repro * 4 * load;
+                    r.endo.ins += t.endo * 3 * load; r.endo.est += t.endo * 2 * load;
+                    r.repro.sup += t.repro * 5 * load; r.repro.atr += t.repro * 4 * load;
                 }
             });
-            for (let sys in r) {
-                for (let k in r[sys]) {
+            for (var sys in r) {
+                for (var k in r[sys]) {
                     r[sys][k] = Math.min(100, Math.round(r[sys][k]));
                 }
             }
