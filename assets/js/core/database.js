@@ -87,3 +87,54 @@ const DB = {
         { id: 'agtr1_a1166c', name: 'AGTR1 A1166C', effect: 'hypertension_risk', multiplier: 1.3 }
     ]
 };
+
+// --- ДОПОЛНЕНИЯ STAGE 3 ---
+
+// 1.4 БАЗА ЭФИРОВ (Для калькулятора дозировок)
+DB.esters = {
+    'propionate': { name: 'Пропионат', halfLife: 2, releaseFactor: 0.8 },
+    'acetate': { name: 'Ацетат', halfLife: 3, releaseFactor: 0.85 },
+    'phenylpropionate': { name: 'Фенилпропионат', halfLife: 4.5, releaseFactor: 0.9 },
+    'enanthate': { name: 'Энантат', halfLife: 7, releaseFactor: 0.7 },
+    'cypionate': { name: 'Ципионат', halfLife: 8, releaseFactor: 0.7 },
+    'decanoate': { name: 'Деканоат', halfLife: 14, releaseFactor: 0.6 },
+    'undecylenate': { name: 'Ундесиленат', halfLife: 14, releaseFactor: 0.6 },
+    'hexahydrobenzylcarbonate': { name: 'Гексагидробензилкарбонат', halfLife: 10, releaseFactor: 0.65 }
+};
+
+// 1.5 МАГАЗИН (MAPPING)
+DB.shopMapping = {
+    'telmisartan': [
+        { platform: 'Ozon', price: '450 ₽', url: '#', inStock: true },
+        { platform: 'Apteka.ru', price: '420 ₽', url: '#', inStock: true }
+    ],
+    'udca': [
+        { platform: 'Ozon', price: '1200 ₽', url: '#', inStock: true },
+        { platform: 'iHerb', price: '$25', url: '#', inStock: false }
+    ],
+    'berberine': [
+        { platform: 'iHerb', price: '$18', url: '#', inStock: true }
+    ],
+    // ... можно расширять
+};
+
+// 1.6 СТАТЬИ И ГЛОССАРИЙ
+DB.articles = [
+    { id: 1, title: 'Кардиопротекция на курсе ААС', category: 'Health', views: 1205, content: 'Полный гайд по защите сердца...' },
+    { id: 2, title: 'Как читать анализы: Липидный профиль', category: 'Labs', views: 850, content: 'Разбор ЛПВП, ЛПНП, Триглицеридов...' },
+    { id: 3, title: 'ПКТ: Кломид или Тамоксифен?', category: 'Therapy', views: 2100, content: 'Сравнение SERMs...' }
+];
+
+DB.glossary = {
+    'AR Affinity': 'Сродство к андрогенному рецептору. Чем выше, тем сильнее анаболический эффект.',
+    'Hematocrit': 'Доля эритроцитов в крови. Критический порог >54%.',
+    'Half-life': 'Период полувыведения вещества из организма.',
+    'Estradiol Conversion': 'Способность ароматизироваться в эстрадиол.'
+};
+
+// 1.7 ГАМИФИКАЦИЯ
+DB.achievements = [
+    { id: 'first_stack', title: 'Первый стек', desc: 'Добавь первый препарат', xp: 50, icon: '💉' },
+    { id: 'lab_geek', title: 'Лабораторный гений', desc: 'Загрузи первые анализы', xp: 100, icon: '🧬' },
+    { id: 'trust_100', title: 'Доверие', desc: 'Trust Score 100', xp: 500, icon: '👑' }
+];

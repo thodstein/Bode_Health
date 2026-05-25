@@ -100,3 +100,7 @@ label { font-size: 0.9em; color: #b0b0b0; margin-bottom: 4px; display: block; }
 .sub-btn.active { background: var(--secondary); color: #000; }
 .sub-content { background: #1e1e1e; padding: 15px; border-radius: 8px; }
 .article-card, .shop-item { border-bottom: 1px solid #333; padding: 15px 0; }
+.input-group-vertical { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; gap: 10px; }
+.badge { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.7em; margin-bottom: 2px; }
+hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }

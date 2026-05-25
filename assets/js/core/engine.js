@@ -82,3 +82,57 @@ const Engine = {
         return count === 0 ? 0 : Math.round(sum / count);
     }
 };
+
+// --- ДОПОЛНЕНИЯ STAGE 3 ---
+
+// 2.6 ГЕНЕРАЦИЯ ПОНЕДЕЛЬНОГО ПЛАНА
+Engine.generateWeeklyPlan = function(stack, weeks) {
+    let plan = [];
+    for (let w = 1; w <= weeks; w++) {
+        let weekRisks = this.calculateRawRisks(stack); // Упрощенно: риски постоянны, в полном - накопление
+        let weekNet = this.calculateNetRisks(weekRisks, true);
+        
+        // Подбор поддержки на неделю (фильтрация по критическим рискам)
+        let supportForWeek = DB.supportProtocol.filter(block => {
+            // Логика: если риск системы > 30%, включаем соответствующие препараты
+            return true; // Пока возвращаем весь протокол
+        });
+
+        plan.push({
+            week: w,
+            risks: weekNet,
+            support: supportForWeek,
+            alerts: weekNet.hemato.erythrocytosis > 40 ? ['Риск эритроцитоза! Проверь гематокрит.'] : []
+        });
+    }
+    return plan;
+};
+
+// 2.7 ПРОГНОЗЫ (ARIMA Mock / Exponential Smoothing)
+Engine.predictMarker = function(history, stepsAhead) {
+    if (history.length < 3) return history[history.length-1] || 0;
+    // Простое экспоненциальное сглаживание (alpha = 0.3)
+    let lastVal = history[history.length-1];
+    let trend = lastVal - history[history.length-2];
+    let forecast = [];
+    for(let i=0; i<stepsAhead; i++) {
+        lastVal = lastVal + (trend * 0.8); // Затухание тренда
+        forecast.push(Math.round(lastVal * 10)/10);
+    }
+    return forecast;
+};
+
+// 2.8 WHAT-IF СИМУЛЯТОР
+Engine.simulateWhatIf = function(baseStack, changes) {
+    // changes = { 'test_e': { dose: newDose } }
+    let simStack = JSON.parse(JSON.stringify(baseStack));
+    simStack.forEach(item => {
+        if (changes[item.id]) {
+            item.dose = changes[item.id].dose;
+        }
+    });
+    return {
+        raw: this.calculateRawRisks(simStack),
+        net: this.calculateNetRisks(this.calculateRawRisks(simStack), true)
+    };
+};
