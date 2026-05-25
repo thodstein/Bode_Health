@@ -1,172 +1,248 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация Telegram WebApp
+    // Init Telegram
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
+        document.documentElement.style.setProperty('--bg-dark', window.Telegram.WebApp.themeParams.bg_color || '#121212');
     }
 
-    // Состояние
-    let state = {
-        stack: [],
+    // State
+    const state = {
+        stack: JSON.parse(localStorage.getItem('bh_stack')) || [],
+        food: JSON.parse(localStorage.getItem('bh_food')) || [],
         supportActive: true,
-        risks: { raw: {}, net: {} }
+        currentRiskView: 'raw'
     };
 
-    // 1. Навигация
-    const tabs = document.querySelectorAll('.tab-btn');
-    const contents = document.querySelectorAll('.tab-content');
+    // DOM Elements
+    const els = {
+        drugSelect: document.getElementById('drug-select'),
+        stackList: document.getElementById('stack-list'),
+        supportSchedule: document.getElementById('support-schedule'),
+        riskDetails: document.getElementById('risk-details'),
+        foodLog: document.getElementById('food-log'),
+        dashReadiness: document.getElementById('dash-readiness'),
+        dashFatigue: document.getElementById('dash-fatigue'),
+        dashRisk: document.getElementById('dash-risk'),
+        alertBox: document.getElementById('daily-alert')
+    };
 
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            contents.forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.add('active');
-        });
-    });
-
-    // 2. Заполнение селекта препаратами
-    const drugSelect = document.getElementById('drug-select');
+    // 1. Init Drug Select
     DB.drugs.forEach(drug => {
         const opt = document.createElement('option');
         opt.value = drug.id;
         opt.textContent = `${drug.name} (${drug.type})`;
-        drugSelect.appendChild(opt);
+        els.drugSelect.appendChild(opt);
     });
 
-    // 3. Добавление препарата в стек
-    document.getElementById('add-drug-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = document.getElementById('drug-select').value;
-        const dose = document.getElementById('drug-dose').value;
-        const freq = document.getElementById('drug-freq').value;
-        
-        state.stack.push({ id, dose, freq });
-        renderStack();
-        updateDashboard();
-        e.target.reset();
-    });
-
+    // 2. Render Functions
     function renderStack() {
-        const list = document.getElementById('stack-list');
-        list.innerHTML = '';
+        els.stackList.innerHTML = '';
+        if (state.stack.length === 0) {
+            els.stackList.innerHTML = '<p style="text-align:center;color:#666;">Стек пуст. Добавьте препараты.</p>';
+            return;
+        }
         state.stack.forEach((item, idx) => {
             const drug = DB.drugs.find(d => d.id === item.id);
             const div = document.createElement('div');
             div.className = 'item-card';
             div.innerHTML = `
                 <div>
-                    <strong>${drug.name}</strong><br>
-                    <small>${item.dose} | ${item.freq}</small>
+                    <strong>${drug.name}</strong>
+                    <small>${item.dose} ${item.freq}</small>
                 </div>
-                <button class="btn-secondary" onclick="app.removeDrug(${idx})">✕</button>
+                <button class="btn-danger" style="padding:5px 10px;" onclick="app.removeDrug(${idx})">✕</button>
             `;
-            list.appendChild(div);
+            els.stackList.appendChild(div);
         });
+        localStorage.setItem('bh_stack', JSON.stringify(state.stack));
+        updateCalculations();
     }
 
-    // Экспорт функции удаления в глобальную область
-    window.app = {
-        removeDrug: (idx) => {
-            state.stack.splice(idx, 1);
-            renderStack();
-            updateDashboard();
-        }
-    };
-
-    // 4. Рендеринг поддержки
     function renderSupport() {
-        const container = document.getElementById('support-schedule');
-        container.innerHTML = '';
-        DB.support.forEach(block => {
+        els.supportSchedule.innerHTML = '';
+        DB.supportProtocol.forEach(block => {
             const div = document.createElement('div');
             div.className = 'time-block';
             div.innerHTML = `<h3>${block.label}</h3>`;
             block.items.forEach(item => {
                 div.innerHTML += `
-                    <div class="item-card" style="padding:10px; margin-bottom:5px;">
-                        <div>
-                            <strong>${item.name}</strong> <span style="color:var(--secondary)">${item.dose}</span>
-                            <div style="font-size:0.8em; color:#888;">${item.mechanism}</div>
-                        </div>
+                    <div class="support-item">
+                        <div><span class="dose">${item.name}</span> <span style="color:#fff">${item.dose}</span></div>
+                        <span class="mech">${item.mechanism}</span>
                     </div>
                 `;
             });
-            container.appendChild(div);
+            els.supportSchedule.appendChild(div);
         });
     }
 
-    // 5. Обновление дэшборда и рисков
-    function updateDashboard() {
-        const raw = Engine.calculateRawRisks(state.stack);
-        const net = Engine.calculateNetRisks(raw, state.supportActive);
-        state.risks = { raw, net };
-
-        // Расчет интегрального риска (среднее по всем системам)
-        let totalRaw = 0, count = 0;
-        for(let sys in raw) for(let m in raw[sys]) { totalRaw += raw[sys][m]; count++; }
-        const avgRaw = Math.round(totalRaw / count);
-        
-        let totalNet = 0;
-        for(let sys in net) for(let m in net[sys]) { totalNet += net[sys][m]; }
-        const avgNet = Math.round(totalNet / count);
-
-        document.getElementById('dash-readiness').textContent = state.stack.length ? '65' : '90'; // Mock
-        document.getElementById('dash-fatigue').textContent = state.stack.length ? '45' : '10';
-        document.getElementById('dash-risk').textContent = `${avgRaw}% → ${avgNet}%`;
-        
-        renderRiskChart(net);
+    function renderFood() {
+        els.foodLog.innerHTML = '';
+        state.food.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `
+                <div><strong>${item.name}</strong> <small>${item.weight}г</small></div>
+                <button class="btn-danger" style="padding:5px 10px;" onclick="app.removeFood(${idx})">✕</button>
+            `;
+            els.foodLog.appendChild(div);
+        });
+        localStorage.setItem('bh_food', JSON.stringify(state.food));
     }
 
-    // 6. График рисков
-    let chartInstance = null;
-    function renderRiskChart(data) {
+    // 3. Calculations Core
+    function updateCalculations() {
+        const rawRisks = Engine.calculateRawRisks(state.stack);
+        const netRisks = Engine.calculateNetRisks(rawRisks, state.supportActive);
+        
+        // Avg Risk Calc
+        const getAvg = (r) => {
+            let sum = 0, cnt = 0;
+            for(let s in r) for(let m in r[s]) { sum += r[s][m]; cnt++; }
+            return Math.round(sum / cnt);
+        };
+
+        const avgRaw = getAvg(rawRisks);
+        const avgNet = getAvg(netRisks);
+
+        // Mock Readiness/Fatigue based on stack size and risk
+        const baseReadiness = 90 - (state.stack.length * 5);
+        const baseFatigue = 10 + (state.stack.length * 8);
+        
+        els.dashReadiness.textContent = Math.max(0, baseReadiness);
+        els.dashFatigue.textContent = Math.min(100, baseFatigue);
+        els.dashRisk.textContent = `${avgRaw}% → ${avgNet}%`;
+
+        // Alerts
+        if (avgRaw > 50) {
+            els.alertBox.innerHTML = `⚠️ <strong>Внимание!</strong> Сырой риск ${avgRaw}%. Рекомендуется усилить поддержку (УДХК, Телмисартан).`;
+        } else {
+            els.alertBox.innerHTML = `✅ Риски под контролем. Продолжайте мониторинг.`;
+        }
+
+        // Store risks for chart
+        state.currentRisks = { raw: rawRisks, net: netRisks };
+        if (state.currentRiskView === 'raw') drawRiskChart(rawRisks);
+        else drawRiskChart(netRisks);
+    }
+
+    // 4. Charts
+    let riskChart = null;
+    function drawRiskChart(data) {
         const ctx = document.getElementById('risk-chart').getContext('2d');
         const labels = ['Печень', 'Кардио', 'Почки', 'Невро', 'Кровь', 'Эндо', 'Репро'];
         const values = [
             (data.liver.cholestasis + data.liver.cytolysis)/2,
             (data.cardio.htn + data.cardio.lipids)/2,
             (data.kidney.hyperfiltration + data.kidney.fibrosis)/2,
-            (data.neuro.dopamine + data.neuro.gaba)/2,
+            (data.neuro.dopamine + data.neuro.anxiety)/2,
             (data.hemato.erythrocytosis + data.hemato.rheology)/2,
-            (data.endo.insulin_resist + data.endo.estrogen)/2,
+            (data.endo.insulin_resist + data.endo.prolactin)/2,
             (data.repro.atrophy + data.repro.suppression)/2
         ];
 
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
+        if (riskChart) riskChart.destroy();
+        riskChart = new Chart(ctx, {
             type: 'radar',
-             {
+            data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Net Risk',
+                    label: state.currentRiskView === 'raw' ? 'RAW Risk' : 'NET Risk',
                     data: values,
-                    backgroundColor: 'rgba(3, 218, 198, 0.4)',
-                    borderColor: '#03dac6',
-                    borderWidth: 2
+                    backgroundColor: state.currentRiskView === 'raw' ? 'rgba(207, 102, 121, 0.4)' : 'rgba(3, 218, 198, 0.4)',
+                    borderColor: state.currentRiskView === 'raw' ? '#cf6679' : '#03dac6',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff'
                 }]
             },
             options: {
-                scales: { r: { beginAtZero: true, max: 100, ticks: { color: '#fff' } } },
-                plugins: { legend: { labels: { color: '#fff' } } }
+                scales: { 
+                    r: { 
+                        beginAtZero: true, 
+                        max: 100, 
+                        ticks: { color: '#b0b0b0', stepSize: 20 },
+                        grid: { color: '#333' },
+                        angleLines: { color: '#333' },
+                        pointLabels: { color: '#fff', font: { size: 12 } }
+                    } 
+                },
+                plugins: { legend: { labels: { color: '#fff' } } },
+                responsive: true,
+                maintainAspectRatio: false
             }
         });
     }
 
-    // 7. Фертильность
-    window.calcFertility = () => {
-        const vol = parseFloat(document.getElementById('semen-vol').value);
-        const conc = parseFloat(document.getElementById('semen-conc').value);
-        const pr = parseFloat(document.getElementById('semen-pr').value);
-        
-        if(!vol || !conc) return alert('Введите данные');
-        
-        const ifScore = Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr: pr });
-        const resDiv = document.getElementById('fertility-result');
-        resDiv.innerHTML = `<h2 style="color:${ifScore > 60 ? 'green' : 'red'}">IF: ${ifScore}/100</h2>`;
+    // 5. Event Listeners
+    document.getElementById('add-drug-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        state.stack.push({
+            id: document.getElementById('drug-select').value,
+            dose: document.getElementById('drug-dose').value,
+            freq: document.getElementById('drug-freq').value
+        });
+        renderStack();
+        e.target.reset();
+    });
+
+    document.getElementById('support-toggle').addEventListener('change', (e) => {
+        state.supportActive = e.target.checked;
+        updateCalculations();
+    });
+
+    document.getElementById('food-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        state.food.push({
+            name: document.getElementById('food-name').value,
+            weight: document.getElementById('food-weight').value
+        });
+        renderFood();
+        e.target.reset();
+    });
+
+    // Voice Input Mock
+    document.getElementById('voice-btn').addEventListener('click', () => {
+        const status = document.getElementById('voice-status');
+        status.textContent = "Слушаю...";
+        status.style.color = "var(--error)";
+        setTimeout(() => {
+            status.textContent = "Распознавание не доступно в демо-режиме. Введите вручную.";
+            status.style.color = "var(--text-sec)";
+        }, 2000);
+    });
+
+    // Global App Methods
+    window.app = {
+        removeDrug: (idx) => { state.stack.splice(idx, 1); renderStack(); },
+        removeFood: (idx) => { state.food.splice(idx, 1); renderFood(); },
+        calcFertility: () => {
+            const data = {
+                volume: parseFloat(document.getElementById('semen-vol').value),
+                concentration: parseFloat(document.getElementById('semen-conc').value),
+                total: parseFloat(document.getElementById('semen-total').value),
+                pr: parseFloat(document.getElementById('semen-pr').value),
+                morphology: parseFloat(document.getElementById('semen-morph').value)
+            };
+            const score = Engine.calculateFertilityIndex(data);
+            const resDiv = document.getElementById('fertility-result');
+            let color = score > 60 ? 'var(--success)' : (score > 30 ? 'var(--warning)' : 'var(--error)');
+            let text = score > 60 ? 'Норма' : (score > 30 ? 'Умеренное снижение' : 'Критическое снижение');
+            resDiv.innerHTML = `<span style="color:${color}">IF: ${score}/100 (${text})</span>`;
+        },
+        renderRisks: (type) => {
+            state.currentRiskView = type;
+            document.querySelectorAll('.risk-toggles .toggle').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            drawRiskChart(state.currentRisks[type]);
+        }
     };
 
-    // Инициализация
+    // Init
+    renderStack();
     renderSupport();
-    updateDashboard();
+    renderFood();
+    
+    // Date
+    document.getElementById('date-display').textContent = new Date().toLocaleDateString('ru-RU');
 });
