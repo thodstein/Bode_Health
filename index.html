@@ -51,10 +51,13 @@ canvas{background:var(--card);border-radius:12px;padding:10px;margin-bottom:20px
 <button class="tab-btn" onclick="App.switchTab('profile')">👤 Профиль</button>
 </nav>
 <main>
+<!-- DASHBOARD -->
 <div id="dashboard" class="view active">
 <div class="grid"><div class="card"><h3>Readiness</h3><div class="big-val" id="d-readiness">--</div></div><div class="card"><h3>Risk Avg</h3><div class="big-val" id="d-risk">--</div></div></div>
 <div class="form-box" style="border:1px solid var(--err);color:var(--err)">⚠️ Добавьте препараты во вкладке "Стек" для расчета.</div>
 </div>
+
+<!-- STACK -->
 <div id="stack" class="view">
 <div class="form-box">
 <label>Вещество</label><select id="sub-select" onchange="App.loadEsters()"></select>
@@ -67,30 +70,55 @@ canvas{background:var(--card);border-radius:12px;padding:10px;margin-bottom:20px
 <button class="btn-sec" onclick="App.calcPlan()">РАССЧИТАТЬ ДИНАМИКУ</button>
 <div id="plan-msg" style="margin-top:15px;color:var(--sec)"></div>
 </div>
+
+<!-- RISKS -->
 <div id="risks" class="view">
 <h3>Динамика рисков</h3><div class="controls" id="chart-controls"></div><canvas id="trend-chart"></canvas>
 <h3>Матрица (Heatmap)</h3>
 <div class="week-nav"><button onclick="App.changeWeek(-1)">◀</button><span id="week-label" style="font-weight:bold;color:var(--sec)">Неделя 1</span><button onclick="App.changeWeek(1)">▶</button></div>
 <div id="heatmap" class="heatmap"></div>
 </div>
+
+<!-- SUPPORT -->
 <div id="support" class="view"><h2>Протокол поддержки</h2><div id="support-list"></div></div>
-<div id="labs" class="view"><div class="form-box"><h3>Индекс Фертильности (WHO)</h3><input type="number" id="lab-vol" placeholder="Объем (мл)"><input type="number" id="lab-conc" placeholder="Концентрация (млн)"><input type="number" id="lab-pr" placeholder="Подвижность (%)"><button class="btn-pri" onclick="App.calcFert()">Рассчитать IF</button><div id="fert-res" style="margin-top:15px;font-size:1.2rem;font-weight:bold"></div></div></div>
-<div id="articles" class="view"><h2>База знаний</h2><div id="articles-list"></div></div>
+
+<!-- LABS -->
+<div id="labs" class="view">
+<div class="form-box">
+<h3>Индекс Фертильности (WHO)</h3>
+<input type="number" id="lab-vol" placeholder="Объем (мл)">
+<input type="number" id="lab-conc" placeholder="Концентрация (млн)">
+<input type="number" id="lab-pr" placeholder="Подвижность (%)">
+<button class="btn-pri" onclick="App.calcFert()">Рассчитать IF</button>
+<div id="fert-res" style="margin-top:15px;font-size:1.2rem;font-weight:bold"></div>
+</div>
+</div>
+
+<!-- ARTICLES (SEPARATE) -->
+<div id="articles" class="view"><h2>База знаний (Статьи)</h2><div id="articles-list"></div></div>
+
+<!-- SHOP (SEPARATE) -->
 <div id="shop" class="view"><h2>Магазин</h2><div id="shop-list"></div><h2>Глоссарий</h2><div id="glossary-list"></div></div>
-<div id="profile" class="view"><h2>Профиль пользователя</h2><div class="card"><h3>Статистика</h3><p>XP: <span id="prof-xp">0</span></p><p>Trust Score: <span id="prof-trust">0</span></p></div><h2>Настройки</h2><div class="form-box"><p>Экспорт данных:</p><button class="btn-sec" onclick="alert('Функция экспорта в разработке')">Скачать JSON</button></div></div>
+
+<!-- PROFILE (SEPARATE) -->
+<div id="profile" class="view">
+<h2>Профиль пользователя</h2>
+<div class="card">
+<h3>Статистика</h3>
+<p>XP: <span id="prof-xp">0</span></p>
+<p>Trust Score: <span id="prof-trust">0</span></p>
+</div>
+<h2>Настройки</h2>
+<div class="form-box">
+<p>Экспорт данных:</p>
+<button class="btn-sec" onclick="alert('Функция экспорта в разработке')">Скачать JSON</button>
+</div>
+</div>
+
 </main>
 </div>
-<script src="assets/js/core/database.js?v=12"></script>
-<script src="assets/js/core/engine.js?v=12"></script>
-<script src="assets/js/app.js?v=12"></script>
-<script>
-// Обновление профиля
-setInterval(() => {
-    if(document.getElementById('profile').classList.contains('active')) {
-        document.getElementById('prof-xp').innerText = App.state.xp;
-        document.getElementById('prof-trust').innerText = Math.min(100, Math.floor(App.state.xp / 10));
-    }
-}, 1000);
-</script>
+<script src="assets/js/core/database.js?v=13"></script>
+<script src="assets/js/core/engine.js?v=13"></script>
+<script src="assets/js/app.js?v=13"></script>
 </body>
 </html>
