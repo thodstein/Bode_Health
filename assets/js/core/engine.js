@@ -1,87 +1,101 @@
 const Engine = {
-    generateWeeklyPlan(stack) {
-        if (stack.length === 0) return [];
-
-        // Находим самую позднюю неделю окончания + период выведения (5 периодов п/в макс эфира)
-        let maxWeekEnd = 0;
-        let maxHalfLife = 0;
+    calculateConcentration(halfLife, startWeek, endWeek, currentWeek) {
+        if (currentWeek < startWeek) return 0;
         
-        stack.forEach(item => {
-            const endWeek = item.startWeek + item.duration - 1;
-            if (endWeek > maxWeekEnd) maxWeekEnd = endWeek;
-            
-            const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
-            const hl = ester ? ester.halfLife : (item.substanceId.includes('oral') ? 0.5 : 1);
-            if (hl > maxHalfLife) maxHalfLife = hl;
-        });
+        const duration = endWeek - startWeek;
+        const weeksOnDrug = currentWeek - startWeek;
+        
+        // Фаза приема
+        if (currentWeek <= endWeek) {
+            const riseFactor = Math.min(1, weeksOnDrug / (halfLife / 7)); // Плавный вход
+            return riseFactor;
+        } 
+        // Фаза выведения (после курса)
+        else {
+            const weeksOff = currentWeek - endWeek;
+            const decay = Math.exp(-0.693 * weeksOff / (halfLife / 7));
+            return Math.max(0, decay);
+        }
+    },
 
-        const washoutWeeks = Math.ceil((maxHalfLife * 5) / 7); // 5 периодов п/в в неделях
-        const totalWeeks = maxWeekEnd + washoutWeeks;
-
+    generateWeeklyPlan(stack, totalWeeksForecast) {
         const weeks = [];
-        for (let w = 1; w <= totalWeeks; w++) {
-            let risks = { liver: 0, cardio: 0, kidney: 0, neuro: 0, hemato: 0, endo: 0, repro: 0 };
+        // Прогноз длится до конца самого длинного курса + 5 периодов полувыведения самого длинного эфира
+        let maxEnd = 0;
+        stack.forEach(s => { if (s.endWeek > maxEnd) maxEnd = s.endWeek; });
+        const longestHalfLife = Math.max(...stack.map(s => {
+            const ester = DB.esters[s.substanceId]?.find(e => e.id === s.esterId);
+            return ester ? ester.halfLife : 1;
+        }), 1);
+        const forecastEnd = Math.ceil(maxEnd + (longestHalfLife / 7) * 5);
+        const finalDuration = Math.max(totalWeeksForecast || 12, forecastEnd);
+
+        for (let w = 1; w <= finalDuration; w++) {
+            let risks = {};
+            // Инициализация всех 49 механизмов нулями
+            for (let sys in DB.riskMatrix) {
+                risks[sys] = {};
+                DB.riskMatrix[sys].mechanisms.forEach(m => risks[sys][m.id] = 0);
+            }
+
             let activeDrugs = [];
-            let concentrationFactor = 0;
-
             stack.forEach(item => {
-                const start = item.startWeek;
-                const end = item.startWeek + item.duration - 1;
-                const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
-                const hl = ester ? ester.halfLife : 1;
-                
-                let currentConc = 0;
+                const conc = this.calculateConcentration(
+                    (DB.esters[item.substanceId]?.find(e => e.id === item.esterId)?.halfLife) || 1,
+                    item.startWeek,
+                    item.endWeek,
+                    w
+                );
 
-                if (w >= start && w <= end) {
-                    // Активная фаза: накопление
-                    const weekInCycle = w - start + 1;
-                    // Простая модель накопления до steady state (примерно 4-5 периодов п/в)
-                    const accumulation = Math.min(1, weekInCycle / (hl/7 + 2)); 
-                    currentConc = accumulation;
-                    activeDrugs.push(`${DB.substances.find(s=>s.id===item.substanceId)?.name} (${item.dose}мг)`);
-                } else if (w > end) {
-                    // Фаза выведения
-                    const weeksOff = w - end;
-                    // Экспоненциальный спад
-                    currentConc = Math.max(0, Math.pow(0.5, (weeksOff * 7) / hl));
-                    if (currentConc > 0.05) activeDrugs.push(`(Washout) ${DB.substances.find(s=>s.id===item.substanceId)?.name}`);
-                }
+                if (conc > 0.01) {
+                    activeDrugs.push({ ...item, conc });
+                    const sub = DB.substances.find(s => s.id === item.substanceId);
+                    if (!sub) return;
 
-                if (currentConc > 0.05) {
-                    const tox = DB.substances.find(s => s.id === item.substanceId)?.baseToxicity;
-                    if (tox) {
-                        const load = (item.dose / 100) * currentConc;
-                        risks.liver += (tox.liver || 0) * load;
-                        risks.cardio += (tox.lipid || 0) * load;
-                        risks.kidney += (tox.kidney || 0) * load;
-                        risks.neuro += (tox.neuro || 0) * load;
-                        risks.hemato += (tox.hct || 0) * load;
-                        risks.endo += (tox.endo || 0) * load;
-                        risks.repro += (tox.repro || 0) * load;
-                    }
+                    const tox = sub.baseTox;
+                    const load = conc * (item.dose / 100);
+
+                    // Распределение базовой токсичности по механизмам (упрощенно)
+                    // В полной версии тут нужна карта влияния substance -> mechanism
+                    risks.liver.cholestasis += (tox.liver * 3) * load;
+                    risks.liver.cytolysis += (tox.liver * 2) * load;
+                    
+                    risks.cardio.lipids += (tox.lipid * 3) * load;
+                    risks.cardio.htn += (tox.lipid * 1.5) * load;
+                    risks.cardio.thrombo += (tox.lipid * 1) * load;
+
+                    risks.hemato.erythrocytosis += (tox.hct * 4) * load;
+                    risks.hemato.viscosity += (tox.hct * 3) * load;
+
+                    risks.neuro.dopamine += (tox.neuro * 5) * load;
+                    
+                    risks.kidney.hyperfiltration += (tox.kidney * 3) * load;
+                    
+                    risks.endo.insulin_res += (tox.endo * 3) * load;
+                    risks.endo.estrogen += (tox.endo * 2) * load; // Условно
+                    
+                    risks.repro.suppression += (tox.repro * 5) * load;
+                    risks.repro.atrophy += (tox.repro * 4) * load;
                 }
             });
 
-            // Нормализация до 100
-            for (let k in risks) risks[k] = Math.min(100, Math.round(risks[k]));
-            
-            // Детализация механизмов (упрощенно распределяем общий риск системы по механизмам)
-            let mechanisms = {};
-            DB.riskMatrixDef.liver.forEach(m => mechanisms[`liver_${m}`] = Math.round(risks.liver * (0.1 + Math.random()*0.2))); // Примерная дисперсия
-            
-            weeks.push({
-                week: w,
-                risks: risks,
-                activeDrugs: [...new Set(activeDrugs)],
-                isWashout: w > maxWeekEnd
-            });
+            // Нормализация до 100%
+            for (let sys in risks) {
+                for (let m in risks[sys]) {
+                    risks[sys][m] = Math.min(100, Math.round(risks[sys][m]));
+                }
+            }
+
+            weeks.push({ week: w, risks, activeDrugsCount: activeDrugs.length });
         }
         return weeks;
     },
 
-    calculateFertilityIndex(data) {
-        if (!data.volume || !data.conc) return 0;
-        let score = (Math.min(1, data.volume/1.5)*15) + (Math.min(1, data.conc/16)*20) + (Math.min(1, (data.pr||0)/30)*25) + (Math.min(1, (data.morph||0)/4)*20);
-        return Math.round(score * 100 / 80);
+    getRiskColor(value) {
+        if (value < 20) return '#4caf50'; // Green
+        if (value < 40) return '#8bc34a'; // Light Green
+        if (value < 60) return '#ffeb3b'; // Yellow
+        if (value < 80) return '#ff9800'; // Orange
+        return '#f44336'; // Red
     }
 };
