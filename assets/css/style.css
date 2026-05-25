@@ -19,14 +19,14 @@ header { background: var(--bg-card); padding: 20px; border-bottom: 1px solid var
 .card { background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
 .big-value { font-size: 2.2em; font-weight: bold; margin-top: 10px; color: var(--secondary); }
 
-.deep-form { background: var(--bg-card); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
+.deep-form { background: var(--bg-card); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
 .row { display: flex; gap: 10px; }
 input, select { background: #2c2c2c; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; flex: 1; }
-button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: var(--primary); color: #000; }
-.btn-delete { background: rgba(207, 102, 121, 0.2); color: var(--error); padding: 8px 12px; font-size: 0.9em; }
-.btn-success { background: #03dac6; color: #000; width: 100%; margin-top: 20px; }
-.btn-secondary { background: #333; color: white; margin-right: 10px; margin-top: 10px; }
-.btn-icon { font-size: 1.5em; background: none; border: none; cursor: pointer; color: var(--secondary); padding: 0; }
+button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: var(--primary); color: #000; width: 100%; }
+.btn-delete { background: rgba(207, 102, 121, 0.2); color: var(--error); padding: 8px 12px; font-size: 0.9em; width: auto; }
+.btn-success { background: #03dac6; color: #000; margin-top: 20px; }
+.btn-secondary { background: #333; color: white; margin-right: 10px; margin-top: 10px; width: auto; display: inline-block; }
+.btn-icon { font-size: 1.5em; background: none; border: none; cursor: pointer; color: var(--secondary); padding: 0; width: auto; }
 
 .list-container, .schedule-container { display: flex; flex-direction: column; gap: 12px; }
 .drug-card, .support-item { background: var(--bg-card); padding: 15px; border-radius: 8px; border-left: 4px solid var(--secondary); display: flex; justify-content: space-between; align-items: center; }
@@ -37,21 +37,9 @@ button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold
 .week-card { background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 .week-card h4 { margin: 0 0 10px; color: var(--secondary); }
 .mini-stats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.9em; margin-top: 10px; }
-details { margin-top: 10px; font-size: 0.9em; color: var(--text-sec); }
-summary { cursor: pointer; color: var(--primary); }
 
 .fertility-block, .glossary-container { margin-top: 20px; }
 canvas { max-width: 100%; margin: 20px 0; background: var(--bg-card); border-radius: 12px; padding: 10px; }
 .alert-box { background: rgba(207, 102, 121, 0.15); border: 1px solid var(--error); color: var(--error); padding: 15px; border-radius: 8px; margin-top: 20px; }
-
-/* Risk Matrix Table */
-.risk-matrix-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.8em; }
-.risk-matrix-table th, .risk-matrix-table td { border: 1px solid #444; padding: 8px; text-align: center; }
-.risk-matrix-table th { background: #333; color: var(--primary); }
-.sys-name { text-align: left; font-weight: bold; background: #252525; }
-.matrix-cell { position: relative; min-width: 60px; }
-.cell-val { font-weight: bold; font-size: 1.1em; }
-.cell-diff { font-size: 0.7em; color: #03dac6; }
-.bg-red { background: rgba(207, 102, 121, 0.3); }
-.bg-orange { background: rgba(255, 159, 64, 0.3); }
-.bg-green { background: rgba(3, 218, 198, 0.3); }
+.details-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.details-list .drug-card { flex-direction: column; align-items: flex-start; }

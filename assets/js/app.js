@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
 
-    const state = { stack: [], plan: [], currentWeek: 1, trust: 0, xp: 0 };
+    const state = { stack: [], currentWeek: 1, trust: 0, xp: 0 };
 
-    // Навигация
+    // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Инициализация селектов
+    // Init Substance Select
     const subSelect = document.getElementById('drug-substance');
     DB.substances.forEach(s => {
         const opt = document.createElement('option');
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const estSelect = document.getElementById('drug-ester');
             estSelect.innerHTML = '';
             const esters = DB.esters[subId];
-            if (esters && esters.length > 0) {
+            if (esters) {
                 estSelect.disabled = false;
                 esters.forEach(e => {
                     const opt = document.createElement('option');
@@ -39,34 +39,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 estSelect.disabled = true;
                 const opt = document.createElement('option');
-                opt.textContent = "Без эфира (Орал/Пептид)";
+                opt.textContent = "Без эфира";
                 estSelect.appendChild(opt);
             }
         },
-        
         addDrug: (e) => {
             e.preventDefault();
             const subId = document.getElementById('drug-substance').value;
             const esterId = document.getElementById('drug-ester').value;
             const dose = parseFloat(document.getElementById('drug-dose').value);
-            const weeks = parseInt(document.getElementById('drug-weeks').value);
+            const startW = parseInt(document.getElementById('drug-start').value);
+            const endW = parseInt(document.getElementById('drug-end').value);
             
-            if (!dose || !weeks) return alert("Заполните дозу и недели!");
+            if (startW >= endW) return alert("Неделя окончания должна быть больше начала!");
 
-            state.stack.push({ substanceId: subId, esterId, dose, duration: weeks });
+            state.stack.push({ substanceId: subId, esterId, dose, startWeek: startW, endWeek: endW });
             App.renderStack();
             e.target.reset();
+            document.getElementById('drug-start').value = 1;
+            document.getElementById('drug-end').value = 12;
             document.getElementById('drug-ester').disabled = true;
-            alert("Препарат добавлен! Нажмите 'Рассчитать план'.");
         },
-
         renderStack: () => {
             const list = document.getElementById('stack-list');
             list.innerHTML = '';
-            if (state.stack.length === 0) {
-                list.innerHTML = '<div class="empty-state">Стек пуст</div>';
-                return;
-            }
             state.stack.forEach((item, idx) => {
                 const sub = DB.substances.find(s => s.id === item.substanceId);
                 const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
@@ -75,158 +71,131 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.innerHTML = `
                     <div>
                         <strong>${sub.name}</strong> ${ester ? '('+ester.name+')' : ''}
-                        <br><small>${item.dose} мг/нед | ${item.duration} нед.</small>
+                        <br><small>${item.dose} мг/нед | С ${item.startWeek} по ${item.endWeek} нед.</small>
                     </div>
                     <button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack()">✕</button>
                 `;
                 list.appendChild(div);
             });
         },
-
         generatePlan: () => {
-            if (state.stack.length === 0) return alert("Сначала добавьте препараты!");
-            
-            state.plan = Engine.generateWeeklyPlan(state.stack);
+            const plan = Engine.generateCoursePlan(state.stack);
             const out = document.getElementById('weekly-plan-output');
-            out.innerHTML = `<h3>План курса (${state.plan.length} недель)</h3>`;
+            out.innerHTML = '<h3>План курса и выведения</h3>';
             
-            state.plan.forEach((w, idx) => {
-                const raw = w.risks;
-                const net = Engine.calculateNetRisks(raw);
+            plan.forEach(w => {
+                const r = w.risks;
+                const avgRisk = (r.liver+r.cardio+r.kidney+r.neuro+r.hemato+r.endo+r.repro)/7;
+                const color = avgRisk > 50 ? '#cf6679' : (avgRisk > 30 ? '#ffeb3b' : '#03dac6');
+                const status = w.isPostCycle ? '(ПКТ/Вывод)' : '';
                 
-                // Средний риск
-                let sumRaw = 0, count = 0;
-                for(let s in raw) for(let m in raw[s]) { sumRaw += raw[s][m]; count++; }
-                const avgRaw = Math.round(sumRaw / count);
-                
-                let sumNet = 0;
-                for(let s in net) for(let m in net[s]) { sumNet += net[s][m]; }
-                const avgNet = Math.round(sumNet / count);
-
-                const color = avgNet > 50 ? '#cf6679' : (avgNet > 30 ? '#ff9f40' : '#03dac6');
-                const isActive = w.isOnCycle ? '🟢 На курсе' : '🟡 Выведение';
-
                 out.innerHTML += `
                     <div class="week-card" style="border-left: 4px solid ${color}">
-                        <div style="display:flex; justify-content:space-between;">
-                            <h4>Неделя ${w.week} <small>(${isActive})</small></h4>
-                            <span style="font-weight:bold; color:${color}">Risk: ${avgRaw}% → ${avgNet}%</span>
+                        <h4>Неделя ${w.week} ${status}</h4>
+                        <p>Препараты: ${w.activeDrugs.length ? w.activeDrugs.map(d => DB.substances.find(s=>s.id===d.substanceId).name).join(', ') : 'Нет активных'}</p>
+                        <div class="mini-stats">
+                            <span>Печень: ${r.liver}%</span>
+                            <span>Сердце: ${r.cardio}%</span>
+                            <span>Кровь: ${r.hemato}%</span>
+                            <span style="color:${color}; font-weight:bold">Avg: ${Math.round(avgRisk)}%</span>
                         </div>
-                        <p style="font-size:0.9em; color:#aaa">Активные препараты: ${w.activeDrugs.length ? w.activeDrugs.map(d => DB.substances.find(s=>s.id===d.substanceId).name).join(', ') : 'Нет (пост-курс)'}</p>
-                        
-                        <details>
-                            <summary>Детали рисков и поддержка</summary>
-                            <div style="margin-top:10px; font-size:0.85em;">
-                                <p><strong>Ключевые риски:</strong> Печень: ${raw.liver.cholestasis}%, Кровь: ${raw.hemato.erythrocytosis}%, Сердце: ${raw.cardio.lipids}%</p>
-                                <p><strong>Рекомендации:</strong> ${DB.supportProtocol.map(b => `${b.title}: ${b.items.slice(0,2).map(i=>i.name).join(', ')}`).join('; ')}</p>
-                            </div>
-                        </details>
                     </div>
                 `;
             });
-
-            App.renderMatrixTable(state.plan[0]); // Показать первую неделю
-            App.updateTrendChart(state.plan);
             
+            App.updateCharts(plan);
             state.xp += 100;
             document.getElementById('xp-display').textContent = `XP: ${state.xp}`;
-            document.getElementById('dash-risk').textContent = state.plan[0] ? Math.round(state.plan[0].risks.liver.cholestasis) + '%' : '--';
+            alert('План рассчитан! Перейдите во вкладку "Риски" для графиков.');
         },
-
-        renderMatrixTable: (weekData) => {
-            const table = document.getElementById('risk-matrix-table');
-            if (!weekData) return;
-            
-            const raw = weekData.risks;
-            const net = Engine.calculateNetRisks(raw);
-            
-            const systems = {
-                liver: 'Печень', cardio: 'Сердце', kidney: 'Почки', neuro: 'Невро', hemato: 'Кровь', endo: 'Эндо', repro: 'Репро'
-            };
-            
-            let html = `<thead><tr><th>Система / Механизм</th>`;
-            for (let mech in raw.liver) html += `<th>${mech}</th>`;
-            html += `</tr></thead><tbody>`;
-
-            for (let sys in raw) {
-                html += `<tr><td class="sys-name">${systems[sys]}</td>`;
-                for (let mech in raw[sys]) {
-                    const rVal = raw[sys][mech];
-                    const nVal = net[sys][mech];
-                    const diff = rVal - nVal;
-                    const color = nVal > 50 ? 'bg-red' : (nVal > 30 ? 'bg-orange' : 'bg-green');
-                    
-                    html += `
-                        <td class="matrix-cell ${color}">
-                            <div class="cell-val">${nVal}%</div>
-                            <div class="cell-diff">${diff > 0 ? '↓'+diff : ''}</div>
-                        </td>
-                    `;
-                }
-                html += `</tr>`;
-            }
-            html += `</tbody>`;
-            table.innerHTML = html;
-        },
-
-        updateTrendChart: (plan) => {
-            const ctx = document.getElementById('risk-trend-chart');
-            if (!ctx) return;
-            if (window.trendChart) window.trendChart.destroy();
-
-            const labels = plan.map(p => `W${p.week}`);
-            // Берем среднее по всем системам для каждой недели
-            const dataAvg = plan.map(p => {
-                let sum = 0, cnt = 0;
-                const net = Engine.calculateNetRisks(p.risks);
-                for(let s in net) for(let m in net[s]) { sum += net[s][m]; cnt++; }
-                return Math.round(sum/cnt);
-            });
-
-            window.trendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Средний Net Risk',
-                        data: dataAvg,
-                        borderColor: '#03dac6',
-                        backgroundColor: 'rgba(3, 218, 198, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: 'white' } } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } },
-                        x: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
+        updateCharts: (plan) => {
+            // 1. Trend Chart (Line)
+            const ctxTrend = document.getElementById('risk-trend-chart');
+            if (ctxTrend) {
+                if (window.trendChart) window.trendChart.destroy();
+                const labels = plan.map(p => `W${p.week}`);
+                const dataLiver = plan.map(p => p.risks.liver);
+                const dataCardio = plan.map(p => p.risks.cardio);
+                const dataHemato = plan.map(p => p.risks.hemato);
+                const dataNeuro = plan.map(p => p.risks.neuro);
+                
+                window.trendChart = new Chart(ctxTrend, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Печень', data: dataLiver, borderColor: '#ff6384', tension: 0.3 },
+                            { label: 'Сердце', data: dataCardio, borderColor: '#36a2eb', tension: 0.3 },
+                            { label: 'Кровь', data: dataHemato, borderColor: '#ff9f40', tension: 0.3 },
+                            { label: 'Невро', data: dataNeuro, borderColor: '#9966ff', tension: 0.3 }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        plugins: { legend: { labels: { color: 'white' } } }, 
+                        scales: { y: { beginAtZero: true, max: 100, ticks: { color: 'gray' } }, x: { ticks: { color: 'gray' } } } 
                     }
+                });
+            }
+            
+            // 2. Radar Chart (Current Week or Max Risk)
+            const curr = plan[state.currentWeek-1] || plan[0];
+            const ctxRadar = document.getElementById('risk-radar-chart');
+            if (ctxRadar) {
+                if (window.radarChart) window.radarChart.destroy();
+                const r = curr.risks;
+                window.radarChart = new Chart(ctxRadar, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Печень', 'Сердце', 'Почки', 'Невро', 'Кровь', 'Эндо', 'Репро'],
+                        datasets: [{
+                            label: `Неделя ${curr.week}`,
+                            data: [r.liver, r.cardio, r.kidney, r.neuro, r.hemato, r.endo, r.repro],
+                            backgroundColor: 'rgba(3, 218, 198, 0.4)',
+                            borderColor: '#03dac6',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: { 
+                        scales: { r: { beginAtZero: true, max: 100, ticks: { color: 'gray', backdropColor: 'transparent' }, grid: { color: '#444' } } }, 
+                        plugins: { legend: { labels: { color: 'white' } } } 
+                    }
+                });
+                
+                // Update Dashboard
+                const avg = (r.liver+r.cardio+r.kidney+r.neuro+r.hemato+r.endo+r.repro)/7;
+                document.getElementById('dash-risk').textContent = Math.round(avg) + '%';
+                document.getElementById('dash-readiness').textContent = Math.max(10, 100 - Math.round(avg));
+                document.getElementById('dash-fatigue').textContent = Math.min(90, Math.round(avg * 0.8));
+                
+                // Render Mechanism Details (Text List)
+                const details = Engine.getMechanismBreakdown(state.stack, curr.week);
+                const detDiv = document.getElementById('mechanism-details');
+                detDiv.innerHTML = '<h4>Детализация механизмов (Неделя '+curr.week+')</h4>';
+                for (const [sys, mechanisms] of Object.entries(details)) {
+                    detDiv.innerHTML += `<div class="drug-card"><strong>${sys.toUpperCase()}</strong><br>` + 
+                        mechanisms.map(m => `<small>${m.name}: ${m.value}%</small>`).join(' | ') + '</div>';
                 }
-            });
+            }
         },
-
         calcFertility: () => {
             const vol = parseFloat(document.getElementById('semen-vol').value);
             const conc = parseFloat(document.getElementById('semen-conc').value);
             const pr = parseFloat(document.getElementById('semen-pr').value);
             const morph = parseFloat(document.getElementById('semen-morph').value);
-            if (!vol || !conc) return alert("Введите данные");
             const ifScore = Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr, morphology: morph });
-            document.getElementById('fertility-result').innerHTML = `<h3>IF: ${ifScore}/100</h3><p>${ifScore > 60 ? '✅ Норма' : '⚠️ Требуется внимание'}</p>`;
+            const res = document.getElementById('fertility-result');
+            res.innerHTML = `<h3>IF: ${ifScore}/100</h3><p>${ifScore > 60 ? '✅ Норма' : '⚠️ Требуется внимание'}</p>`;
         },
-
         exportJSON: () => {
             const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
             const node = document.createElement('a');
             node.setAttribute("href", dataStr);
-            node.setAttribute("download", "bode_health_plan.json");
+            node.setAttribute("download", "bode_health_course.json");
             document.body.appendChild(node);
             node.click();
             node.remove();
         },
-        
         renderShop: () => {
             const list = document.getElementById('shop-list');
             list.innerHTML = '';
@@ -235,13 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     list.innerHTML += `
                         <div class="drug-card">
                             <div><strong>${key.toUpperCase()}</strong><br><small>${item.platform}</small></div>
-                            <div><span style="color:#03dac6">${item.price}</span> <a href="${item.url}" class="btn-primary" style="padding:5px 10px; font-size:0.8em; margin-left:10px; text-decoration:none;">Buy</a></div>
+                            <div><span style="color:#03dac6">${item.price}</span> <a href="${item.url}" class="btn-primary" style="font-size:0.7em; padding:4px 8px; margin-left:5px; text-decoration:none;">Buy</a></div>
                         </div>
                     `;
                 });
             }
         },
-        
         renderGlossary: () => {
             const list = document.getElementById('glossary-list');
             list.innerHTML = '';
@@ -251,12 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Привязка событий
     document.getElementById('add-drug-form').addEventListener('submit', App.addDrug);
-    document.getElementById('btn-generate-plan').addEventListener('click', App.generatePlan);
-    
-    // Init
     App.renderStack();
     App.renderShop();
     App.renderGlossary();
+    document.getElementById('trust-score-display').textContent = `Trust: ${Engine.calculateFertilityIndex({volume:2, conc:20}) > 0 ? 50 : 0}`; // Mock
 });

@@ -42,10 +42,10 @@
                     <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
                     <div class="card"><h3>Risk (Net)</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
-                <div class="alert-box" id="daily-alert">Добавьте препараты для расчета прогноза.</div>
+                <div class="alert-box" id="daily-alert">Настройте курс во вкладке "Стек" для расчета.</div>
             </section>
 
-            <!-- Stack -->
+            <!-- Stack (FIXED: Start/End Weeks) -->
             <section id="stack" class="tab-content">
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
@@ -57,7 +57,10 @@
                     
                     <div class="row">
                         <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
-                        <input type="number" id="drug-weeks" placeholder="Недель курса" required>
+                    </div>
+                    <div class="row">
+                        <input type="number" id="drug-start" placeholder="С недели" min="1" value="1" required>
+                        <input type="number" id="drug-end" placeholder="По неделю" min="1" value="12" required>
                     </div>
                     <button type="submit" class="btn-primary">Включить в курс</button>
                 </form>
@@ -65,7 +68,7 @@
                 <div id="stack-list" class="list-container"></div>
                 
                 <div class="actions">
-                    <button id="btn-generate-plan" class="btn-success">Рассчитать план и риски</button>
+                    <button onclick="App.generatePlan()" class="btn-success">Рассчитать план и риски</button>
                 </div>
                 <div id="weekly-plan-output"></div>
             </section>
@@ -76,16 +79,14 @@
                 <div id="support-schedule" class="schedule-container"></div>
             </section>
 
-            <!-- Risks (FULL MATRIX) -->
+            <!-- Risks (Restored Charts) -->
             <section id="risks" class="tab-content">
-                <h2>Матрица рисков (7×7)</h2>
-                <div style="overflow-x:auto;">
-                    <table class="risk-matrix-table" id="risk-matrix-table">
-                        <!-- Генерируется JS -->
-                    </table>
-                </div>
-                <h3>Динамика средних рисков</h3>
+                <h2>Динамика рисков (по неделям)</h2>
                 <canvas id="risk-trend-chart"></canvas>
+                <h3>Матрица 7x7 (Детализация)</h3>
+                <p style="font-size:0.8em; color:#aaa">Наведите на сектор для деталей</p>
+                <canvas id="risk-radar-chart"></canvas>
+                <div id="mechanism-details" class="details-list"></div>
             </section>
 
             <!-- Nutrition -->
@@ -125,6 +126,7 @@
             <!-- Reports -->
             <section id="reports" class="tab-content">
                 <h2>Отчеты</h2>
+                <button onclick="alert('Генерация PDF...')" class="btn-secondary">📄 Скачать PDF</button>
                 <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
                 <div id="report-preview"></div>
             </section>
