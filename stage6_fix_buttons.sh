@@ -1,3 +1,8 @@
+#!/bin/bash
+echo "🔧 STAGE 6 FIX: Buttons Logic + Content Enrichment"
+
+# Исправляем app.js (Надежная инициализация событий)
+cat > assets/js/app.js << 'APPEOF'
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App Initialized");
     
@@ -358,3 +363,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обновление XP при загрузке (если есть сохранение)
     document.getElementById('xp-display').textContent = `XP: ${window.appState.xp}`;
 });
+APPEOF
+
+# Обновляем CSS для кнопок и heatmap
+cat >> assets/css/style.css << 'CSSEOF'
+
+/* Fix for Buttons */
+button:active { transform: scale(0.98); }
+.btn-delete:hover { background: rgba(207, 102, 121, 0.4); }
+.heatmap-cell { user-select: none; }
+
+/* Scrollbar for Tabs */
+.tabs::-webkit-scrollbar { height: 4px; }
+.tabs::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+CSSEOF
+
+echo "🚀 Committing Fix..."
+git add -A
+git commit -m "Stage 6 FIXED: Buttons Logic, Content Enrichment, Heatmap UI Polish"
+git push origin main --force
+
+echo "✅ Done! Check site."

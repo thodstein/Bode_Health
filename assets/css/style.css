@@ -36,3 +36,12 @@ button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold
 .week-selector button { padding: 5px 15px; font-size: 1.2em; }
 #current-week-display { font-size: 1.2em; font-weight: bold; color: var(--secondary); min-width: 120px; text-align: center; }
 canvas { max-width: 100%; margin: 20px 0; background: var(--bg-card); border-radius: 12px; padding: 10px; }
+
+/* Fix for Buttons */
+button:active { transform: scale(0.98); }
+.btn-delete:hover { background: rgba(207, 102, 121, 0.4); }
+.heatmap-cell { user-select: none; }
+
+/* Scrollbar for Tabs */
+.tabs::-webkit-scrollbar { height: 4px; }
+.tabs::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
