@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0</title>
+    <title>Bode Health v11.0 Ultimate</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="app-container">
         <header>
-            <div><h1>Bode Health <span class="version">v11.0</span></h1></div>
-            <div class="status-bar" id="xp-display">XP: 0</div>
+            <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Pro Analytics</p></div>
+            <div class="status-bar"><span id="xp-display">XP: 0</span></div>
         </header>
 
         <nav class="tabs">
@@ -21,6 +22,7 @@
             <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
             <button class="tab-btn" data-tab="support">💊 Поддержка</button>
             <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
+            <button class="tab-btn" data-tab="articles">📚 Статьи</button>
             <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
         </nav>
 
@@ -32,6 +34,7 @@
                     <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
                     <div class="card"><h3>Avg Risk</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
+                <div class="alert-box">Добавьте препараты во вкладке "Стек" для расчета.</div>
             </section>
 
             <!-- Stack -->
@@ -39,22 +42,22 @@
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
                     <label>Вещество:</label>
-                    <select id="drug-substance" onchange="App.loadEsters()"></select>
+                    <select id="drug-substance" required onchange="App.loadEsters()"></select>
                     
                     <label>Эфир:</label>
-                    <select id="drug-ester" disabled></select>
+                    <select id="drug-ester" disabled required></select>
                     
                     <div class="row">
-                        <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
+                        <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required min="1">
                     </div>
                     <div class="row">
-                        <input type="number" id="drug-start" placeholder="Старт (неделя)" value="1" min="1" required>
-                        <input type="number" id="drug-end" placeholder="Финиш (неделя)" value="8" min="1" required>
+                        <input type="number" id="drug-start" placeholder="Старт (нед)" value="1" min="1" required>
+                        <input type="number" id="drug-end" placeholder="Финиш (нед)" value="8" min="2" required>
                     </div>
                     <button type="submit" class="btn-primary">Добавить в курс</button>
                 </form>
                 <div id="stack-list" class="list-container"></div>
-                <button onclick="App.generatePlan()" class="btn-success">Рассчитать динамику курса</button>
+                <button onclick="App.generatePlan()" class="btn-success">Рассчитать динамику</button>
                 <div id="weekly-plan-output"></div>
             </section>
 
@@ -89,20 +92,31 @@
 
             <!-- Labs -->
             <section id="labs" class="tab-content">
-                <h2>Фертильность</h2>
+                <h2>Фертильность (WHO 2021)</h2>
                 <div class="input-group">
-                    <input type="number" id="semen-vol" placeholder="Объем">
-                    <input type="number" id="semen-conc" placeholder="Конц.">
-                    <input type="number" id="semen-pr" placeholder="PR%">
-                    <input type="number" id="semen-morph" placeholder="Morph%">
+                    <input type="number" id="semen-vol" placeholder="Объем (мл)">
+                    <input type="number" id="semen-conc" placeholder="Конц. (млн)">
+                    <input type="number" id="semen-pr" placeholder="PR (%)">
+                    <input type="number" id="semen-morph" placeholder="Morph (%)">
                 </div>
                 <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
                 <div id="fertility-result"></div>
             </section>
 
+            <!-- Articles -->
+            <section id="articles" class="tab-content">
+                <h2>База знаний</h2>
+                <div id="articles-list" class="list-container"></div>
+                <div id="article-viewer" style="display:none; background:var(--bg-card); padding:20px; border-radius:12px; margin-top:20px;">
+                    <button onclick="document.getElementById('article-viewer').style.display='none'; document.getElementById('articles-list').style.display='block'" class="btn-secondary">← Назад</button>
+                    <h3 id="article-title"></h3>
+                    <div id="article-content" style="margin-top:15px; line-height:1.6;"></div>
+                </div>
+            </section>
+
             <!-- Shop -->
             <section id="shop" class="tab-content">
-                <h2>Магазин</h2>
+                <h2>Магазин поддержки</h2>
                 <div id="shop-list" class="list-container"></div>
                 <h2>Глоссарий</h2>
                 <div id="glossary-list"></div>
