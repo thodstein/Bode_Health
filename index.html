@@ -13,7 +13,7 @@
     <div class="app-container">
         <header>
             <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Advanced Analytics</p></div>
-            <div class="status-bar"><span id="xp-display">XP: 0</span></div>
+            <div class="status-bar" id="xp-display">Lvl 1 | XP: 0</div>
         </header>
 
         <nav class="tabs">
@@ -27,21 +27,27 @@
         </nav>
 
         <main>
-            <!-- Dashboard -->
+            <!-- Dashboard with Predictions -->
             <section id="dashboard" class="tab-content active">
                 <div class="cards-grid">
                     <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
                     <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
                     <div class="card"><h3>Avg Risk</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
+                
+                <div class="prediction-block">
+                    <h3>🔮 Прогноз состояния (7 дней)</h3>
+                    <canvas id="prediction-chart" height="100"></canvas>
+                    <div id="prediction-alerts" style="margin-top:15px; color:#ff9800"></div>
+                </div>
             </section>
 
-            <!-- Stack (Flexible Input) -->
+            <!-- Stack -->
             <section id="stack" class="tab-content">
                 <h2>Добавить препарат</h2>
                 <form id="add-drug-form" class="deep-form">
                     <label>Вещество:</label>
-                    <select id="drug-substance" onchange="App.loadEsters()"></select>
+                    <select id="drug-substance"></select>
                     
                     <label>Эфир:</label>
                     <select id="drug-ester" disabled></select>
@@ -50,17 +56,28 @@
                         <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
                     </div>
                     <div class="row">
-                        <input type="number" id="drug-start" placeholder="Старт (неделя)" value="1" min="1" required>
-                        <input type="number" id="drug-end" placeholder="Финиш (неделя)" value="8" min="1" required>
+                        <input type="number" id="drug-start" placeholder="Старт (нед)" value="1" min="1" required>
+                        <input type="number" id="drug-end" placeholder="Финиш (нед)" value="8" min="1" required>
                     </div>
                     <button type="submit" class="btn-primary">Добавить в курс</button>
                 </form>
                 <div id="stack-list" class="list-container"></div>
-                <button onclick="App.generatePlan()" class="btn-success">Рассчитать динамику курса</button>
+                <button class="btn-success">Рассчитать динамику курса</button>
                 <div id="weekly-plan-output"></div>
+                
+                <!-- What-If Simulator Placeholder -->
+                <div class="what-if-block" style="margin-top:30px; background:#252525; padding:15px; border-radius:8px;">
+                    <h3>🔄 What-If Симулятор</h3>
+                    <p style="font-size:0.9em; color:#aaa">Измените дозу тестостерона и посмотрите на риск без сохранения:</p>
+                    <div class="row">
+                        <input type="range" min="0" max="1000" value="0" id="whatif-slider" oninput="App.runWhatIf(this.value)">
+                        <span id="whatif-val" style="color:#03dac6; font-weight:bold">0 мг</span>
+                    </div>
+                    <div id="whatif-result" style="margin-top:10px; font-size:0.9em"></div>
+                </div>
             </section>
 
-            <!-- Risks (Heatmap + Charts) -->
+            <!-- Risks -->
             <section id="risks" class="tab-content">
                 <h2>Динамика рисков</h2>
                 <div class="chart-controls">
@@ -72,7 +89,7 @@
                     <label><input type="checkbox" onchange="App.toggleChart('endo')"> Эндо</label>
                     <label><input type="checkbox" onchange="App.toggleChart('repro')"> Репро</label>
                 </div>
-                <canvas id="risk-trend-chart"></canvas>
+                <div style="height:300px"><canvas id="risk-trend-chart"></canvas></div>
 
                 <h2>Матрица рисков (Heatmap)</h2>
                 <div class="week-selector">
@@ -109,7 +126,7 @@
                 <div id="report-preview"></div>
             </section>
 
-            <!-- Shop (Last) -->
+            <!-- Shop -->
             <section id="shop" class="tab-content">
                 <h2>Магазин</h2>
                 <div id="shop-list" class="list-container"></div>

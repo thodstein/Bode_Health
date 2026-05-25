@@ -1,3 +1,9 @@
+#!/bin/bash
+echo "🚀 STAGE 7: Fixing Buttons, Gamification, Predictive Analytics & What-If"
+
+# 1. Обновляем App.js с исправлением кнопок и новой логикой
+echo "🔧 Fixing Button Logic & Adding New Features..."
+cat > assets/js/app.js << 'APPEOF'
 // Глобальное состояние
 window.AppState = {
     stack: [],
@@ -377,3 +383,217 @@ window.App = {
         // Тут можно добавить прогресс бар и список ачивок
     }
 };
+APPEOF
+
+# 2. Обновляем HTML (добавляем блок прогноза и что-иф)
+echo "📝 Updating HTML with Predictive Blocks..."
+cat > index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bode Health v11.0 Pro</title>
+    <base href="https://thodstein.github.io/Bode_Health/">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div><h1>Bode Health <span class="version">v11.0</span></h1><p class="subtitle">Advanced Analytics</p></div>
+            <div class="status-bar" id="xp-display">Lvl 1 | XP: 0</div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
+            <button class="tab-btn" data-tab="stack">💉 Стек</button>
+            <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
+            <button class="tab-btn" data-tab="support">💊 Поддержка</button>
+            <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
+            <button class="tab-btn" data-tab="reports">📑 Отчеты</button>
+            <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
+        </nav>
+
+        <main>
+            <!-- Dashboard with Predictions -->
+            <section id="dashboard" class="tab-content active">
+                <div class="cards-grid">
+                    <div class="card"><h3>Readiness</h3><div class="big-value" id="dash-readiness">--</div></div>
+                    <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
+                    <div class="card"><h3>Avg Risk</h3><div class="big-value" id="dash-risk">--</div></div>
+                </div>
+                
+                <div class="prediction-block">
+                    <h3>🔮 Прогноз состояния (7 дней)</h3>
+                    <canvas id="prediction-chart" height="100"></canvas>
+                    <div id="prediction-alerts" style="margin-top:15px; color:#ff9800"></div>
+                </div>
+            </section>
+
+            <!-- Stack -->
+            <section id="stack" class="tab-content">
+                <h2>Добавить препарат</h2>
+                <form id="add-drug-form" class="deep-form">
+                    <label>Вещество:</label>
+                    <select id="drug-substance"></select>
+                    
+                    <label>Эфир:</label>
+                    <select id="drug-ester" disabled></select>
+                    
+                    <div class="row">
+                        <input type="number" id="drug-dose" placeholder="Доза (мг/нед)" required>
+                    </div>
+                    <div class="row">
+                        <input type="number" id="drug-start" placeholder="Старт (нед)" value="1" min="1" required>
+                        <input type="number" id="drug-end" placeholder="Финиш (нед)" value="8" min="1" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Добавить в курс</button>
+                </form>
+                <div id="stack-list" class="list-container"></div>
+                <button class="btn-success">Рассчитать динамику курса</button>
+                <div id="weekly-plan-output"></div>
+                
+                <!-- What-If Simulator Placeholder -->
+                <div class="what-if-block" style="margin-top:30px; background:#252525; padding:15px; border-radius:8px;">
+                    <h3>🔄 What-If Симулятор</h3>
+                    <p style="font-size:0.9em; color:#aaa">Измените дозу тестостерона и посмотрите на риск без сохранения:</p>
+                    <div class="row">
+                        <input type="range" min="0" max="1000" value="0" id="whatif-slider" oninput="App.runWhatIf(this.value)">
+                        <span id="whatif-val" style="color:#03dac6; font-weight:bold">0 мг</span>
+                    </div>
+                    <div id="whatif-result" style="margin-top:10px; font-size:0.9em"></div>
+                </div>
+            </section>
+
+            <!-- Risks -->
+            <section id="risks" class="tab-content">
+                <h2>Динамика рисков</h2>
+                <div class="chart-controls">
+                    <label><input type="checkbox" checked onchange="App.toggleChart('liver')"> Печень</label>
+                    <label><input type="checkbox" checked onchange="App.toggleChart('cardio')"> Сердце</label>
+                    <label><input type="checkbox" checked onchange="App.toggleChart('hemato')"> Кровь</label>
+                    <label><input type="checkbox" onchange="App.toggleChart('neuro')"> Нейро</label>
+                    <label><input type="checkbox" onchange="App.toggleChart('kidney')"> Почки</label>
+                    <label><input type="checkbox" onchange="App.toggleChart('endo')"> Эндо</label>
+                    <label><input type="checkbox" onchange="App.toggleChart('repro')"> Репро</label>
+                </div>
+                <div style="height:300px"><canvas id="risk-trend-chart"></canvas></div>
+
+                <h2>Матрица рисков (Heatmap)</h2>
+                <div class="week-selector">
+                    <button onclick="App.changeWeek(-1)">◀</button>
+                    <span id="current-week-display">Неделя 1</span>
+                    <button onclick="App.changeWeek(1)">▶</button>
+                </div>
+                <div id="heatmap-container" class="heatmap-grid"></div>
+            </section>
+
+            <!-- Support -->
+            <section id="support" class="tab-content">
+                <h2>Протокол поддержки</h2>
+                <div id="support-schedule" class="schedule-container"></div>
+            </section>
+
+            <!-- Labs -->
+            <section id="labs" class="tab-content">
+                <h2>Фертильность (WHO 2021)</h2>
+                <div class="input-group">
+                    <input type="number" id="semen-vol" placeholder="Объем">
+                    <input type="number" id="semen-conc" placeholder="Конц.">
+                    <input type="number" id="semen-pr" placeholder="PR%">
+                    <input type="number" id="semen-morph" placeholder="Morph%">
+                </div>
+                <button onclick="App.calcFertility()" class="btn-primary">Рассчитать IF</button>
+                <div id="fertility-result"></div>
+            </section>
+
+            <!-- Reports -->
+            <section id="reports" class="tab-content">
+                <h2>Отчеты</h2>
+                <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
+                <div id="report-preview"></div>
+            </section>
+
+            <!-- Shop -->
+            <section id="shop" class="tab-content">
+                <h2>Магазин</h2>
+                <div id="shop-list" class="list-container"></div>
+                <h2>Глоссарий</h2>
+                <div id="glossary-list"></div>
+            </section>
+        </main>
+    </div>
+    <script src="assets/js/core/database.js"></script>
+    <script src="assets/js/core/engine.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
+HTMLEOF
+
+# 3. CSS Updates
+cat > assets/css/style.css << 'CSSEOF'
+:root { --bg-dark: #121212; --bg-card: #1e1e1e; --primary: #bb86fc; --secondary: #03dac6; --error: #cf6679; --text-main: #fff; --text-sec: #b0b0b0; --border: #333; }
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: var(--text-main); padding-bottom: 60px; }
+.app-container { max-width: 900px; margin: 0 auto; }
+header { background: var(--bg-card); padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.version { font-size: 0.6em; color: var(--secondary); }
+.subtitle { margin: 5px 0 0; font-size: 0.9em; color: var(--text-sec); }
+.status-bar { font-size: 0.9em; color: var(--primary); font-weight: bold; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 15px; }
+
+.tabs { display: flex; overflow-x: auto; background: var(--bg-card); position: sticky; top: 0; z-index: 100; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn { flex: 1; min-width: 100px; padding: 15px 10px; background: none; border: none; color: var(--text-sec); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: 0.2s; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(187, 134, 252, 0.1); }
+
+.tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+.card { background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+.big-value { font-size: 2.2em; font-weight: bold; margin-top: 10px; color: var(--secondary); text-shadow: 0 0 10px rgba(3, 218, 198, 0.3); }
+
+.deep-form { background: var(--bg-card); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border); }
+.row { display: flex; gap: 10px; }
+input, select { background: #2c2c2c; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; flex: 1; outline: none; }
+input:focus, select:focus { border-color: var(--primary); }
+button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: var(--primary); color: #000; transition: 0.2s; }
+button:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-delete { background: rgba(207, 102, 121, 0.2); color: var(--error); padding: 8px 12px; font-size: 0.9em; }
+.btn-success { background: #03dac6; color: #000; width: 100%; margin-top: 20px; font-size: 1.1em; box-shadow: 0 0 15px rgba(3, 218, 198, 0.4); }
+.btn-secondary { background: #333; color: white; margin-right: 10px; margin-top: 10px; }
+
+.list-container, .schedule-container { display: flex; flex-direction: column; gap: 12px; }
+.drug-card, .support-item { background: var(--bg-card); padding: 15px; border-radius: 8px; border-left: 4px solid var(--secondary); display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+.drug-card:hover { background: #252525; }
+.support-item { flex-direction: column; align-items: flex-start; border-left-color: var(--primary); }
+.time-block { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+.time-block h3 { color: var(--primary); margin: 0 0 10px; font-size: 0.9em; text-transform: uppercase; }
+
+/* Heatmap */
+.heatmap-grid { display: grid; gap: 8px; margin-top: 15px; }
+.heatmap-cell { transition: all 0.2s; cursor: help; border: 1px solid rgba(255,255,255,0.1); }
+.heatmap-cell:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 0 15px rgba(0,0,0,0.5); filter: brightness(1.2); }
+
+/* Charts */
+.chart-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+.chart-controls label { display: flex; align-items: center; gap: 5px; font-size: 0.9em; cursor: pointer; color: var(--text-sec); }
+.chart-controls input[type="checkbox"] { accent-color: var(--primary); }
+.week-selector { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 20px 0; background: var(--bg-card); padding: 10px; border-radius: 8px; }
+.week-selector button { padding: 5px 15px; font-size: 1.2em; background: #333; color: white; }
+#current-week-display { font-size: 1.2em; font-weight: bold; color: var(--secondary); min-width: 120px; text-align: center; }
+
+canvas { max-width: 100%; margin: 10px 0; background: var(--bg-card); border-radius: 12px; padding: 10px; }
+.prediction-block, .what-if-block { background: var(--bg-card); padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid var(--border); }
+.prediction-block h3, .what-if-block h3 { margin-top: 0; color: var(--primary); }
+CSSEOF
+
+# 4. Git Push
+echo "🚀 Committing and Pushing Stage 7 (Fixes + Features)..."
+git add -A
+git commit -m "Stage 7: Fixed Buttons Logic, Gamification (XP/Lvl), What-If Simulator, Predictive Charts"
+git push origin main --force
+
+echo "✅ Stage 7 Complete! Check Actions."
