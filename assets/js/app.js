@@ -1,26 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
     let drugs = [];
-    let chartInstance = null;
+    let logs = { nutrition: [], training: [] };
+    let chartInst = null;
 
     // Табы
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(btn.dataset.tab).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById(b.dataset.tab).classList.add('active');
         });
     });
 
     // Слайдеры
-    ['CV', 'Hep', 'Neuro', 'Lipid', 'Nephro', 'Hemo'].forEach(k => {
-        const inp = document.getElementById(`r${k}`);
-        const out = document.getElementById(`v${k}`);
-        if(inp && out) inp.addEventListener('input', () => out.textContent = inp.value);
+    ['CV','Hep','Neuro','Lipid','Nephro','Hemo'].forEach(k => {
+        const el = document.getElementById('r'+k);
+        const span = el.nextElementSibling;
+        el.oninput = () => span.textContent = el.value;
     });
 
-    // Добавление
-    document.getElementById('drugForm').addEventListener('submit', (e) => {
+    // Добавление препарата
+    document.getElementById('drugForm').onsubmit = (e) => {
         e.preventDefault();
         const drug = {
             id: Date.now(),
@@ -40,67 +41,73 @@ document.addEventListener('DOMContentLoaded', () => {
         drugs.push(drug);
         renderStack();
         e.target.reset();
-        ['CV','Hep','Neuro','Lipid','Nephro','Hemo'].forEach(k => document.getElementById(`v${k}`).textContent='0');
-        alert('Препарат добавлен!');
-    });
+        ['CV','Hep','Neuro','Lipid','Nephro','Hemo'].forEach(k => document.getElementById('r'+k).nextElementSibling.textContent = '0');
+    };
 
     function renderStack() {
         const list = document.getElementById('stackList');
         list.innerHTML = '';
-        if(!drugs.length) { list.innerHTML = '<div class="no-data">Стек пуст</div>'; return; }
-        
+        if(!drugs.length) { list.innerHTML = '<p style="text-align:center;color:#718096">Стек пуст</p>'; return; }
         drugs.forEach(d => {
-            const rText = d.route === 'oral' ? '💊' : (d.route === 'inject' ? '💉' : '🧴');
             const div = document.createElement('div');
-            div.className = 'drug-item';
+            div.className = 'item-card';
+            const rTxt = d.route === 'oral' ? '💊' : (d.route === 'inject' ? '💉' : '🧴');
             div.innerHTML = `
-                <div class="drug-info">
+                <div class="item-info">
                     <h4>${d.name} <small>(${d.dose})</small></h4>
-                    <p>${rText} ${d.period} | Риски: CV:${d.risks.CV} Hep:${d.risks.Hep}</p>
+                    <p>${rTxt} ${d.period} | Риски: CV:${d.risks.CV} Hep:${d.risks.Hep}</p>
                 </div>
-                <button class="btn-del" onclick="removeDrug(${d.id})">X</button>
+                <button class="delete-btn" onclick="delDrug(${d.id})">✕</button>
             `;
             list.appendChild(div);
         });
     }
+    window.delDrug = (id) => { drugs = drugs.filter(x=>x.id!==id); renderStack(); };
 
-    window.removeDrug = (id) => {
-        drugs = drugs.filter(d => d.id !== id);
-        renderStack();
-        document.getElementById('riskOutput').style.display = 'none';
-        document.getElementById('noData').style.display = 'block';
+    // Логи (Питание/Тренировки)
+    window.addLog = (type) => {
+        const prefix = type === 'nutrition' ? 'nutri' : 'train';
+        const inp1 = document.getElementById(type==='nutrition'?'calIn':'trainEx');
+        const inp2 = document.getElementById(type==='nutrition'?'protIn':'trainSets');
+        const inp3 = document.getElementById(type==='nutrition'?'fatIn':'trainWeight');
+        
+        if(!inp1.value) return alert('Заполните данные');
+        
+        const item = { id: Date.now(), v1: inp1.value, v2: inp2.value, v3: inp3.value };
+        logs[type].push(item);
+        
+        const ul = document.getElementById(prefix+'List');
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${item.v1}</span> <span style="color:#a0aec0">${item.v2} ${item.v3?'| '+item.v3:''}</span> <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>`;
+        ul.prepend(li);
+        
+        inp1.value=''; inp2.value=''; if(inp3) inp3.value='';
     };
 
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        if(confirm('Удалить всё?')) { drugs = []; renderStack(); location.reload(); }
-    });
-
-    // Расчет
-    document.getElementById('calcBtn').addEventListener('click', () => {
-        if(!drugs.length) return alert('Добавьте препараты!');
+    // Расчет рисков
+    document.getElementById('calcBtn').onclick = () => {
+        if(!drugs.length) return alert('Добавьте препараты в стек!');
         
-        const sums = { CV:0, Hep:0, Neuro:0, Lipid:0, Nephro:0, Hemo:0 };
+        const sums = {CV:0,Hep:0,Neuro:0,Lipid:0,Nephro:0,Hemo:0};
         let oralCnt = 0;
-        
         drugs.forEach(d => {
-            Object.keys(sums).forEach(k => sums[k] += d.risks[k]);
-            if(d.route === 'oral') oralCnt++;
+            Object.keys(sums).forEach(k => sums[k]+=d.risks[k]);
+            if(d.route==='oral') oralCnt++;
         });
-
+        
         const penalty = oralCnt > 1 ? (oralCnt-1)*2 : 0;
         const maxVal = Math.max(...Object.values(sums)) + penalty;
         
-        // График
-        const ctx = document.getElementById('radarChart').getContext('2d');
-        if(chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('riskChart').getContext('2d');
+        if(chartInst) chartInst.destroy();
         
-        chartInstance = new Chart(ctx, {
+        chartInst = new Chart(ctx, {
             type: 'radar',
-             {
-                labels: ['Сердце', 'Печень', 'Нервы', 'Липиды', 'Почки', 'Кровь'],
+            data: {
+                labels: ['Сердце','Печень','Невро','Липиды','Почки','Кровь'],
                 datasets: [{
-                    label: 'Токсичность',
-                     [sums.CV, sums.Hep, sums.Neuro, sums.Lipid, sums.Nephro, sums.Hemo],
+                    label: 'Уровень токсичности',
+                    data: [sums.CV, sums.Hep, sums.Neuro, sums.Lipid, sums.Nephro, sums.Hemo],
                     backgroundColor: 'rgba(79, 209, 197, 0.4)',
                     borderColor: '#4fd1c5',
                     borderWidth: 2,
@@ -108,32 +115,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }]
             },
             options: {
-                scales: { r: { beginAtZero: true, max: Math.max(50, maxVal+10), grid: { color: '#4a5568' }, ticks: { color: '#a0aec0' } } },
-                plugins: { legend: { labels: { color: '#fff' } } }
+                scales: { r: { beginAtZero: true, max: Math.max(50, maxVal+10), grid:{color:'#4a5568'}, ticks:{color:'#cbd5e0'} } },
+                plugins: { legend: {labels:{color:'#fff'}} }
             }
         });
-
-        // Вывод
-        const out = document.getElementById('riskOutput');
-        const noData = document.getElementById('noData');
-        const scoreBox = document.getElementById('scoreBox');
-        const detailList = document.getElementById('detailList');
-
-        out.style.display = 'block';
-        noData.style.display = 'none';
-
-        let msg = `Индекс нагрузки: ${maxVal}`;
-        if(penalty) msg += ` (+${penalty} штраф за оральные)`;
-        scoreBox.textContent = msg;
-        scoreBox.className = 'score-box ' + (maxVal < 20 ? 'score-low' : (maxVal < 40 ? 'score-med' : 'score-high'));
-
-        detailList.innerHTML = Object.entries(sums).map(([k,v]) => `<li><b>${k}:</b> ${v}</li>`).join('');
         
-        // Переключение на вкладку результатов
-        setTimeout(() => {
-            document.querySelector('[data-tab="risks"]').click();
-        }, 500);
-    });
-
+        const resDiv = document.getElementById('riskResult');
+        const txtDiv = document.getElementById('riskText');
+        resDiv.style.display = 'block';
+        
+        let msg = `Максимальная нагрузка: <b>${maxVal}</b>`;
+        if(penalty) msg += ` (штраф за пероральные: +${penalty})`;
+        txtDiv.innerHTML = msg;
+        txtDiv.className = 'risk-text ' + (maxVal > 40 ? 'score-high' : (maxVal > 20 ? 'score-med' : 'score-low'));
+        
+        // Автопереход на вкладку рисков если мы не там
+        if(!document.querySelector('[data-tab="risks"]').classList.contains('active')) {
+             document.querySelector('[data-tab="risks"]').click();
+        }
+    };
+    
     renderStack();
 });
