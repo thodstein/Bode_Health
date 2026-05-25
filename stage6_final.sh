@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     datasets.push({ label: sys.toUpperCase(), data, borderColor: cols[sys], borderWidth: 2, fill: false, tension: 0.4 });
                 }
             }
-            window.trendChart = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, x: { ticks: { color: '#aaa' }, grid: { color: '#333' } } } } });
+            window.trendChart = new Chart(ctx, { type: 'line',  { labels, datasets }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } }, x: { ticks: { color: '#aaa' }, grid: { color: '#333' } } } } });
         },
         calcFertility: () => {
             const v = parseFloat(document.getElementById('semen-vol').value)||0;
