@@ -1,223 +1,74 @@
 const DB = {
     substances: [
-        { id: 'test', name: 'Тестостерон', class: 'AAS', tox: { liver: 1, lipid: 3, hct: 4, neuro: 0, kid: 1, endo: 2, repro: 5 } },
-        { id: 'nandrolone', name: 'Нандролон', class: 'AAS', tox: { liver: 1, lipid: 4, hct: 2, neuro: 0, kid: 2, endo: 4, repro: 4 } },
-        { id: 'trenbolone', name: 'Тренболон', class: 'AAS', tox: { liver: 2, lipid: 5, hct: 3, neuro: 5, kid: 4, endo: 4, repro: 5 } },
-        { id: 'boldenone', name: 'Болденон', class: 'AAS', tox: { liver: 1, lipid: 3, hct: 6, neuro: 0, kid: 1, endo: 1, repro: 3 } },
-        { id: 'dhb', name: 'Дигидроболденон (DHB)', class: 'AAS', tox: { liver: 1, lipid: 4, hct: 5, neuro: 0, kid: 3, endo: 1, repro: 3 } },
-        { id: 'masteron', name: 'Мастерон', class: 'AAS', tox: { liver: 1, lipid: 4, hct: 3, neuro: 0, kid: 1, endo: 1, repro: 4 } },
-        { id: 'primobolan', name: 'Примоболан', class: 'AAS', tox: { liver: 1, lipid: 3, hct: 2, neuro: 0, kid: 1, endo: 1, repro: 2 } },
-        { id: 'oxandrolone', name: 'Оксандролон', class: 'Oral', tox: { liver: 4, lipid: 5, hct: 1, neuro: 0, kid: 1, endo: 1, repro: 2 } },
-        { id: 'stanozolol', name: 'Станозолол', class: 'Oral/Inj', tox: { liver: 5, lipid: 5, hct: 2, neuro: 0, kid: 2, endo: 1, repro: 3 } },
-        { id: 'methandienone', name: 'Метандиенон', class: 'Oral', tox: { liver: 5, lipid: 4, hct: 3, neuro: 0, kid: 1, endo: 3, repro: 3 } },
-        { id: 'gh', name: 'Гормон Роста', class: 'Peptide', tox: { liver: 0, lipid: 2, hct: 0, neuro: 0, kid: 1, endo: 5, repro: 0 } },
-        { id: 'insulin', name: 'Инсулин', class: 'Hormone', tox: { liver: 0, lipid: 1, hct: 0, neuro: 0, kid: 0, endo: 5, repro: 0 } },
+        { id: 'test', name: 'Testosterone', class: 'AAS', tox: { liver: 1, lipid: 3, hct: 4, neuro: 0, kid: 1, endo: 2, repro: 5 } },
+        { id: 'nandrolone', name: 'Nandrolone', class: 'AAS', tox: { liver: 1, lipid: 4, hct: 2, neuro: 0, kid: 2, endo: 4, repro: 4 } },
+        { id: 'trenbolone', name: 'Trenbolone', class: 'AAS', tox: { liver: 2, lipid: 5, hct: 3, neuro: 5, kid: 4, endo: 4, repro: 5 } },
+        { id: 'boldenone', name: 'Boldenone', class: 'AAS', tox: { liver: 1, lipid: 3, hct: 6, neuro: 0, kid: 1, endo: 1, repro: 3 } },
+        { id: 'dhb', name: 'Dihydroboldenone (DHB)', class: 'AAS', tox: { liver: 1, lipid: 4, hct: 5, neuro: 0, kid: 3, endo: 1, repro: 3 } },
+        { id: 'masteron', name: 'Masteron', class: 'AAS', tox: { liver: 1, lipid: 4, hct: 3, neuro: 0, kid: 1, endo: 1, repro: 4 } },
+        { id: 'primobolan', name: 'Primobolan', class: 'AAS', tox: { liver: 1, lipid: 3, hct: 2, neuro: 0, kid: 1, endo: 1, repro: 2 } },
+        { id: 'oxandrolone', name: 'Oxandrolone', class: 'Oral', tox: { liver: 4, lipid: 5, hct: 1, neuro: 0, kid: 1, endo: 1, repro: 2 } },
+        { id: 'stanozolol', name: 'Stanozolol', class: 'Oral/Inj', tox: { liver: 5, lipid: 5, hct: 2, neuro: 0, kid: 2, endo: 1, repro: 3 } },
+        { id: 'methandienone', name: 'Methandienone', class: 'Oral', tox: { liver: 5, lipid: 4, hct: 3, neuro: 0, kid: 1, endo: 3, repro: 3 } },
+        { id: 'gh', name: 'Growth Hormone', class: 'Peptide', tox: { liver: 0, lipid: 2, hct: 0, neuro: 0, kid: 1, endo: 5, repro: 0 } },
+        { id: 'insulin', name: 'Insulin', class: 'Hormone', tox: { liver: 0, lipid: 1, hct: 0, neuro: 0, kid: 0, endo: 5, repro: 0 } },
         { id: 'igf1', name: 'IGF-1', class: 'Peptide', tox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kid: 2, endo: 4, repro: 0 } },
-        { id: 'mgf', name: 'MGF / PEG-MGF', class: 'Peptide', tox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kid: 1, endo: 2, repro: 0 } },
-        { id: 'turinabol', name: 'Туринабол', class: 'Oral', tox: { liver: 3, lipid: 4, hct: 2, neuro: 0, kid: 1, endo: 2, repro: 3 } },
-        { id: 'anavar', name: 'Анавар (Оксандролон)', class: 'Oral', tox: { liver: 4, lipid: 5, hct: 1, neuro: 0, kid: 1, endo: 1, repro: 2 } },
-        { id: 'winstrol', name: 'Винстрол', class: 'Oral/Inj', tox: { liver: 5, lipid: 5, hct: 2, neuro: 0, kid: 2, endo: 1, repro: 3 } },
-        { id: 'dianabol', name: 'Дианабол', class: 'Oral', tox: { liver: 5, lipid: 4, hct: 3, neuro: 0, kid: 1, endo: 3, repro: 3 } },
-        { id: 'halotestin', name: 'Галотестин', class: 'Oral', tox: { liver: 6, lipid: 5, hct: 5, neuro: 5, kid: 2, endo: 3, repro: 4 } },
-        { id: 'proviron', name: 'Провирон', class: 'Oral', tox: { liver: 2, lipid: 2, hct: 2, neuro: 0, kid: 1, endo: 1, repro: 3 } },
-        { id: 'clenbuterol', name: 'Кленбутерол', class: 'Stimulant', tox: { liver: 0, lipid: 1, hct: 0, neuro: 4, kid: 0, endo: 2, repro: 0 } },
-        { id: 't3', name: 'Трийодтиронин (T3)', class: 'Hormone', tox: { liver: 1, lipid: 0, hct: 0, neuro: 2, kid: 1, endo: 5, repro: 0 } },
-        { id: 'cabergoline', name: 'Каберголин', class: 'Dopamine Agonist', tox: { liver: 1, lipid: 0, hct: 0, neuro: 3, kid: 0, endo: 4, repro: 0 } },
-        { id: 'hcg', name: 'Хорионический гонадотропин', class: 'Peptide', tox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kid: 0, endo: 3, repro: 5 } }
+        { id: 'mgf', name: 'MGF / PEG-MGF', class: 'Peptide', tox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kid: 1, endo: 2, repro: 0 } }
     ],
     esters: {
-        'test': [ 
-            {id:'test_p', name:'Тестостерон Пропионат', hl:2}, 
-            {id:'test_e', name:'Тестостерон Энантат', hl:7}, 
-            {id:'test_c', name:'Тестостерон Ципионат', hl:8}, 
-            {id:'test_sus', name:'Сустанон 250', hl:15},
-            {id:'test_u', name:'Тестостерон Ундесиленат', hl:20}
-        ],
-        'nandrolone': [ 
-            {id:'nandrolone_p', name:'Нандролон Фенилпропионат', hl:4.5}, 
-            {id:'nandrolone_d', name:'Нандролон Деканоат', hl:14} 
-        ],
-        'trenbolone': [ 
-            {id:'trenbolone_a', name:'Тренболон Ацетат', hl:3}, 
-            {id:'trenbolone_e', name:'Тренболон Энантат', hl:7}, 
-            {id:'trenbolone_h', name:'Тренболон Гексагидробензилкарбонат', hl:10} 
-        ],
-        'boldenone': [ 
-            {id:'boldenone_u', name:'Болденон Ундесиленат', hl:14} 
-        ],
-        'dhb': [ 
-            {id:'dhb_p', name:'Дигидроболденон Ацетат', hl:10} 
-        ],
-        'masteron': [ 
-            {id:'masteron_p', name:'Мастерон Пропионат', hl:2.5}, 
-            {id:'masteron_e', name:'Мастерон Энантат', hl:7} 
-        ],
-        'primobolan': [ 
-            {id:'primobolan_e', name:'Примоболан Энантат', hl:10} 
-        ],
-        'stanozolol': [ 
-            {id:'stanozolol_s', name:'Станозолол Суспензия', hl:1} 
-        ],
-        'gh': [ 
-            {id:'gh_short', name:'Соматропин (Ежедневно)', hl:0.1}, 
-            {id:'gh_long', name:'Пегилрованный ГР (Недельный)', hl:168} 
-        ],
-        'insulin': [ 
-            {id:'insulin_r', name:'Инсулин Короткий (Актрапид)', hl:0.1}, 
-            {id:'insulin_l', name:'Инсулин Продленный (Лантус)', hl:24} 
-        ],
-        'igf1': [ 
-            {id:'igf1_lr3', name:'IGF-1 LR3 (Длинный)', hl:24}, 
-            {id:'igf1_des', name:'IGF-1 DES (Короткий)', hl:0.5} 
-        ],
-        'mgf': [ 
-            {id:'mgf_plain', name:'MGF (Локальный)', hl:0.5}, 
-            {id:'peg_mgf', name:'PEG-MGF (Системный)', hl:48} 
-        ]
+        'test': [ {id:'test_p', name:'Propionate', hl:2}, {id:'test_e', name:'Enanthate', hl:7}, {id:'test_c', name:'Cypionate', hl:8}, {id:'test_sus', name:'Sustanon', hl:15} ],
+        'nandrolone': [ {id:'nandrolone_p', name:'Phenylpropionate', hl:4.5}, {id:'nandrolone_d', name:'Decanoate', hl:14} ],
+        'trenbolone': [ {id:'trenbolone_a', name:'Acetate', hl:3}, {id:'trenbolone_e', name:'Enanthate', hl:7}, {id:'trenbolone_h', name:'Hexahydrobenzylcarbonate', hl:10} ],
+        'boldenone': [ {id:'boldenone_u', name:'Undecylenate', hl:14} ],
+        'dhb': [ {id:'dhb_p', name:'Acetate', hl:10} ],
+        'masteron': [ {id:'masteron_p', name:'Propionate', hl:2.5}, {id:'masteron_e', name:'Enanthate', hl:7} ],
+        'primobolan': [ {id:'primobolan_e', name:'Enanthate', hl:10} ],
+        'stanozolol': [ {id:'stanozolol_s', name:'Suspension', hl:24} ],
+        'gh': [ {id:'gh_short', name:'Daily', hl:0.1}, {id:'gh_long', name:'Long Acting', hl:168} ],
+        'insulin': [ {id:'insulin_r', name:'Regular (R)', hl:0.1}, {id:'insulin_l', name:'Long Acting (Glargine)', hl:24} ],
+        'igf1': [ {id:'igf1_lr3', name:'LR3 (Long)', hl:24}, {id:'igf1_des', name:'DES (Short)', hl:0.5} ],
+        'mgf': [ {id:'mgf_plain', name:'MGF', hl:0.5}, {id:'peg_mgf', name:'PEG-MGF', hl:48} ]
     },
     risks: {
-        liver: [ 
-            {id:'chol',n:'Холестаз', d:'Застой желчи'}, 
-            {id:'ox',n:'Окислительный стресс', d:'Повреждение свободными радикалами'}, 
-            {id:'cyt',n:'Цитолиз', d:'Разрушение клеток печени (ALT/AST)'}, 
-            {id:'fib',n:'Фиброз', d:'Рубцевание ткани'}, 
-            {id:'mito',n:'Митохондриальная дисфункция', d:'Энергодефицит клеток'}, 
-            {id:'met',n:'Дефицит метилирования', d:'Нарушение детоксикации'}, 
-            {id:'apo',n:'Апоптоз', d:'Программируемая гибель клеток'} 
-        ],
-        cardio: [ 
-            {id:'htn',n:'Артериальная гипертензия', d:'Высокое давление'}, 
-            {id:'tach',n:'Тахикардия', d:'Высокий пульс'}, 
-            {id:'lip',n:'Дислипидемия', d:'Нарушение профиля холестерина'}, 
-            {id:'thr',n:'Тромбоз', d:'Риск образования сгустков'}, 
-            {id:'lvh',n:'Гипертрофия левого желудочка', d:'Утолщение стенок сердца'}, 
-            {id:'endo',n:'Дисфункция эндотелия', d:'Нарушение работы сосудов'}, 
-            {id:'arr',n:'Аритмия', d:'Нарушение ритма сердца'} 
-        ],
-        kidney: [ 
-            {id:'hyper',n:'Гиперфильтрация', d:'Перегрузка почечных клубочков'}, 
-            {id:'fib_k',n:'Нефрофиброз', d:'Рубцевание почечной ткани'}, 
-            {id:'elec',n:'Электролитный дисбаланс', d:'Нарушение баланса калия/натрия'}, 
-            {id:'prot',n:'Протеинурия', d:'Белок в моче'}, 
-            {id:'stone',n:'Нефролитиаз', d:'Образование камней'}, 
-            {id:'tub',n:'Тубулярный некроз', d:'Отмирание канальцев'}, 
-            {id:'gfr',n:'Снижение СКФ', d:'Падение функции фильтрации'} 
-        ],
-        neuro: [ 
-            {id:'dop',n:'Дофаминовый дисбаланс', d:'Агрессия или апатия'}, 
-            {id:'glu',n:'Глутаматная эксайтотоксичность', d:'Перевозбуждение нейронов'}, 
-            {id:'gaba',n:'Дисрегуляция ГАМК', d:'Тревожность, бессонница'}, 
-            {id:'ser',n:'Серотониновый синдром', d:'Перепады настроения'}, 
-            {id:'inf',n:'Нейровоспаление', d:'Активация микроглии'}, 
-            {id:'cog',n:'Когнитивный спад', d:'Ухудшение памяти и фокуса'}, 
-            {id:'add',n:'Потенциал зависимости', d:'Формирование привыкания'} 
-        ],
-        hemato: [ 
-            {id:'ery',n:'Эритроцитоз', d:'Повышение уровня эритроцитов'}, 
-            {id:'visc',n:'Гипервязкость', d:'Сгущение крови'}, 
-            {id:'coag',n:'Гиперкоагуляция', d:'Повышенная свертываемость'}, 
-            {id:'anem',n:'Анемия', d:'Дефицит железа или B12'}, 
-            {id:'leuk',n:'Лейкоцитоз', d:'Повышение лейкоцитов (воспаление)'}, 
-            {id:'plat',n:'Тромбоцитоз', d:'Повышение тромбоцитов'}, 
-            {id:'hem',n:'Гемолиз', d:'Разрушение эритроцитов'} 
-        ],
-        endo: [ 
-            {id:'ins',n:'Инсулинорезистентность', d:'Снижение чувствительности к инсулину'}, 
-            {id:'est',n:'Эстрогендоминирование', d:'Избыток эстрадиола'}, 
-            {id:'prl',n:'Гиперпролактинемия', d:'Повышение пролактина'}, 
-            {id:'thy',n:'Супрессия щитовидной железы', d:'Снижение Т3/Т4'}, 
-            {id:'cor',n:'Дисрегуляция кортизола', d:'Хронический стресс/катаболизм'}, 
-            {id:'gh_ax',n:'Супрессия оси ГР', d:'Снижение выработки собственного ГР'}, 
-            {id:'adr',n:'Истощение надпочечников', d:'Снижение реакции на стресс'} 
-        ],
-        repro: [ 
-            {id:'atr',n:'Атрофия тестикул', d:'Уменьшение размера яичек'}, 
-            {id:'sup',n:'Подавление оси ГГГ', d:'Отключение выработки своего тестостерона'}, 
-            {id:'sp',n:'Нарушение спермогенеза', d:'Ухудшение качества спермы'}, 
-            {id:'lib',n:'Снижение либидо', d:'Потеря полового влечения'}, 
-            {id:'ed',n:'Эректильная дисфункция', d:'Проблемы с эрекцией'}, 
-            {id:'gyn',n:'Гинекомастия', d:'Рост грудных желез'}, 
-            {id:'inf',n:'Временное бесплодие', d:'Невозможность зачатия'} 
-        ]
+        liver: [ {id:'chol',n:'Cholestasis'}, {id:'ox',n:'Oxidative Stress'}, {id:'cyt',n:'Cytolysis'}, {id:'fib',n:'Fibrosis'}, {id:'mito',n:'Mitochondrial'}, {id:'met',n:'Methylation'}, {id:'apo',n:'Apoptosis'} ],
+        cardio: [ {id:'htn',n:'Hypertension'}, {id:'tach',n:'Tachycardia'}, {id:'lip',n:'Dyslipidemia'}, {id:'thr',n:'Thrombosis'}, {id:'lvh',n:'LVH'}, {id:'endo',n:'Endothelial'}, {id:'arr',n:'Arrhythmia'} ],
+        kidney: [ {id:'hyper',n:'Hyperfiltration'}, {id:'fib_k',n:'Fibrosis'}, {id:'elec',n:'Electrolytes'}, {id:'prot',n:'Proteinuria'}, {id:'stone',n:'Stones'}, {id:'tub',n:'Tubular Necrosis'}, {id:'gfr',n:'GFR Drop'} ],
+        neuro: [ {id:'dop',n:'Dopamine'}, {id:'glu',n:'Glutamate'}, {id:'gaba',n:'GABA'}, {id:'ser',n:'Serotonin'}, {id:'inf',n:'Inflammation'}, {id:'cog',n:'Cognitive'}, {id:'add',n:'Addiction'} ],
+        hemato: [ {id:'ery',n:'Erythrocytosis'}, {id:'visc',n:'Viscosity'}, {id:'coag',n:'Coagulation'}, {id:'anem',n:'Anemia'}, {id:'leuk',n:'Leukocytosis'}, {id:'plat',n:'Platelets'}, {id:'hem',n:'Hemolysis'} ],
+        endo: [ {id:'ins',n:'Insulin Resist'}, {id:'est',n:'Estrogen'}, {id:'prl',n:'Prolactin'}, {id:'thy',n:'Thyroid'}, {id:'cor',n:'Cortisol'}, {id:'gh_ax',n:'GH Axis'}, {id:'adr',n:'Adrenals'} ],
+        repro: [ {id:'atr',n:'Atrophy'}, {id:'sup',n:'Suppression'}, {id:'sp',n:'Sperm Quality'}, {id:'lib',n:'Libido'}, {id:'ed',n:'Erectile Dys'}, {id:'gyn',n:'Gyno'}, {id:'inf',n:'Infertility'} ]
     },
     support: [
-        { t:'☀️ Натощак (сразу после сна)', items:[ 
-            {n:'Iron Guard (Железо)', d:'2 капсулы', m:'Субстрат для синтеза гема, профилактика анемии'}, 
-            {n:'Цитиколин', d:'500 мг', m:'Прекурсор ацетилхолина, нейропротекция, улучшение когнитивных функций'}, 
-            {n:'Серрапептаза + Наттокиназа', d:'2 капсулы', m:'Мощный фибринолиз, улучшение реологии крови, профилактика тромбозов'}, 
-            {n:'Таурин', d:'2000 мг', m:'Антагонист ангиотензина II, мембраностабилизатор, профилактика гипертонии и судорог'} 
-        ]},
-        { t:'🍳 Утро (после завтрака)', items:[ 
-            {n:'Астрагал перепончатый', d:'500 мг', m:'Нефропротекция, снижение протеинурии, антифибротический эффект'}, 
-            {n:'Небилет (Небиволол)', d:'2.5 мг', m:'Бета-1 селективный блокатор, стимуляция NO, контроль АД и ЧСС'}, 
-            {n:'Тадалафил', d:'5 мг', m:'Ингибитор ФДЭ5, улучшение эндотелиальной функции, кровоток в малом тазу'}, 
-            {n:'Берберин', d:'500 мг', m:'Активатор AMPK, повышение чувствительности к инсулину, контроль липидов'}, 
-            {n:'Витамин D3 + K2 (MK-7)', d:'5000 МЕ + 100 мкг', m:'Иммунная модуляция, управление кальцием, защита костей и сосудов'}, 
-            {n:'TMG (Бетаин) + Метилфолат', d:'1000 мг + 1 капс', m:'Доноры метильных групп, снижение гомоцистеина, поддержка печени'}, 
-            {n:'Бергамот', d:'500 мг', m:'Природный статин (ингибитор ГМГ-КоА редуктазы), контроль ЛПНП'}, 
-            {n:'Бромантан + Фасорацетам', d:'50 мг + 100 мг', m:'Актопротектор и ноотроп, баланс дофамина и ГАМК, устойчивость к стрессу'} 
-        ]},
-        { t:'🍲 Обед', items:[ 
-            {n:'УДХК (Урсосан)', d:'1000 мг', m:'Гидрофильная желчная кислота, вытеснение токсичных кислот, защита от холестаза'}, 
-            {n:'Пентоксифиллин (Трентал)', d:'400 мг', m:'Улучшение деформируемости эритроцитов, снижение вязкости крови, микроциркуляция'}, 
-            {n:'Комплекс для суставов (Glucosamine/Chondroitin)', d:'2 капсулы', m:'Субстрат для хрящевой ткани, смазка суставов'}, 
-            {n:'Витамин Е (смесь токоферолов)', d:'400 МЕ', m:'Жирорастворимый антиоксидант, защита клеточных мембран'} 
-        ]},
-        { t:'💪 Предтренировочный комплекс', items:[ 
-            {n:'Агматин Сульфат', d:'1000 мг', m:'Ингибитор аргиназы, продление действия NO, нейропротекция'} 
-        ]},
-        { t:'🥤 Intra-Workout (во время тренировки)', items:[ 
-            {n:'L-Цитруллин', d:'6000 мг', m:'Прекурсор аргинина, мощный буст NO, удаление аммиака'}, 
-            {n:'Креатин Моногидрат', d:'5000 мг', m:'Восполнение запасов фосфокреатина, силовая выносливость'}, 
-            {n:'EAA (Незаменимые аминокислоты)', d:'10 г', m:'Предотвращение катаболизма во время нагрузки'}, 
-            {n:'Бета-Аланин', d:'3200 мг', m:'Буферизация лактата, повышение мышечной выносливости'} 
-        ]},
-        { t:'🌙 Вечер (после ужина / перед сном)', items:[ 
-            {n:'Телмисартан', d:'80 мг', m:'Блокатор рецепторов ангиотензина II (ARB), мощная нефро- и кардиопротекция'}, 
-            {n:'Магний (Цитрат/Глицинат/Малат)', d:'400 мг (элементарного)', m:'Расслабление мышц, стабилизация ритма сердца, поддержка нервной системы'}, 
-            {n:'L-Теанин', d:'400 мг', m:'Стимуляция альфа-волн, расслабление без седации, улучшение качества сна'}, 
-            {n:'Гормон Роста (Соматропин)', d:'5 ЕД', m:'Стимуляция липолиза, регенерация тканей, анаболизм (колется за 30 мин до сна)', note:'INJECTION'} 
-        ]},
-        { t:'💉 Специфическая терапия (по показаниям)', items:[ 
-            {n:'BPC-157', d:'250-500 мкг/день', m:'Локальная регенерация связок, сухожилий и ЖКТ'}, 
-            {n:'TB-500 (Тимозин бета-4)', d:'2.5-10 мг/нед', m:'Системная регенерация, заживление травм'}, 
-            {n:'HCG (Хорионический гонадотропин)', d:'500 МЕ 2 раза в неделю', m:'Поддержка функции тестикул, профилактика атрофии'}, 
-            {n:'Анастрозол', d:'0.5 мг 2 раза в неделю (при высоком E2)', m:'Ингибитор ароматазы, контроль эстрадиола'}, 
-            {n:'Каберголин', d:'0.25 мг 1-2 раза в неделю (при высоком PRL)', m:'Агонист дофаминовых рецепторов, снижение пролактина'} 
-        ]}
+        { t:'Morning Empty', items:[ {n:'Iron Guard', d:'2 caps', m:'Heme synthesis'}, {n:'Citicoline', d:'500mg', m:'Neuro protection'}, {n:'Nattokinase', d:'2 caps', m:'Blood flow'}, {n:'Taurine', d:'2g', m:'Anti-spasm'} ] },
+        { t:'Breakfast', items:[ {n:'Astragalus', d:'500mg', m:'Kidney protect'}, {n:'Nebivolol', d:'2.5mg', m:'BP control'}, {n:'Tadalafil', d:'5mg', m:'Blood flow'}, {n:'Berberine', d:'500mg', m:'Insulin sens'}, {n:'D3+K2', d:'5000IU', m:'Bone health'}, {n:'TMG+Folate', d:'1g', m:'Methylation'}, {n:'Bergamot', d:'500mg', m:'Lipids'}, {n:'Bromantan+Fasoracetam', d:'50+100mg', m:'Dopamine/GABA'} ] },
+        { t:'Lunch', items:[ {n:'UDCA', d:'1000mg', m:'Liver bile'}, {n:'Pentoxifylline', d:'400mg', m:'Viscosity'}, {n:'Joint Health', d:'2 caps', m:'Joints'}, {n:'Vitamin E', d:'400IU', m:'Antioxidant'} ] },
+        { t:'Pre-Workout', items:[ {n:'Agmatine', d:'1000mg', m:'NO Boost'} ] },
+        { t:'Evening', items:[ {n:'Telmisartan', d:'80mg', m:'BP/Kidney'}, {n:'Magnesium', d:'400mg', m:'Relaxation'}, {n:'L-Theanine', d:'400mg', m:'Sleep'}, {n:'GH', d:'5IU', m:'Growth', note:'Inj'} ] }
     ],
     shop: {
-        'udca': [ {p:'Ozon.ru', pr:'1 500 ₽', url:'#'}, {p:'iHerb', pr:'$25.00', url:'#'}, {p:'Apteka.ru', pr:'1 600 ₽', url:'#'} ],
-        'telmisartan': [ {p:'Ozon.ru', pr:'600 ₽', url:'#'}, {p:'Apteka.ru', pr:'650 ₽', url:'#'} ],
-        'nebivolol': [ {p:'Ozon.ru', pr:'400 ₽', url:'#'}, {p:'Eapteka', pr:'420 ₽', url:'#'} ],
-        'berberine': [ {p:'iHerb', pr:'$20.00', url:'#'}, {p:'Ozon.ru', pr:'1 800 ₽', url:'#'} ],
-        'taurine': [ {p:'Ozon.ru', pr:'800 ₽', url:'#'}, {p:'iHerb', pr:'$15.00', url:'#'} ],
-        'magnesium': [ {p:'Ozon.ru', pr:'900 ₽', url:'#'}, {p:'iHerb', pr:'$18.00', url:'#'} ],
-        'citrulline': [ {p:'Ozon.ru', pr:'1 200 ₽', url:'#'}, {p:'Bodymarket', pr:'1 300 ₽', url:'#'} ],
-        'creatine': [ {p:'Ozon.ru', pr:'1 000 ₽', url:'#'}, {p:'iHerb', pr:'$22.00', url:'#'} ],
-        'omega3': [ {p:'iHerb', pr:'$25.00', url:'#'}, {p:'Ozon.ru', pr:'1 500 ₽', url:'#'} ],
-        'vitamin_d3_k2': [ {p:'iHerb', pr:'$18.00', url:'#'}, {p:'Ozon.ru', pr:'1 100 ₽', url:'#'} ]
+        'udca': [ {p:'Ozon', pr:'1500 RUB'}, {p:'iHerb', pr:'$25'} ],
+        'telmisartan': [ {p:'Apteka', pr:'600 RUB'} ],
+        'nebivolol': [ {p:'Ozon', pr:'400 RUB'} ],
+        'berberine': [ {p:'iHerb', pr:'$20'} ],
+        'taurine': [ {p:'Ozon', pr:'800 RUB'} ],
+        'magnesium': [ {p:'Ozon', pr:'900 RUB'} ]
     },
     articles: [
-        { id: 1, title: 'Основы фармакокинетики: Период полувыведения и кумуляция', category: 'Theory', views: 1240, content: 'Подробный разбор того, как работают эфиры...' },
-        { id: 2, title: 'Протоколы защиты печени: УДХК, TMG и НАК', category: 'Safety', views: 3450, content: 'Как правильно использовать гепатопротекторы...' },
-        { id: 3, title: 'IGF-1: Подробное сравнение LR3 и DES', category: 'Peptides', views: 890, content: 'В чем разница между длинным и коротким IGF-1...' },
-        { id: 4, title: 'Управление эстрадиолом и пролактином на курсе', category: 'Hormones', views: 2150, content: 'Когда нужно подключать ингибиторы ароматазы...' },
-        { id: 5, title: 'ПКТ: Пост-курсовая терапия по анализам', category: 'Recovery', views: 1560, content: 'Схема восстановления оси ГГГ...' },
-        { id: 6, title: 'Интерпретация общего анализа крови: Гематокрит и гемоглобин', category: 'Labs', views: 4100, content: 'Что делать, если гематокрит выше 52%...' },
-        { id: 7, title: 'Кардиопротекция на курсе: Телмисартан и Небилет', category: 'Cardio', views: 1890, content: 'Схемы приема препаратов для защиты сердца...' },
-        { id: 8, title: 'Пептиды для восстановления травм: BPC-157 и TB-500', category: 'Peptides', views: 1320, content: 'Протоколы лечения связок и сухожилий...' }
+        { t:'PK/PD Basics', c:'Theory', v:120 },
+        { t:'Liver Protection', c:'Safety', v:340 },
+        { t:'IGF-1: LR3 vs DES', c:'Peptides', v:85 },
+        { t:'Estrogen Control', c:'Hormones', v:210 },
+        { t:'PCT Protocols', c:'Recovery', v:150 },
+        { t:'Blood Work Guide', c:'Labs', v:400 }
     ],
     glossary: {
-        'Raw Risk': 'Исходный уровень риска, рассчитанный на основе свойств препаратов и дозировок, без учета средств поддержки.',
-        'Net Risk': 'Остаточный уровень риска после применения протокола фармакологической поддержки. Показывает эффективность вашей защиты.',
-        'Half-life (T1/2)': 'Период полувыведения — время, за которое концентрация вещества в крови уменьшается вдвое. Критически важен для расчета частоты инъекций.',
-        'Hematocrit': 'Показатель, отражающий долю эритроцитов в общем объеме крови. Значения выше 52% значительно повышают риск тромбозов и требуют внимания (донорство, разжижение).',
-        'IGF-1 LR3': 'Модифицированная форма инсулиноподобного фактора роста-1 с удлиненным периодом полувыведения (до 24 часов). Работает системно по всему организму.',
-        'IGF-1 DES': 'Укороченная форма IGF-1 с очень коротким периодом действия (20-30 минут). Используется локально (в мышцу перед тренировкой) для точечного воздействия.',
-        'PEG-MGF': 'Пегиллированная версия Механофактора Роста. Имеет длительный период полувыведения, используется для системного восстановления мышц после тяжелых нагрузок.',
-        'Insulin Glargine': 'Современный аналог инсулина продленного действия (базальный). Создает ровный фон без выраженных пиков, снижая риск гипогликемии по сравнению с короткими инсулинами.',
-        'Aromatase': 'Фермент, превращающий тестостерон в эстрадиол. Высокая активность ведет к гинекомастии и задержке воды.',
-        '5-alpha Reductase': 'Фермент, конвертирующий тестостерон в дигидротестостерон (ДГТ). Влияет на выпадение волос и простату.'
+        'Raw Risk': 'Base risk without support.',
+        'Net Risk': 'Remaining risk with support.',
+        'Half-life': 'Time to reduce concentration by 50%.',
+        'Hematocrit': 'Blood thickness. Critical if >52%.',
+        'IGF-1 LR3': 'Long acting IGF-1 (24h).',
+        'IGF-1 DES': 'Short acting IGF-1 (20min).',
+        'PEG-MGF': 'Pegylated MGF for muscle repair.',
+        'Insulin Glargine': 'Long acting insulin.'
     }
 };
