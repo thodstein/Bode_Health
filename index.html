@@ -42,12 +42,13 @@
                     <div class="card"><h3>Fatigue</h3><div class="big-value" id="dash-fatigue">--</div></div>
                     <div class="card"><h3>Risk (Net)</h3><div class="big-value" id="dash-risk">--</div></div>
                 </div>
-                <div class="alert-box" id="daily-alert">Настройте курс во вкладке "Стек" для расчета.</div>
+                <div class="alert-box" id="daily-alert">Добавьте препараты для расчета прогноза.</div>
+                <div id="quick-alerts"></div>
             </section>
 
-            <!-- Stack (FIXED: Start/End Weeks) -->
+            <!-- Stack (FIXED INPUT: Start/End Weeks) -->
             <section id="stack" class="tab-content">
-                <h2>Добавить препарат</h2>
+                <h2>Добавить препарат в курс</h2>
                 <form id="add-drug-form" class="deep-form">
                     <label>Вещество:</label>
                     <select id="drug-substance" onchange="App.loadEsters()"></select>
@@ -60,33 +61,43 @@
                     </div>
                     <div class="row">
                         <input type="number" id="drug-start" placeholder="С недели" min="1" value="1" required>
-                        <input type="number" id="drug-end" placeholder="По неделю" min="1" value="12" required>
+                        <input type="number" id="drug-end" placeholder="По неделю" min="1" value="10" required>
                     </div>
                     <button type="submit" class="btn-primary">Включить в курс</button>
                 </form>
+                
                 <h3>Текущий стек</h3>
                 <div id="stack-list" class="list-container"></div>
                 
                 <div class="actions">
                     <button onclick="App.generatePlan()" class="btn-success">Рассчитать план и риски</button>
+                    <button onclick="state.stack=[]; App.renderStack(); document.getElementById('weekly-plan-output').innerHTML='';" class="btn-secondary" style="background:#cf6679">Очистить всё</button>
                 </div>
+                
                 <div id="weekly-plan-output"></div>
             </section>
 
             <!-- Support -->
             <section id="support" class="tab-content">
                 <h2>Протокол поддержки</h2>
+                <div class="toggle-switch">
+                    <label>Активировать расчет Net Risks</label>
+                    <input type="checkbox" id="support-toggle" checked onchange="App.generatePlan()">
+                </div>
                 <div id="support-schedule" class="schedule-container"></div>
             </section>
 
-            <!-- Risks (Restored Charts) -->
+            <!-- Risks (FULL 7x7 MATRIX) -->
             <section id="risks" class="tab-content">
                 <h2>Динамика рисков (по неделям)</h2>
                 <canvas id="risk-trend-chart"></canvas>
-                <h3>Матрица 7x7 (Детализация)</h3>
-                <p style="font-size:0.8em; color:#aaa">Наведите на сектор для деталей</p>
-                <canvas id="risk-radar-chart"></canvas>
-                <div id="mechanism-details" class="details-list"></div>
+                
+                <h3>Полная матрица рисков (Неделя <span id="current-week-num">1</span>)</h3>
+                <div class="matrix-controls">
+                    <button onclick="App.changeWeek(-1)" class="btn-secondary">← Назад</button>
+                    <button onclick="App.changeWeek(1)" class="btn-secondary">Вперед →</button>
+                </div>
+                <div id="matrix-container" class="matrix-grid"></div>
             </section>
 
             <!-- Nutrition -->
@@ -104,6 +115,7 @@
             <!-- Training -->
             <section id="training" class="tab-content">
                 <h2>Тренировочный план</h2>
+                <p>Генерация на основе Readiness и слабых мест...</p>
                 <div id="workout-plan"></div>
             </section>
 
@@ -126,7 +138,7 @@
             <!-- Reports -->
             <section id="reports" class="tab-content">
                 <h2>Отчеты</h2>
-                <button onclick="alert('Генерация PDF...')" class="btn-secondary">📄 Скачать PDF</button>
+                <button onclick="App.exportPDF()" class="btn-secondary">📄 Скачать PDF для врача</button>
                 <button onclick="App.exportJSON()" class="btn-secondary">💾 Экспорт JSON</button>
                 <div id="report-preview"></div>
             </section>
@@ -137,6 +149,8 @@
                 <div id="shop-list" class="list-container"></div>
                 <h2>Глоссарий</h2>
                 <div id="glossary-list" class="glossary-container"></div>
+                <h2>Статьи (База знаний)</h2>
+                <div id="articles-list" class="articles-container"></div>
             </section>
         </main>
     </div>

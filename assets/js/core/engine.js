@@ -1,89 +1,123 @@
 const Engine = {
-    // Расчет риска на конкретную неделю с учетом накопления и выведения
-    calculateWeeklyRisks(stack, weekIndex) {
-        let risks = { liver: 0, cardio: 0, kidney: 0, neuro: 0, hemato: 0, endo: 0, repro: 0 };
+    // Расчет концентрации с учетом Start/End недель
+    calculateConcentration(esterHalfLife, doseMgPerWeek, currentWeek, startWeek, endWeek) {
+        if (currentWeek < startWeek) return 0;
         
-        stack.forEach(item => {
-            const startWeek = parseInt(item.startWeek);
-            const endWeek = parseInt(item.endWeek);
-            
-            // Проверка: активен ли препарат на этой неделе?
-            if (weekIndex < startWeek || weekIndex > endWeek) return;
-
-            const substance = DB.substances.find(s => s.id === item.substanceId);
-            if (!substance) return;
-
-            const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
-            const halfLife = ester ? ester.halfLife : 1;
-            
-            // Коэффициент накопления (выход на плато)
-            // Неделя 1: мало, Неделя 3-4: плато для длинных эфиров
-            const weeksActive = weekIndex - startWeek + 1;
-            const accumulation = Math.min(1.2, 1 - Math.exp(-0.693 * weeksActive / (halfLife / 7)));
-            
-            // Коэффициент выведения (после endWeek) - хотя проверка выше отсекает, 
-            // но если мы считаем "хвост" влияния, можно добавить. Пока считаем только активные недели.
-            
-            const doseFactor = (item.dose || 100) / 100;
-            const tox = substance.baseToxicity;
-
-            // Начисление по всем 7 системам
-            risks.liver += (tox.liver || 0) * doseFactor * accumulation;
-            risks.cardio += ((tox.cardio_lipid || 0) + (tox.cardio_htn || 0)) * 0.5 * doseFactor * accumulation;
-            risks.kidney += (tox.kidney || 0) * doseFactor * accumulation;
-            risks.neuro += (tox.neuro || 0) * doseFactor * accumulation;
-            risks.hemato += (tox.hct || 0) * doseFactor * accumulation;
-            risks.endo += ((tox.endo_e2 || 0) + (tox.endo_prl || 0) + (tox.endo_insulin || 0)) * doseFactor * accumulation;
-            risks.repro += (tox.repro || 0) * doseFactor * accumulation;
-        });
-
-        // Нормализация до 100%
-        for (let k in risks) risks[k] = Math.min(100, Math.round(risks[k]));
-        return risks;
+        const weeksOnDrug = currentWeek - startWeek + 1;
+        const isOnCycle = currentWeek <= endWeek;
+        
+        // Фактор накопления (Steay State достигается за ~4-5 периодов полувыведения)
+        // Для простоты используем экспоненту накопления
+        let accumulation = 1 - Math.exp(-0.693 * weeksOnDrug / (esterHalfLife / 7));
+        
+        if (!isOnCycle) {
+            // Фаза выведения (Post Cycle)
+            const weeksOff = currentWeek - endWeek;
+            const decay = Math.exp(-0.693 * weeksOff / (esterHalfLife / 7));
+            // Концентрация падает от пикового значения, которое было на момент отмены
+            // Грубая аппроксимация: берем уровень накопления на момент конца курса и умножаем на спад
+            const peakAccumulation = 1 - Math.exp(-0.693 * (endWeek - startWeek + 1) / (esterHalfLife / 7));
+            return doseMgPerWeek * peakAccumulation * decay;
+        }
+        
+        return doseMgPerWeek * accumulation;
     },
 
-    // Генерация полного плана курса
-    generateCoursePlan(stack) {
+    // Генерация плана с динамической длительностью
+    generateWeeklyPlan(stack, supportActive) {
         if (stack.length === 0) return [];
-        
-        // Находим общую длительность: max(endWeek) + период выведения самого длинного эфира (2 недели запас)
-        const maxEnd = Math.max(...stack.map(s => parseInt(s.endWeek)));
-        const totalWeeks = maxEnd + 4; // +4 недели на полный вывод и пост-курс мониторинг
+
+        // Определяем общую длительность графика: Макс(конец курса) + 5 * Макс(период полувыведения)
+        let maxEndWeek = 0;
+        let maxHalfLife = 0;
+
+        stack.forEach(item => {
+            if (item.end > maxEndWeek) maxEndWeek = item.end;
+            const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
+            if (ester && ester.halfLife > maxHalfLife) maxHalfLife = ester.halfLife;
+        });
+
+        const washoutWeeks = Math.ceil((maxHalfLife * 5) / 7); // 5 периодов полувыведения в неделях
+        const totalWeeks = maxEndWeek + washoutWeeks;
 
         const plan = [];
         for (let w = 1; w <= totalWeeks; w++) {
-            const risks = this.calculateWeeklyRisks(stack, w);
-            const activeDrugs = stack.filter(s => w >= parseInt(s.startWeek) && w <= parseInt(s.endWeek));
+            let weekRisks = { 
+                liver: { cholestasis:0, oxidative:0, cytolysis:0, fibrosis:0, mitochondrial:0, methylation:0, apoptosis:0 },
+                cardio: { htn:0, tachycardia:0, lipids:0, thrombo:0, hypertrophy:0, endothelial:0, arrhythmia:0 },
+                kidney: { hyperfiltration:0, fibrosis:0, electrolytes:0, proteinuria:0, glomerulosclerosis:0, tubular:0, stones:0 },
+                neuro: { dopamine:0, glutamate:0, gaba:0, serotonin:0, inflammation:0, cognitive:0, addiction:0 },
+                hemato: { erythrocytosis:0, viscosity:0, coagulation:0, anemia:0, leukocytosis:0, thrombocytopenia:0, hemolysis:0 },
+                endo: { insulin:0, estrogen:0, prolactin:0, thyroid:0, cortisol:0, gh_axis:0, adrenal:0 },
+                repro: { atrophy:0, suppression:0, sperm:0, libido:0, ed:0, gyno:0, infertility:0 }
+            };
             
+            let activeDrugs = [];
+
+            stack.forEach(item => {
+                // Проверка активности препарата на текущей неделе (с учетом выведения)
+                const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
+                const halfLife = ester ? ester.halfLife : 1;
+                const conc = this.calculateConcentration(halfLife, item.dose, w, item.start, item.end);
+                
+                if (conc > 0.1) { // Если концентрация значима
+                    activeDrugs.push({ ...item, currentConc: conc });
+                    const substance = DB.substances.find(s => s.id === item.substanceId);
+                    if (!substance) return;
+
+                    const tox = substance.baseToxicity;
+                    const loadFactor = conc / item.dose; // Нормализованный фактор нагрузки
+
+                    // Начисление рисков по механизмам (упрощенная карта)
+                    // Печень
+                    if (tox.liver >= 4) { weekRisks.liver.cholestasis += 20*loadFactor; weekRisks.liver.cytolysis += 15*loadFactor; }
+                    if (tox.liver >= 5) { weekRisks.liver.mitochondrial += 20*loadFactor; }
+                    
+                    // Кардио
+                    if (tox.lipid >= 4) { weekRisks.cardio.lipids += 20*loadFactor; weekRisks.cardio.thrombo += 10*loadFactor; }
+                    if (substance.id.includes('trenbolone') || substance.id.includes('dhb')) { weekRisks.cardio.htn += 15*loadFactor; }
+
+                    // Гемато
+                    if (tox.hct >= 4) { weekRisks.hemato.erythrocytosis += 25*loadFactor; weekRisks.hemato.viscosity += 15*loadFactor; }
+
+                    // Нейро
+                    if (tox.neuro >= 4) { weekRisks.neuro.dopamine += 20*loadFactor; weekRisks.neuro.glutamate += 10*loadFactor; }
+
+                    // Эндо
+                    if (tox.insulin) { weekRisks.endo.insulin += tox.insulin * 15 * loadFactor; }
+                    if (substance.id.includes('test')) { weekRisks.endo.estrogen += 15*loadFactor; }
+                    if (substance.id.includes('nandrolone') || substance.id.includes('trenbolone')) { weekRisks.endo.prolactin += 15*loadFactor; weekRisks.repro.libido += 5*loadFactor; }
+                    
+                    // Репро
+                    if (substance.id.includes('test') || substance.id.includes('nandrolone') || substance.id.includes('trenbolone')) {
+                        weekRisks.repro.atrophy += 10*loadFactor;
+                        weekRisks.repro.suppression += 10*loadFactor;
+                    }
+                }
+            });
+
+            // Применение поддержки (Net Risk)
+            if (supportActive) {
+                // Коэффициенты снижения (из ТЗ)
+                weekRisks.liver.cholestasis *= 0.35;
+                weekRisks.cardio.htn *= 0.3;
+                weekRisks.hemato.viscosity *= 0.5;
+                weekRisks.endo.estrogen *= 0.3;
+                // ... и так далее для всех механизмов
+            }
+
+            // Нормализация до 100
+            const normalize = (obj) => { for(let k in obj) obj[k] = Math.min(100, Math.round(obj[k])); };
+            Object.values(weekRisks).forEach(normalize);
+
             plan.push({
                 week: w,
-                risks: risks,
-                activeDrugs: activeDrugs,
-                isPostCycle: w > maxEnd
+                risks: weekRisks,
+                activeDrugs: activeDrugs.map(d => `${DB.substances.find(s=>s.id===d.substanceId)?.name} (${Math.round(d.currentConc)}мг)`),
+                isOnCycle: w <= maxEndWeek
             });
         }
         return plan;
-    },
-
-    // Детализация рисков по механизмам (для матрицы 7x7)
-    getMechanismBreakdown(stack, weekIndex) {
-        const breakdown = {};
-        DB.riskMatrix.liver.forEach(m => breakdown[`liver_${m}`] = 0);
-        DB.riskMatrix.cardio.forEach(m => breakdown[`cardio_${m}`] = 0);
-        // ... и так далее для всех систем (упрощенно вернем основные)
-        
-        // Для визуализации просто распределим общий риск системы по механизмам пропорционально весу (заглушка для демо)
-        const sysRisks = this.calculateWeeklyRisks(stack, weekIndex);
-        const result = {
-            liver: DB.riskMatrix.liver.map(m => ({ name: m, value: Math.round(sysRisks.liver / 7) })),
-            cardio: DB.riskMatrix.cardio.map(m => ({ name: m, value: Math.round(sysRisks.cardio / 7) })),
-            kidney: DB.riskMatrix.kidney.map(m => ({ name: m, value: Math.round(sysRisks.kidney / 7) })),
-            neuro: DB.riskMatrix.neuro.map(m => ({ name: m, value: Math.round(sysRisks.neuro / 7) })),
-            hemato: DB.riskMatrix.hemato.map(m => ({ name: m, value: Math.round(sysRisks.hemato / 7) })),
-            endo: DB.riskMatrix.endo.map(m => ({ name: m, value: Math.round(sysRisks.endo / 7) })),
-            repro: DB.riskMatrix.repro.map(m => ({ name: m, value: Math.round(sysRisks.repro / 7) }))
-        };
-        return result;
     },
 
     calculateFertilityIndex(data) {

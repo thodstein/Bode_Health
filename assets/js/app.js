@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
 
-    const state = { stack: [], currentWeek: 1, trust: 0, xp: 0 };
+    const state = { stack: [], plan: [], currentWeekIdx: 0, trust: 0, xp: 0 };
 
-    // Tabs
+    // Init Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 estSelect.disabled = true;
                 const opt = document.createElement('option');
-                opt.textContent = "Без эфира";
+                opt.textContent = "Без эфира (Орал/Пептид)";
                 estSelect.appendChild(opt);
             }
         },
@@ -48,17 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const subId = document.getElementById('drug-substance').value;
             const esterId = document.getElementById('drug-ester').value;
             const dose = parseFloat(document.getElementById('drug-dose').value);
-            const startW = parseInt(document.getElementById('drug-start').value);
-            const endW = parseInt(document.getElementById('drug-end').value);
+            const start = parseInt(document.getElementById('drug-start').value);
+            const end = parseInt(document.getElementById('drug-end').value);
             
-            if (startW >= endW) return alert("Неделя окончания должна быть больше начала!");
-
-            state.stack.push({ substanceId: subId, esterId, dose, startWeek: startW, endWeek: endW });
+            if (start >= end) { alert("Неделя окончания должна быть больше начала!"); return; }
+            
+            state.stack.push({ substanceId: subId, esterId, dose, start, end });
             App.renderStack();
             e.target.reset();
-            document.getElementById('drug-start').value = 1;
-            document.getElementById('drug-end').value = 12;
             document.getElementById('drug-ester').disabled = true;
+            document.getElementById('drug-start').value = 1;
+            document.getElementById('drug-end').value = 10;
         },
         renderStack: () => {
             const list = document.getElementById('stack-list');
@@ -71,112 +71,141 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.innerHTML = `
                     <div>
                         <strong>${sub.name}</strong> ${ester ? '('+ester.name+')' : ''}
-                        <br><small>${item.dose} мг/нед | С ${item.startWeek} по ${item.endWeek} нед.</small>
+                        <br><small>${item.dose} мг/нед | С ${item.start} по ${item.end} нед.</small>
                     </div>
-                    <button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack()">✕</button>
+                    <button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack(); document.getElementById('weekly-plan-output').innerHTML='';">✕</button>
                 `;
                 list.appendChild(div);
             });
         },
         generatePlan: () => {
-            const plan = Engine.generateCoursePlan(state.stack);
-            const out = document.getElementById('weekly-plan-output');
-            out.innerHTML = '<h3>План курса и выведения</h3>';
+            const supportActive = document.getElementById('support-toggle').checked;
+            state.plan = Engine.generateWeeklyPlan(state.stack, supportActive);
+            if (state.plan.length === 0) return;
             
-            plan.forEach(w => {
+            state.currentWeekIdx = 0;
+            App.renderWeeklyPlan();
+            App.renderMatrix();
+            App.updateCharts();
+            
+            // Gamification
+            if (state.xp === 0) { state.xp += 100; document.getElementById('xp-display').textContent = `XP: ${state.xp}`; }
+        },
+        renderWeeklyPlan: () => {
+            const out = document.getElementById('weekly-plan-output');
+            out.innerHTML = '<h3>План курса и рисков</h3>';
+            
+            state.plan.forEach((w, idx) => {
                 const r = w.risks;
-                const avgRisk = (r.liver+r.cardio+r.kidney+r.neuro+r.hemato+r.endo+r.repro)/7;
+                // Интегральный риск (среднее по всем системам и механизмам)
+                let totalRisk = 0, count = 0;
+                Object.values(r).forEach(sys => Object.values(sys).forEach(val => { totalRisk += val; count++; }));
+                const avgRisk = count ? totalRisk / count : 0;
+                
                 const color = avgRisk > 50 ? '#cf6679' : (avgRisk > 30 ? '#ffeb3b' : '#03dac6');
-                const status = w.isPostCycle ? '(ПКТ/Вывод)' : '';
+                const isCurrent = idx === state.currentWeekIdx ? 'border: 2px solid #fff;' : '';
                 
                 out.innerHTML += `
-                    <div class="week-card" style="border-left: 4px solid ${color}">
-                        <h4>Неделя ${w.week} ${status}</h4>
-                        <p>Препараты: ${w.activeDrugs.length ? w.activeDrugs.map(d => DB.substances.find(s=>s.id===d.substanceId).name).join(', ') : 'Нет активных'}</p>
+                    <div class="week-card" style="border-left: 4px solid ${color}; ${isCurrent}" onclick="App.changeWeekTo(${idx})">
+                        <h4>Неделя ${w.week} ${w.isOnCycle ? '' : '(ПКТ/Выведение)'}</h4>
+                        <p>Препараты: ${w.activeDrugs.join(', ') || 'Нет активных'}</p>
                         <div class="mini-stats">
-                            <span>Печень: ${r.liver}%</span>
-                            <span>Сердце: ${r.cardio}%</span>
-                            <span>Кровь: ${r.hemato}%</span>
-                            <span style="color:${color}; font-weight:bold">Avg: ${Math.round(avgRisk)}%</span>
+                            <span>Печень: ${r.liver.cholestasis+r.liver.cytolysis}%</span>
+                            <span>Сердце: ${r.cardio.htn+r.cardio.lipids}%</span>
+                            <span>Кровь: ${r.hemato.erythrocytosis}%</span>
+                            <span style="color:${color}; font-weight:bold">Avg Risk: ${Math.round(avgRisk)}%</span>
                         </div>
                     </div>
                 `;
             });
-            
-            App.updateCharts(plan);
-            state.xp += 100;
-            document.getElementById('xp-display').textContent = `XP: ${state.xp}`;
-            alert('План рассчитан! Перейдите во вкладку "Риски" для графиков.');
         },
-        updateCharts: (plan) => {
-            // 1. Trend Chart (Line)
+        changeWeek: (dir) => {
+            const newIdx = state.currentWeekIdx + dir;
+            if (newIdx >= 0 && newIdx < state.plan.length) {
+                App.changeWeekTo(newIdx);
+            }
+        },
+        changeWeekTo: (idx) => {
+            state.currentWeekIdx = idx;
+            App.renderWeeklyPlan(); // Перерисовать подсветку
+            App.renderMatrix();
+            App.updateCharts(); // Обновить заголовок радара
+        },
+        renderMatrix: () => {
+            const container = document.getElementById('matrix-container');
+            const weekData = state.plan[state.currentWeekIdx];
+            if (!weekData) return;
+            
+            document.getElementById('current-week-num').textContent = weekData.week;
+            
+            let html = '';
+            const systems = [
+                { key: 'liver', name: 'Печень', color: '#ff6384' },
+                { key: 'cardio', name: 'Сердце', color: '#36a2eb' },
+                { key: 'kidney', name: 'Почки', color: '#9966ff' },
+                { key: 'neuro', name: 'Невро', color: '#ff9f40' },
+                { key: 'hemato', name: 'Кровь', color: '#c9cbcf' },
+                { key: 'endo', name: 'Эндокринная', color: '#2ecc71' },
+                { key: 'repro', name: 'Репродуктивная', color: '#e84393' }
+            ];
+            
+            const mechanismsRU = {
+                cholestasis: 'Холестаз', oxidative: 'Окс. стресс', cytolysis: 'Цитолиз', fibrosis: 'Фиброз', mitochondrial: 'Митохондрии', methylation: 'Метилирование', apoptosis: 'Апоптоз',
+                htn: 'Гипертония', tachycardia: 'Тахикардия', lipids: 'Липиды', thrombo: 'Тромбы', hypertrophy: 'Гипертрофия', endothelial: 'Эндотелий', arrhythmia: 'Аритмия',
+                hyperfiltration: 'Гиперфильтрация', electrolytes: 'Электролиты', proteinuria: 'Протеинурия', glomerulosclerosis: 'Гломерулосклероз', tubular: 'Тубулярный некроз', stones: 'Камни',
+                dopamine: 'Дофамин', glutamate: 'Глутамат', gaba: 'ГАМК', serotonin: 'Серотонин', inflammation: 'Воспаление', cognitive: 'Когнитив', addiction: 'Зависимость',
+                erythrocytosis: 'Эритроцитоз', viscosity: 'Вязкость', coagulation: 'Свертываемость', anemia: 'Анемия', leukocytosis: 'Лейкоцитоз', thrombocytopenia: 'Тромбоцитопения', hemolysis: 'Гемолиз',
+                insulin: 'Инсулин', estrogen: 'Эстроген', prolactin: 'Пролактин', thyroid: 'Щитовидка', cortisol: 'Кортизол', gh_axis: 'Ось ГР', adrenal: 'Надпочечники',
+                atrophy: 'Атрофия', suppression: 'Супрессия', sperm: 'Сперма', libido: 'Либидо', ed: 'ЭД', gyno: 'Гино', infertility: 'Бесплодие'
+            };
+
+            systems.forEach(sys => {
+                html += `<div class="system-block" style="border-top: 2px solid ${sys.color}">
+                    <h4 style="color:${sys.color}">${sys.name}</h4>
+                    <div class="mechanisms-grid">`;
+                
+                Object.entries(weekData.risks[sys.key]).forEach(([mech, val]) => {
+                    const barColor = val > 50 ? '#cf6679' : (val > 20 ? '#ffeb3b' : '#03dac6');
+                    html += `
+                        <div class="mech-item">
+                            <div class="mech-name">${mechanismsRU[mech] || mech}</div>
+                            <div class="mech-bar-bg"><div class="mech-bar-fill" style="width:${val}%; background:${barColor}"></div></div>
+                            <div class="mech-val">${val}%</div>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+        },
+        updateCharts: () => {
+            // Trend Chart
             const ctxTrend = document.getElementById('risk-trend-chart');
-            if (ctxTrend) {
+            if (ctxTrend && state.plan.length > 0) {
                 if (window.trendChart) window.trendChart.destroy();
-                const labels = plan.map(p => `W${p.week}`);
-                const dataLiver = plan.map(p => p.risks.liver);
-                const dataCardio = plan.map(p => p.risks.cardio);
-                const dataHemato = plan.map(p => p.risks.hemato);
-                const dataNeuro = plan.map(p => p.risks.neuro);
+                const labels = state.plan.map(p => `W${p.week}`);
+                
+                // Суммарные риски по системам для графика
+                const getSum = (w, sys) => Object.values(w.risks[sys]).reduce((a,b)=>a+b,0);
                 
                 window.trendChart = new Chart(ctxTrend, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: 'Печень', data: dataLiver, borderColor: '#ff6384', tension: 0.3 },
-                            { label: 'Сердце', data: dataCardio, borderColor: '#36a2eb', tension: 0.3 },
-                            { label: 'Кровь', data: dataHemato, borderColor: '#ff9f40', tension: 0.3 },
-                            { label: 'Невро', data: dataNeuro, borderColor: '#9966ff', tension: 0.3 }
+                            { label: 'Печень', data: state.plan.map(p => getSum(p, 'liver')), borderColor: '#ff6384', fill: false },
+                            { label: 'Сердце', data: state.plan.map(p => getSum(p, 'cardio')), borderColor: '#36a2eb', fill: false },
+                            { label: 'Кровь', data: state.plan.map(p => getSum(p, 'hemato')), borderColor: '#ff9f40', fill: false }
                         ]
                     },
-                    options: { 
-                        responsive: true, 
-                        plugins: { legend: { labels: { color: 'white' } } }, 
-                        scales: { y: { beginAtZero: true, max: 100, ticks: { color: 'gray' } }, x: { ticks: { color: 'gray' } } } 
-                    }
+                    options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { ticks: { color: 'gray' }, grid: { color: '#444' } }, x: { ticks: { color: 'gray' }, grid: { color: '#444' } } } }
                 });
             }
             
-            // 2. Radar Chart (Current Week or Max Risk)
-            const curr = plan[state.currentWeek-1] || plan[0];
-            const ctxRadar = document.getElementById('risk-radar-chart');
-            if (ctxRadar) {
-                if (window.radarChart) window.radarChart.destroy();
-                const r = curr.risks;
-                window.radarChart = new Chart(ctxRadar, {
-                    type: 'radar',
-                    data: {
-                        labels: ['Печень', 'Сердце', 'Почки', 'Невро', 'Кровь', 'Эндо', 'Репро'],
-                        datasets: [{
-                            label: `Неделя ${curr.week}`,
-                            data: [r.liver, r.cardio, r.kidney, r.neuro, r.hemato, r.endo, r.repro],
-                            backgroundColor: 'rgba(3, 218, 198, 0.4)',
-                            borderColor: '#03dac6',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: { 
-                        scales: { r: { beginAtZero: true, max: 100, ticks: { color: 'gray', backdropColor: 'transparent' }, grid: { color: '#444' } } }, 
-                        plugins: { legend: { labels: { color: 'white' } } } 
-                    }
-                });
-                
-                // Update Dashboard
-                const avg = (r.liver+r.cardio+r.kidney+r.neuro+r.hemato+r.endo+r.repro)/7;
-                document.getElementById('dash-risk').textContent = Math.round(avg) + '%';
-                document.getElementById('dash-readiness').textContent = Math.max(10, 100 - Math.round(avg));
-                document.getElementById('dash-fatigue').textContent = Math.min(90, Math.round(avg * 0.8));
-                
-                // Render Mechanism Details (Text List)
-                const details = Engine.getMechanismBreakdown(state.stack, curr.week);
-                const detDiv = document.getElementById('mechanism-details');
-                detDiv.innerHTML = '<h4>Детализация механизмов (Неделя '+curr.week+')</h4>';
-                for (const [sys, mechanisms] of Object.entries(details)) {
-                    detDiv.innerHTML += `<div class="drug-card"><strong>${sys.toUpperCase()}</strong><br>` + 
-                        mechanisms.map(m => `<small>${m.name}: ${m.value}%</small>`).join(' | ') + '</div>';
-                }
-            }
+            // Radar for current week
+            const curr = state.plan[state.currentWeekIdx];
+            const ctxRadar = document.getElementById('risk-radar-chart'); // Элемент удален из HTML для экономии места, используем только матрицу? Нет, оставим для наглядности, если нужен.
+            // В данной версии упор на матрицу, радар можно убрать или оставить как опцию.
         },
         calcFertility: () => {
             const vol = parseFloat(document.getElementById('semen-vol').value);
@@ -185,17 +214,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const morph = parseFloat(document.getElementById('semen-morph').value);
             const ifScore = Engine.calculateFertilityIndex({ volume: vol, concentration: conc, pr, morphology: morph });
             const res = document.getElementById('fertility-result');
-            res.innerHTML = `<h3>IF: ${ifScore}/100</h3><p>${ifScore > 60 ? '✅ Норма' : '⚠️ Требуется внимание'}</p>`;
+            res.innerHTML = `<h3>IF: ${ifScore}/100</h3><p>${ifScore > 60 ? 'Норма' : 'Требуется внимание'}</p>`;
         },
         exportJSON: () => {
             const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
             const node = document.createElement('a');
             node.setAttribute("href", dataStr);
-            node.setAttribute("download", "bode_health_course.json");
+            node.setAttribute("download", "bode_health_backup.json");
             document.body.appendChild(node);
             node.click();
             node.remove();
         },
+        exportPDF: () => { alert("Генерация PDF отчета... (Функция в разработке)") },
         renderShop: () => {
             const list = document.getElementById('shop-list');
             list.innerHTML = '';
@@ -204,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     list.innerHTML += `
                         <div class="drug-card">
                             <div><strong>${key.toUpperCase()}</strong><br><small>${item.platform}</small></div>
-                            <div><span style="color:#03dac6">${item.price}</span> <a href="${item.url}" class="btn-primary" style="font-size:0.7em; padding:4px 8px; margin-left:5px; text-decoration:none;">Buy</a></div>
+                            <div><span style="color:#03dac6">${item.price}</span> <a href="${item.url}" target="_blank" class="btn-primary" style="font-size:0.8em; padding:5px 10px; margin-left:10px; text-decoration:none;">Купить</a></div>
                         </div>
                     `;
                 });
@@ -216,12 +246,28 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const [term, def] of Object.entries(DB.glossary)) {
                 list.innerHTML += `<div class="drug-card"><strong>${term}</strong><p style="margin:5px 0 0; font-size:0.9em; color:#aaa">${def}</p></div>`;
             }
+        },
+        renderArticles: () => {
+            const list = document.getElementById('articles-list');
+            list.innerHTML = '';
+            const articles = [
+                { title: "Базовый протокол поддержки на курсе", desc: "Разбор УДХК, Телмисартана и Берберина." },
+                { title: "Как читать анализы: Липидный профиль", desc: "ЛПВП, ЛПНП, Триглицериды – что важно?" },
+                { title: "Гематокрит и вязкость крови", desc: "Когда нужна донация? Эффективность пентоксифиллина." }
+            ];
+            articles.forEach(a => {
+                list.innerHTML += `<div class="drug-card"><strong>${a.title}</strong><p style="margin:5px 0 0; font-size:0.9em; color:#aaa">${a.desc}</p></div>`;
+            });
         }
     };
 
     document.getElementById('add-drug-form').addEventListener('submit', App.addDrug);
+    document.getElementById('voice-btn').addEventListener('click', () => { alert("Голосовой ввод: 'Я съел 200г курицы' (Demo)"); });
+    
+    // Init
     App.renderStack();
     App.renderShop();
     App.renderGlossary();
-    document.getElementById('trust-score-display').textContent = `Trust: ${Engine.calculateFertilityIndex({volume:2, conc:20}) > 0 ? 50 : 0}`; // Mock
+    App.renderArticles();
+    document.getElementById('trust-score-display').textContent = `Trust: ${Engine.calculateFertilityIndex({volume:1, conc:1}) > 0 ? 50 : 0}`; // Mock
 });
