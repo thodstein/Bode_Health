@@ -1,0 +1,22 @@
+{
+  "baseline": [
+    { "id": "alt", "name": "ALT", "unit": "U/L", "priority": 5, "frequencyWeeks": 12, "systems": ["hep"] },
+    { "id": "ast", "name": "AST", "unit": "U/L", "priority": 5, "frequencyWeeks": 12, "systems": ["hep"] },
+    { "id": "ggt", "name": "GGT", "unit": "U/L", "priority": 5, "frequencyWeeks": 12, "systems": ["hep"] },
+    { "id": "creat", "name": "Creatinine", "unit": "µmol/L", "priority": 5, "frequencyWeeks": 12, "systems": ["nephro"] },
+    { "id": "ldl", "name": "LDL", "unit": "mmol/L", "priority": 5, "frequencyWeeks": 12, "systems": ["lipid", "cardio"] },
+    { "id": "hdl", "name": "HDL", "unit": "mmol/L", "priority": 5, "frequencyWeeks": 12, "systems": ["lipid", "cardio"] }
+  ],
+  "onCycle": [
+    { "id": "hct", "name": "Hct", "unit": "%", "priority": 10, "frequencyWeeks": 4, "systems": ["hemo"] },
+    { "id": "alt", "name": "ALT", "unit": "U/L", "priority": 10, "frequencyWeeks": 4, "systems": ["hep"] },
+    { "id": "ast", "name": "AST", "unit": "U/L", "priority": 10, "frequencyWeeks": 4, "systems": ["hep"] },
+    { "id": "e2", "name": "Estradiol", "unit": "pg/mL", "priority": 9, "frequencyWeeks": 4, "systems": ["end", "neuro"] }
+  ],
+  "pct": [
+    { "id": "tt", "name": "Total T", "unit": "nmol/L", "priority": 8, "frequencyWeeks": 2, "systems": ["end"] },
+    { "id": "lh", "name": "LH", "unit": "IU/L", "priority": 8, "frequencyWeeks": 2, "systems": ["end"] },
+    { "id": "fsh", "name": "FSH", "unit": "IU/L", "priority": 8, "frequencyWeeks": 2, "systems": ["end"] },
+    { "id": "crp", "name": "CRP", "unit": "mg/L", "priority": 6, "frequencyWeeks": 2, "systems": ["immune"] }
+  ]
+}

@@ -1,0 +1,20 @@
+<h2 class="section-title">🔄 Модуль ПКТ</h2>
+<p class="muted">Расчёт старта ПКТ по последней инъекции и периоду полувыведения.</p>
+
+<div class="field-grid">
+  <div class="field">
+    <label>Последняя неделя инъекции</label>
+    <input id="pct-last-week" type="number" min="0" step="1" placeholder="Например, 12">
+  </div>
+  <div class="field">
+    <label>Макс. период полувыведения (дней)</label>
+    <input id="pct-half-life" type="number" min="0" step="1" placeholder="Например, 7">
+  </div>
+</div>
+
+<div class="topbar-actions" style="margin-top:12px">
+  <button class="btn btn-primary" id="pct-save">Рассчитать и сохранить</button>
+  <button class="btn btn-secondary" id="pct-load">Загрузить</button>
+</div>
+
+<div id="pct-result" class="chips" style="margin-top:14px"></div>
