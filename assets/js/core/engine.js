@@ -1,31 +1,32 @@
 const Engine = {
-    // Формула расчета концентрации вещества в крови
+    // Формула концентрации: учет периода полувыведения и времени приема
     calcConc: function(hl, start, end, week) {
         if (week < start) return 0;
-        // Фаза набора (накопление до steady state)
         if (week <= end) {
+            // Плавный вход на плато
             return Math.min(1, (week - start) / (hl / 7 + 1));
+        } else {
+            // Спад после отмены (экспоненциальный)
+            return Math.max(0, Math.exp(-0.693 * (week - end) / (hl / 7)));
         }
-        // Фаза выведения (спад после отмены)
-        return Math.max(0, 1 - (week - end) * 0.2);
     },
-
-    // Генерация плана на весь курс + выведение
+    
+    // Генерация плана по неделям
     generatePlan: function(stack) {
         let maxW = 12;
         stack.forEach(i => { if(i.end > maxW) maxW = i.end; });
-        const total = maxW + 6; // +6 недель на выведение
+        const total = maxW + 8; // + время на полный вывод
         const plan = [];
-
+        
         for(let w = 1; w <= total; w++) {
             let r = {};
-            // Инициализация всех механизмов нулями
+            // Инициализация всех рисков нулями
             for(let sys in DB.risks) { 
                 r[sys] = {}; 
                 DB.risks[sys].forEach(m => r[sys][m.id] = 0); 
             }
-
-            // Расчет рисков для каждого препарата в стеке
+            
+            // Суммирование рисков от всех препаратов
             stack.forEach(it => {
                 const esterList = DB.esters[it.sub];
                 const ester = esterList ? esterList.find(x => x.id === it.est) : null;
@@ -33,13 +34,13 @@ const Engine = {
                 
                 const conc = this.calcConc(hl, it.start, it.end, w);
                 
-                if(conc > 0.05) {
+                if(conc > 0.01) {
                     const sub = DB.substances.find(x => x.id === it.sub);
                     if(!sub) return;
                     const t = sub.tox;
-                    const load = conc * (it.dose / 100); // Коэффициент нагрузки
-
-                    // Накопление рисков по системам
+                    const load = conc * (it.dose / 100); // Нормализация дозы
+                    
+                    // Распределение токсичности по механизмам
                     r.liver.chol += t.liver * 3 * load; 
                     r.liver.cyt += t.liver * 2 * load;
                     
@@ -60,8 +61,8 @@ const Engine = {
                     r.repro.atr += t.repro * 4 * load;
                 }
             });
-
-            // Нормализация (не более 100%)
+            
+            // Ограничение 100%
             for(let sys in r) {
                 for(let k in r[sys]) {
                     r[sys][k] = Math.min(100, Math.round(r[sys][k]));
@@ -71,8 +72,7 @@ const Engine = {
         }
         return plan;
     },
-
-    // Цветовая кодировка для heatmap
+    
     getColor: function(v) {
         if(v < 20) return '#4caf50'; 
         if(v < 40) return '#8bc34a'; 
