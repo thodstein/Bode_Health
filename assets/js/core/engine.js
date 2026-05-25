@@ -1,138 +1,82 @@
 const Engine = {
-    // 2.1 PK/PD MODEL (Упрощенная 1-компартментная для JS, в проде Web Worker с RK4)
-    calculateConcentration(drug, dose, timeHours, prevConc = 0) {
-        const ka = 0.5; 
-        const ke = Math.log(2) / (drug.halfLife * 24); 
-        const vd = 50; 
-        if (timeHours <= 0) return 0;
-        const conc = (dose / vd) * (ka / (ka - ke)) * (Math.exp(-ke * timeHours) - Math.exp(-ka * timeHours));
-        return Math.max(0, conc + prevConc * Math.exp(-ke * 1));
-    },
-
-    // 2.2 RAW RISK CALCULATION
-    calculateRawRisks(stack) {
-        let risks = {};
-        for (let sys in DB.riskMatrixDefinition) {
-            risks[sys] = {};
-            DB.riskMatrixDefinition[sys].mechanisms.forEach(m => risks[sys][m] = 0);
-        }
-
-        stack.forEach(item => {
-            const drug = DB.drugs.find(d => d.id === item.id);
-            if (!drug) return;
-            const doseFactor = (item.dose || 100) / 100; 
-
-            if (drug.hepatotoxicity >= 4) { risks.liver.cholestasis += 20 * doseFactor; risks.liver.cytolysis += 15 * doseFactor; }
-            if (drug.lipidImpact >= 4) { risks.cardio.dyslipidemia += 20 * doseFactor; risks.cardio.thrombosis += 10 * doseFactor; }
-            if (drug.erythrocytosisRisk >= 4) { risks.hemato.erythrocytosis += 25 * doseFactor; risks.hemato.viscosity_high += 15 * doseFactor; }
-            if (drug.neuroToxic) { risks.neuro.dopamine_imbalance += 20 * doseFactor; risks.neuro.glutamate_excitotoxicity += 10 * doseFactor; }
-            if (drug.type === 'oral') { risks.liver.mitochondrial_dysfunction += 10 * doseFactor; }
-            if (['gh', 'insulin', 'semaglutide'].includes(drug.id)) { risks.endo.insulin_resistance += 15 * doseFactor; }
-            if (drug.progestinActivity >= 0.9) { risks.endo.prolactin_elevation += 10 * doseFactor; risks.repro.libido_crash += 5 * doseFactor; }
-            if (drug.conversionE2 >= 0.3) { risks.endo.estrogen_dominance += 15 * doseFactor; risks.repro.gynecomastia += 10 * doseFactor; }
-        });
-
-        for (let sys in risks) {
-            for (let m in risks[sys]) { risks[sys][m] = Math.min(100, Math.round(risks[sys][m])); }
-        }
-        return risks;
-    },
-
-    // 2.3 NET RISK CALCULATION
-    calculateNetRisks(rawRisks, isSupportActive) {
-        if (!isSupportActive) return rawRisks;
-        let netRisks = JSON.parse(JSON.stringify(rawRisks));
-
-        netRisks.liver.cholestasis = Math.floor(rawRisks.liver.cholestasis * 0.35);
-        netRisks.liver.cytolysis = Math.floor(rawRisks.liver.cytolysis * 0.4);
-        netRisks.cardio.hypertension = Math.floor(rawRisks.cardio.hypertension * 0.3);
-        netRisks.cardio.tachycardia = Math.floor(rawRisks.cardio.tachycardia * 0.2);
-        netRisks.cardio.dyslipidemia = Math.floor(rawRisks.cardio.dyslipidemia * 0.5);
-        netRisks.hemato.viscosity_high = Math.floor(rawRisks.hemato.viscosity_high * 0.5);
-        netRisks.hemato.erythrocytosis = Math.floor(rawRisks.hemato.erythrocytosis * 0.6);
-        netRisks.neuro.dopamine_imbalance = Math.floor(rawRisks.neuro.dopamine_imbalance * 0.4);
-        netRisks.neuro.glutamate_excitotoxicity = Math.floor(rawRisks.neuro.glutamate_excitotoxicity * 0.4);
-        netRisks.endo.estrogen_dominance = Math.floor(rawRisks.endo.estrogen_dominance * 0.3);
-        netRisks.endo.prolactin_elevation = Math.floor(rawRisks.endo.prolactin_elevation * 0.3);
-        netRisks.endo.insulin_resistance = Math.floor(rawRisks.endo.insulin_resistance * 0.4);
-        netRisks.repro.testicular_atrophy = Math.floor(rawRisks.repro.testicular_atrophy * 0.3);
-
-        return netRisks;
-    },
-
-    // 2.4 FERTILITY INDEX (WHO 2021)
-    calculateFertilityIndex(data) {
-        const { volume, concentration, total, pr, morphology } = data;
-        if (!volume || !concentration) return 0;
-        let score = 0;
-        score += Math.min(1, volume / 1.5) * 15;
-        score += Math.min(1, concentration / 16) * 20;
-        score += Math.min(1, (total || 0) / 39) * 10;
-        score += Math.min(1, (pr || 0) / 30) * 25;
-        score += Math.min(1, (morphology || 0) / 4) * 20;
-        return Math.round(score);
-    },
-
-    // 2.5 INTEGRATED SCORE
-    calculateIntegratedScore(netRisks) {
-        let sum = 0, count = 0;
-        for (let sys in netRisks) {
-            for (let m in netRisks[sys]) { sum += netRisks[sys][m]; count++; }
-        }
-        return count === 0 ? 0 : Math.round(sum / count);
-    }
-};
-
-// --- ДОПОЛНЕНИЯ STAGE 3 ---
-
-// 2.6 ГЕНЕРАЦИЯ ПОНЕДЕЛЬНОГО ПЛАНА
-Engine.generateWeeklyPlan = function(stack, weeks) {
-    let plan = [];
-    for (let w = 1; w <= weeks; w++) {
-        let weekRisks = this.calculateRawRisks(stack); // Упрощенно: риски постоянны, в полном - накопление
-        let weekNet = this.calculateNetRisks(weekRisks, true);
+    // Расчет концентрации с учетом эфира
+    calculateConcentration(esterHalfLife, doseMgPerWeek, weekIndex, totalWeeks) {
+        const ke = Math.log(2) / (esterHalfLife * 24); // часов -> дни
+        // Упрощенная модель накопления к steady state
+        // Steady state достигается примерно за 4-5 периодов полувыведения
+        const weeksToSteady = (esterHalfLife * 7) / 7; 
         
-        // Подбор поддержки на неделю (фильтрация по критическим рискам)
-        let supportForWeek = DB.supportProtocol.filter(block => {
-            // Логика: если риск системы > 30%, включаем соответствующие препараты
-            return true; // Пока возвращаем весь протокол
-        });
-
-        plan.push({
-            week: w,
-            risks: weekNet,
-            support: supportForWeek,
-            alerts: weekNet.hemato.erythrocytosis > 40 ? ['Риск эритроцитоза! Проверь гематокрит.'] : []
-        });
-    }
-    return plan;
-};
-
-// 2.7 ПРОГНОЗЫ (ARIMA Mock / Exponential Smoothing)
-Engine.predictMarker = function(history, stepsAhead) {
-    if (history.length < 3) return history[history.length-1] || 0;
-    // Простое экспоненциальное сглаживание (alpha = 0.3)
-    let lastVal = history[history.length-1];
-    let trend = lastVal - history[history.length-2];
-    let forecast = [];
-    for(let i=0; i<stepsAhead; i++) {
-        lastVal = lastVal + (trend * 0.8); // Затухание тренда
-        forecast.push(Math.round(lastVal * 10)/10);
-    }
-    return forecast;
-};
-
-// 2.8 WHAT-IF СИМУЛЯТОР
-Engine.simulateWhatIf = function(baseStack, changes) {
-    // changes = { 'test_e': { dose: newDose } }
-    let simStack = JSON.parse(JSON.stringify(baseStack));
-    simStack.forEach(item => {
-        if (changes[item.id]) {
-            item.dose = changes[item.id].dose;
+        let accumulationFactor = 1 - Math.exp(-0.693 * (weekIndex + 1) / (esterHalfLife / 7));
+        if (weekIndex >= totalWeeks) {
+             // ПКТ / спад
+             const weeksOff = weekIndex - totalWeeks;
+             accumulationFactor = Math.max(0, 1 - (weeksOff * 0.2)); // Грубый спад
         }
-    });
-    return {
-        raw: this.calculateRawRisks(simStack),
-        net: this.calculateNetRisks(this.calculateRawRisks(simStack), true)
-    };
+        
+        return doseMgPerWeek * accumulationFactor;
+    },
+
+    // Генерация понедельного плана
+    generateWeeklyPlan(stack) {
+        const weeks = [];
+        const maxWeeks = Math.max(...stack.map(s => s.duration), 12);
+        
+        for (let w = 1; w <= maxWeeks; w++) {
+            let weekRisks = { liver: 0, cardio: 0, kidney: 0, neuro: 0, hemato: 0, endo: 0, repro: 0 };
+            let activeDrugs = [];
+
+            stack.forEach(item => {
+                if (w <= item.duration) {
+                    activeDrugs.push(item);
+                    const substance = DB.substances.find(s => s.id === item.substanceId);
+                    if (!substance) return;
+
+                    // Коэффициент накопления (чем дольше эфир, тем плавнее, но к середине курса максимум)
+                    const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
+                    const halfLife = ester ? ester.halfLife : 1;
+                    const loadFactor = Math.min(1.2, w / (halfLife/7 + 2)); 
+
+                    // Начисление рисков
+                    const tox = substance.baseToxicity;
+                    weekRisks.liver += (tox.liver || 0) * (item.dose / 100) * loadFactor;
+                    weekRisks.cardio += (tox.lipid || 0) * (item.dose / 100) * loadFactor;
+                    weekRisks.hemato += (tox.hct || 0) * (item.dose / 100) * loadFactor;
+                    weekRisks.neuro += (tox.neuro || 0) * (item.dose / 100) * loadFactor;
+                    
+                    if (tox.insulin) weekRisks.endo += tox.insulin * (item.dose / 10) * loadFactor;
+                    if (substance.id.includes('nandrolone') || substance.id.includes('trenbolone')) {
+                        weekRisks.repro += 10 * loadFactor; // Прогестины
+                    }
+                }
+            });
+
+            // Нормализация и сохранение
+            for (let k in weekRisks) weekRisks[k] = Math.min(100, Math.round(weekRisks[k]));
+            
+            weeks.push({
+                week: w,
+                risks: weekRisks,
+                support: DB.supportProtocol, // Поддержка постоянная, но можно динамически менять
+                drugs: activeDrugs.map(d => `${DB.substances.find(s=>s.id===d.substanceId)?.name} (${d.dose}мг)`)
+            });
+        }
+        return weeks;
+    },
+
+    // Расчет Trust Score
+    calculateTrustScore(userActivity) {
+        let score = 0;
+        if (userActivity.daysLogged > 7) score += 20;
+        if (userActivity.labsUploaded) score += 30;
+        if (userActivity.supportCompliance > 0.8) score += 30;
+        if (userActivity.reviews > 0) score += 20;
+        return Math.min(100, score);
+    },
+
+    // Фертильность (WHO 2021)
+    calculateFertilityIndex(data) {
+        if (!data.volume || !data.conc) return 0;
+        let score = (Math.min(1, data.volume/1.5)*15) + (Math.min(1, data.conc/16)*20) + (Math.min(1, (data.pr||0)/30)*25) + (Math.min(1, (data.morph||0)/4)*20);
+        return Math.round(score * 100 / 80); // Нормализация к 100
+    }
 };
