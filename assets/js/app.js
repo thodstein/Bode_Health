@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     let drugs = [];
     let riskChart = null;
+
+    // Переключение вкладок
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -9,11 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(btn.dataset.tab).classList.add('active');
         });
     });
+
+    // Обновление цифр на слайдерах
     ['CV', 'Hep', 'Neuro', 'Lipid', 'Nephro', 'Hemo'].forEach(type => {
         const slider = document.getElementById(`risk${type}`);
         const span = document.getElementById(`val${type}`);
-        if(slider && span) slider.addEventListener('input', () => span.textContent = slider.value);
+        if(slider && span) {
+            slider.addEventListener('input', () => span.textContent = slider.value);
+        }
     });
+
+    // Добавление препарата
     document.getElementById('drugForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const newDrug = {
@@ -37,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ['CV', 'Hep', 'Neuro', 'Lipid', 'Nephro', 'Hemo'].forEach(t => document.getElementById(`val${t}`).textContent = '0');
         alert('Препарат добавлен! Перейдите во вкладку "Стек".');
     });
+
+    // Отрисовка списка препаратов
     function renderStack() {
         const list = document.getElementById('stackList');
         list.innerHTML = '';
@@ -59,11 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
             list.appendChild(card);
         });
     }
+
     window.removeDrug = (id) => {
         drugs = drugs.filter(d => d.id !== id);
         renderStack();
         document.getElementById('riskSummary').style.display = 'none';
     };
+
     document.getElementById('clearStackBtn').addEventListener('click', () => {
         if(confirm('Очистить весь список?')) {
             drugs = [];
@@ -71,18 +83,25 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('riskSummary').style.display = 'none';
         }
     });
+
+    // Расчет рисков и построение графика
     document.getElementById('calcRiskBtn').addEventListener('click', () => {
         if (drugs.length === 0) return alert('Добавьте препараты сначала!');
+        
         const totals = { CV: 0, Hep: 0, Neuro: 0, Lipid: 0, Nephro: 0, Hemo: 0 };
         let oralCount = 0;
+
         drugs.forEach(d => {
             Object.keys(totals).forEach(k => totals[k] += d.risks[k]);
             if (d.route === 'oral') oralCount++;
         });
+
         const oralPenalty = oralCount > 1 ? (oralCount - 1) * 2 : 0;
         const maxScore = Math.max(...Object.values(totals)) + oralPenalty;
+        
         const ctx = document.getElementById('riskChart').getContext('2d');
         if (riskChart) riskChart.destroy();
+        
         riskChart = new Chart(ctx, {
             type: 'radar',
             data: {
@@ -97,21 +116,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 }]
             },
             options: {
-                scales: { r: { beginAtZero: true, max: Math.max(50, maxScore + 10) } },
-                responsive: true
+                scales: { 
+                    r: { 
+                        beginAtZero: true, 
+                        max: Math.max(50, maxScore + 10),
+                        ticks: { stepSize: 5 }
+                    } 
+                },
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
+                }
             }
         });
+
         const summaryDiv = document.getElementById('riskSummary');
         const scoreDiv = document.getElementById('totalScore');
         summaryDiv.style.display = 'block';
+        
         let msg = `Общая нагрузка: ${maxScore}`;
         if (oralPenalty > 0) msg += ` (вкл. штраф +${oralPenalty} за ${oralCount} пероральных преп.)`;
         scoreDiv.textContent = msg;
+        
         scoreDiv.className = 'total-score ' + (maxScore < 20 ? 'score-low' : (maxScore < 40 ? 'score-med' : 'score-high'));
+        
+        // Автоматический переход к результатам
         setTimeout(() => {
             document.querySelector('[data-tab="results"]').click();
-            document.getElementById('reportContent').innerHTML = `<pre>${JSON.stringify(totals, null, 2)}</pre><p>График доступен во вкладке "Стек"</p>`;
-        }, 500);
+            document.getElementById('reportContent').innerHTML = `
+                <div style="background:#f7fafc; padding:15px; border-radius:8px;">
+                    <h3>Детализация по системам:</h3>
+                    <ul>
+                        <li>Сердечно-сосудистая: <b>${totals.CV}</b></li>
+                        <li>Печень: <b>${totals.Hep}</b></li>
+                        <li>Нервная система: <b>${totals.Neuro}</b></li>
+                        <li>Липидный профиль: <b>${totals.Lipid}</b></li>
+                        <li>Почки: <b>${totals.Nephro}</b></li>
+                        <li>Кровь: <b>${totals.Hemo}</b></li>
+                    </ul>
+                    <p><i>График доступен во вкладке "Стек"</i></p>
+                </div>
+            `;
+        }, 800);
     });
+
     renderStack();
 });
