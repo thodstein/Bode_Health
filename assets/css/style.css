@@ -18,7 +18,7 @@ header { background: var(--bg-card); padding: 20px; border-bottom: 1px solid var
 /* Tabs */
 .tabs { display: flex; overflow-x: auto; background: var(--bg-card); position: sticky; top: 0; z-index: 100; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
-.tab-btn { flex: 1; min-width: 100px; padding: 15px 10px; background: none; border: none; color: var(--text-sec); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: 0.2s; }
+.tab-btn { flex: 1; min-width: 90px; padding: 14px 8px; background: none; border: none; color: var(--text-sec); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: 0.2s; font-size: 0.9em; }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); }
 
@@ -27,10 +27,13 @@ header { background: var(--bg-card); padding: 20px; border-bottom: 1px solid var
 .tab-content.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+h2 { color: var(--primary); margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+h3 { color: var(--secondary); font-size: 1.1em; }
+
 /* Cards */
-.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .card { background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
-.big-value { font-size: 2.2em; font-weight: bold; margin-top: 10px; }
+.big-value { font-size: 2em; font-weight: bold; margin-top: 10px; }
 
 /* Forms */
 .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -39,7 +42,7 @@ button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold
 .btn-primary { background: var(--primary); color: #000; }
 .btn-primary:hover { opacity: 0.9; }
 .btn-secondary { background: #333; color: white; }
-.btn-danger { background: #cf6679; color: #000; }
+.btn-danger { background: var(--error); color: white; }
 .btn-delete { background: rgba(207, 102, 121, 0.2); color: var(--error); padding: 8px 12px; font-size: 0.9em; }
 .btn-icon { font-size: 1.5em; background: none; border: none; cursor: pointer; color: var(--secondary); }
 
@@ -74,5 +77,6 @@ button { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold
 .empty-state { text-align: center; color: var(--text-sec); padding: 40px; font-style: italic; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 .toggle-switch { display: flex; align-items: center; gap: 10px; font-size: 0.9em; color: var(--text-sec); }
-.fertility-block, .profile-section, .what-if-block, .forecast-block { background: var(--bg-card); padding: 20px; border-radius: 12px; margin-top: 20px; }
-.plan-container { background: #252525; padding: 15px; border-radius: 8px; }
+.fertility-block, .profile-section, .forecast-block, .what-if-block, .macros-summary, .labs-history { background: var(--bg-card); padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid var(--border); }
+.profile-section { margin-bottom: 15px; }
+.voice-input { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 10px; background: #252525; border-radius: 8px; }
