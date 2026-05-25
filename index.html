@@ -48,6 +48,7 @@ canvas{background:var(--card);border-radius:12px;padding:10px;margin-bottom:20px
 <button class="tab-btn" onclick="App.switchTab('labs')">🧬 Анализы</button>
 <button class="tab-btn" onclick="App.switchTab('articles')">📚 Статьи</button>
 <button class="tab-btn" onclick="App.switchTab('shop')">🛒 Магазин</button>
+<button class="tab-btn" onclick="App.switchTab('profile')">👤 Профиль</button>
 </nav>
 <main>
 <div id="dashboard" class="view active">
@@ -76,10 +77,20 @@ canvas{background:var(--card);border-radius:12px;padding:10px;margin-bottom:20px
 <div id="labs" class="view"><div class="form-box"><h3>Индекс Фертильности (WHO)</h3><input type="number" id="lab-vol" placeholder="Объем (мл)"><input type="number" id="lab-conc" placeholder="Концентрация (млн)"><input type="number" id="lab-pr" placeholder="Подвижность (%)"><button class="btn-pri" onclick="App.calcFert()">Рассчитать IF</button><div id="fert-res" style="margin-top:15px;font-size:1.2rem;font-weight:bold"></div></div></div>
 <div id="articles" class="view"><h2>База знаний</h2><div id="articles-list"></div></div>
 <div id="shop" class="view"><h2>Магазин</h2><div id="shop-list"></div><h2>Глоссарий</h2><div id="glossary-list"></div></div>
+<div id="profile" class="view"><h2>Профиль пользователя</h2><div class="card"><h3>Статистика</h3><p>XP: <span id="prof-xp">0</span></p><p>Trust Score: <span id="prof-trust">0</span></p></div><h2>Настройки</h2><div class="form-box"><p>Экспорт данных:</p><button class="btn-sec" onclick="alert('Функция экспорта в разработке')">Скачать JSON</button></div></div>
 </main>
 </div>
 <script src="assets/js/core/database.js?v=12"></script>
 <script src="assets/js/core/engine.js?v=12"></script>
 <script src="assets/js/app.js?v=12"></script>
+<script>
+// Обновление профиля
+setInterval(() => {
+    if(document.getElementById('profile').classList.contains('active')) {
+        document.getElementById('prof-xp').innerText = App.state.xp;
+        document.getElementById('prof-trust').innerText = Math.min(100, Math.floor(App.state.xp / 10));
+    }
+}, 1000);
+</script>
 </body>
 </html>
