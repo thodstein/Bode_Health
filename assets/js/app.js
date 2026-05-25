@@ -1,28 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("App Initialized");
-    
-    // State
-    const state = { stack: [], plan: [], currentWeekIdx: 0, chartVisibility: { liver:true, cardio:true, hemato:true, neuro:false, kidney:false, endo:false, repro:false } };
+    if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.ready(); window.Telegram.WebApp.expand(); }
 
-    // 1. Tabs Logic
+    const state = { 
+        stack: [], 
+        plan: [], 
+        currentWeekIdx: 0, 
+        chartVisibility: { liver:true, cardio:true, hemato:true, neuro:false, kidney:false, endo:false, repro:false } 
+    };
+
+    // --- TABS LOGIC ---
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
-            
-            // Refresh charts if switching to Risks tab
-            if (tabId === 'risks' && state.plan.length) {
-                App.renderHeatmap();
-                App.renderTrendChart();
-            }
+            document.getElementById(this.dataset.tab).classList.add('active');
         });
     });
 
-    // 2. Substance Select Init
+    // --- SUBSTANCE & ESTER LOGIC ---
     const subSelect = document.getElementById('drug-substance');
+    const estSelect = document.getElementById('drug-ester');
+
+    // Populate Substances
     if (subSelect) {
         DB.substances.forEach(s => {
             const opt = document.createElement('option');
@@ -30,26 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.textContent = s.name;
             subSelect.appendChild(opt);
         });
-        // Trigger initial load
-        App.loadEsters();
-    }
 
-    // 3. Form Submit
-    const form = document.getElementById('add-drug-form');
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            App.addDrug(e);
-        });
-    }
-
-    // Global App Object
-    window.App = {
-        loadEsters: () => {
-            const subId = document.getElementById('drug-substance').value;
-            const estSelect = document.getElementById('drug-ester');
-            if (!estSelect) return;
-            
+        // Attach Change Event for Esters
+        subSelect.addEventListener('change', function() {
+            const subId = this.value;
             estSelect.innerHTML = '';
             const esters = DB.esters[subId];
             
@@ -58,17 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 esters.forEach(e => {
                     const opt = document.createElement('option');
                     opt.value = e.id;
-                    opt.textContent = `${e.name} (${e.halfLife}д)`;
+                    opt.textContent = `${e.name} (T1/2: ${e.halfLife} дн.)`;
                     estSelect.appendChild(opt);
                 });
             } else {
                 estSelect.disabled = true;
                 const opt = document.createElement('option');
-                opt.textContent = "Нет эфира (Орал/Пептид)";
+                opt.textContent = "Без эфира";
                 estSelect.appendChild(opt);
             }
-        },
+        });
+    }
 
+    // --- MAIN APP FUNCTIONS ---
+    window.App = {
         addDrug: (e) => {
             e.preventDefault();
             const subId = document.getElementById('drug-substance').value;
@@ -76,58 +64,53 @@ document.addEventListener('DOMContentLoaded', () => {
             const dose = parseFloat(document.getElementById('drug-dose').value);
             const start = parseInt(document.getElementById('drug-start').value);
             const end = parseInt(document.getElementById('drug-end').value);
-
-            if (!subId || !dose || !start || !end) return alert("Заполните все поля");
-            if (start >= end) return alert("Финиш должен быть больше старта");
-
+            
+            if (!subId) return alert('Выберите вещество!');
+            if (start >= end) return alert('Неделя финиша должна быть больше старта!');
+            
             state.stack.push({ substanceId: subId, esterId, dose, startWeek: start, endWeek: end });
             App.renderStack();
             
-            // Reset form partially
+            // Reset Form
             document.getElementById('drug-dose').value = '';
-            document.getElementById('drug-end').value = parseInt(start) + 8;
+            document.getElementById('drug-start').value = 1;
+            document.getElementById('drug-end').value = 8;
+            estSelect.disabled = true;
         },
-
+        
         renderStack: () => {
             const list = document.getElementById('stack-list');
             if (!list) return;
             list.innerHTML = '';
+            if (state.stack.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#aaa">Стек пуст</p>';
+                return;
+            }
             state.stack.forEach((item, idx) => {
                 const sub = DB.substances.find(s => s.id === item.substanceId);
-                const ester = DB.esters[item.substanceId]?.find(e => e.id === item.esterId);
+                const ester = DB.esters[item.substanceId] ? DB.esters[item.substanceId].find(e => e.id === item.esterId) : null;
                 const div = document.createElement('div');
                 div.className = 'drug-card';
                 div.innerHTML = `
-                    <div>
-                        <strong>${sub.name}</strong> ${ester ? '('+ester.name+')' : ''}
-                        <br><small>${item.dose}мг | Нед ${item.startWeek}-${item.endWeek}</small>
-                    </div>
-                    <button class="btn-delete" onclick="window.App.removeDrug(${idx})">✕</button>
+                    <div><strong>${sub ? sub.name : 'Unknown'}</strong> ${ester ? '('+ester.name+')':''}<br><small>${item.dose}мг | Недели ${item.startWeek}-${item.endWeek}</small></div>
+                    <button class="btn-delete" onclick="state.stack.splice(${idx},1); App.renderStack()">✕</button>
                 `;
                 list.appendChild(div);
             });
         },
-
-        removeDrug: (idx) => {
-            state.stack.splice(idx, 1);
-            App.renderStack();
-            if (state.plan.length) App.generatePlan(); // Recalc
-        },
-
+        
         generatePlan: () => {
-            if (!state.stack.length) return alert("Добавьте препараты");
-            state.plan = Engine.generateWeeklyPlan(state.stack);
+            if (state.stack.length === 0) return alert('Добавьте препараты в стек!');
+            state.plan = Engine.generateWeeklyPlan(state.stack, 20);
             state.currentWeekIdx = 0;
-            
-            const out = document.getElementById('weekly-plan-output');
-            if (out) out.innerHTML = `<div style="padding:15px; background:#222; border-radius:8px; color:#03dac6; margin-top:10px;">
-                ✅ Рассчитано на ${state.plan.length} недель. Перейдите во вкладку "Риски".
-            </div>`;
             
             App.renderHeatmap();
             App.renderTrendChart();
+            
+            const out = document.getElementById('weekly-plan-output');
+            if(out) out.innerHTML = `<p style="color:#03dac6; font-weight:bold">Курс рассчитан на ${state.plan.length} недель (включая выведение).</p>`;
         },
-
+        
         changeWeek: (dir) => {
             if (!state.plan.length) return;
             state.currentWeekIdx += dir;
@@ -135,127 +118,147 @@ document.addEventListener('DOMContentLoaded', () => {
             if (state.currentWeekIdx >= state.plan.length) state.currentWeekIdx = state.plan.length - 1;
             App.renderHeatmap();
         },
-
+        
         toggleChart: (sys) => {
             state.chartVisibility[sys] = !state.chartVisibility[sys];
             App.renderTrendChart();
         },
-
+        
         renderHeatmap: () => {
+            if (!state.plan.length) return;
+            const weekData = state.plan[state.currentWeekIdx];
+            const display = document.getElementById('current-week-display');
+            if(display) display.textContent = `Неделя ${weekData.week}`;
+            
             const container = document.getElementById('heatmap-container');
-            const weekLabel = document.getElementById('current-week-display');
-            if (!container || !state.plan.length) return;
-
-            const data = state.plan[state.currentWeekIdx];
-            weekLabel.textContent = `Неделя ${data.week}`;
+            if(!container) return;
             container.innerHTML = '';
             container.style.display = 'grid';
-            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(90px, 1fr))';
-            container.style.gap = '8px';
+            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(100px, 1fr))';
+            container.style.gap = '5px';
 
             for (let sys in DB.riskMatrix) {
-                // System Header
-                const head = document.createElement('div');
-                head.style.gridColumn = '1 / -1';
-                head.style.color = '#bb86fc';
-                head.style.fontWeight = 'bold';
-                head.style.marginTop = '10px';
-                head.textContent = sys.toUpperCase();
-                container.appendChild(head);
+                const sysDiv = document.createElement('div');
+                sysDiv.style.gridColumn = '1 / -1';
+                sysDiv.style.marginTop = '10px';
+                sysDiv.style.color = '#bb86fc';
+                sysDiv.style.fontWeight = 'bold';
+                sysDiv.textContent = sys.toUpperCase();
+                container.appendChild(sysDiv);
 
-                // Mechanisms
-                DB.riskMatrix[sys].mechanisms.forEach(m => {
-                    const val = data.risks[sys][m.id] || 0;
+                DB.riskMatrix[sys].mechanisms.forEach(mech => {
+                    const val = weekData.risks[sys][mech.id] || 0;
                     const cell = document.createElement('div');
                     cell.className = 'heatmap-cell';
                     cell.style.backgroundColor = Engine.getRiskColor(val);
-                    cell.style.color = val > 50 ? '#fff' : '#eee';
-                    cell.style.padding = '8px';
-                    cell.style.borderRadius = '6px';
+                    cell.style.padding = '10px';
+                    cell.style.borderRadius = '4px';
+                    cell.style.color = val > 50 ? '#000' : '#fff';
                     cell.style.textAlign = 'center';
-                    cell.style.fontSize = '0.75em';
-                    cell.innerHTML = `<div>${m.name}</div><strong>${val}%</strong>`;
+                    cell.style.fontSize = '0.8em';
+                    cell.innerHTML = `<div>${mech.name}</div><div style="font-weight:bold">${val}%</div>`;
+                    cell.title = mech.desc;
                     container.appendChild(cell);
                 });
             }
         },
-
+        
         renderTrendChart: () => {
             const ctx = document.getElementById('risk-trend-chart');
             if (!ctx || !state.plan.length) return;
-            if (window.trendChartInstance) window.trendChartInstance.destroy();
+            if (window.trendChart) window.trendChart.destroy();
 
             const labels = state.plan.map(p => `W${p.week}`);
             const datasets = [];
             const colors = { liver: '#ff6384', cardio: '#36a2eb', hemato: '#ff9f40', neuro: '#9966ff', kidney: '#4bc0c0', endo: '#c9cbcf', repro: '#e7e9ed' };
 
             for (let sys in state.chartVisibility) {
-                if (!state.chartVisibility[sys]) continue;
-                const sysData = state.plan.map(p => {
-                    let sum=0, cnt=0;
-                    for(let k in p.risks[sys]) { sum+=p.risks[sys][k]; cnt++; }
-                    return cnt ? Math.round(sum/cnt) : 0;
-                });
-                datasets.push({
-                    label: sys.toUpperCase(),
-                    data: sysData,
-                    borderColor: colors[sys],
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointRadius: 0
-                });
+                if (state.chartVisibility[sys]) {
+                    const data = state.plan.map(p => {
+                        let sum = 0, cnt = 0;
+                        for(let m in p.risks[sys]) { sum += p.risks[sys][m]; cnt++; }
+                        return cnt ? Math.round(sum/cnt) : 0;
+                    });
+                    datasets.push({
+                        label: sys.toUpperCase(),
+                        data: data,
+                        borderColor: colors[sys],
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4
+                    });
+                }
             }
 
-            window.trendChartInstance = new Chart(ctx, {
+            window.trendChart = new Chart(ctx, {
                 type: 'line',
                  { labels, datasets },
                 options: {
                     responsive: true,
-                    plugins: { legend: { labels: { color: '#ccc' } } },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: 'white' } } },
                     scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: '#333' }, ticks: { color: '#aaa' } },
-                        x: { grid: { color: '#333' }, ticks: { color: '#aaa' } }
+                        y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                        x: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
                     }
                 }
             });
         },
         
+        calcFertility: () => {
+            const vol = parseFloat(document.getElementById('semen-vol').value);
+            const conc = parseFloat(document.getElementById('semen-conc').value);
+            const pr = parseFloat(document.getElementById('semen-pr').value);
+            const morph = parseFloat(document.getElementById('semen-morph').value);
+            
+            // Mock calculation if engine func missing
+            let score = 0;
+            if(vol) score += (vol/1.5)*20;
+            if(conc) score += (conc/16)*30;
+            if(pr) score += (pr/30)*30;
+            if(morph) score += (morph/4)*20;
+            
+            const res = document.getElementById('fertility-result');
+            if(res) res.innerHTML = `<h3>IF: ${Math.round(score)}/100</h3>`;
+        },
+        
+        exportJSON: () => {
+            const dataStr = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const node = document.createElement('a');
+            node.setAttribute("href", dataStr);
+            node.setAttribute("download", "bode_health_course.json");
+            document.body.appendChild(node);
+            node.click();
+            node.remove();
+        },
+        
         renderShop: () => {
             const list = document.getElementById('shop-list');
-            if(!list) return;
+            if(!list || !DB.shopItems) return;
             list.innerHTML = '';
-            for(const [key, items] of Object.entries(DB.shopItems || {})) {
-                items.forEach(i => {
-                    list.innerHTML += `<div class="drug-card"><div><b>${key}</b><br><small>${i.platform}</small></div><div><span style="color:#03dac6">${i.price}</span></div></div>`;
+            for (const [key, items] of Object.entries(DB.shopItems)) {
+                items.forEach(item => {
+                    list.innerHTML += `<div class="drug-card"><div><strong>${key}</strong><br><small>${item.platform}</small></div><div><span style="color:#03dac6">${item.price}</span> <a href="${item.url}" class="btn-primary" style="padding:5px 10px; font-size:0.8em; margin-left:10px; text-decoration:none;">Buy</a></div></div>`;
                 });
             }
         },
         
         renderGlossary: () => {
             const list = document.getElementById('glossary-list');
-            if(!list) return;
+            if(!list || !DB.glossary) return;
             list.innerHTML = '';
-            for(const [k,v] of Object.entries(DB.glossary || {})) {
-                list.innerHTML += `<div class="drug-card"><b>${k}</b><p style="margin:5px 0 0; font-size:0.9em; color:#aaa">${v}</p></div>`;
+            for (const [term, def] of Object.entries(DB.glossary)) {
+                list.innerHTML += `<div class="drug-card"><strong>${term}</strong><p style="margin:5px 0 0; font-size:0.9em; color:#aaa">${def}</p></div>`;
             }
         }
     };
 
-    // Init Lists
+    // Bind Form
+    const form = document.getElementById('add-drug-form');
+    if(form) form.addEventListener('submit', App.addDrug);
+
+    // Init Views
     App.renderStack();
     App.renderShop();
     App.renderGlossary();
 });
-    // Render Support Static
-    const supCont = document.getElementById('support-schedule');
-    if(supCont) {
-        supCont.innerHTML = '';
-        DB.supportProtocol.forEach(block => {
-            let html = `<div class="time-block"><h3>${block.title}</h3>`;
-            block.items.forEach(i => {
-                html += `<div style="border-bottom:1px solid #333; padding:5px 0;"><b>${i.name}</b> ${i.dose} <div style="font-size:0.8em; color:#aaa">${i.mechanism}</div></div>`;
-            });
-            html += '</div>';
-            supCont.innerHTML += html;
-        });
-    }
