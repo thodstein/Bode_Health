@@ -1,136 +1,129 @@
-const App = {
-    state: { stack:[], plan:[], weekIdx:0, charts:{liver:true,cardio:true,hemato:true} },
-    init: function() {
-        // Fill Substance Select
-        const sel = document.getElementById('drug-substance');
-        if(sel) {
-            sel.innerHTML = '';
-            DB.substances.forEach(s => {
-                const opt = document.createElement('option'); opt.value=s.id; opt.textContent=s.name; sel.appendChild(opt);
-            });
-        }
-        this.renderSupport();
-        this.renderArticles();
-        this.renderShop();
-        this.renderGlossary();
-    },
-    switchTab: function(id) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.target.classList.add('active');
-    },
-    loadEsters: function() {
-        const subId = document.getElementById('drug-substance').value;
-        const estSel = document.getElementById('drug-ester');
-        estSel.innerHTML = '';
-        const esters = DB.esters[subId];
-        if(esters && esters.length > 0) {
-            estSel.disabled = false;
-            esters.forEach(e => {
-                const opt = document.createElement('option'); opt.value=e.id; opt.textContent=e.name+' ('+e.halfLife+'д)'; estSel.appendChild(opt);
-            });
-        } else { estSel.disabled = true; }
-    },
-    addDrug: function(e) {
-        e.preventDefault();
-        const sub = document.getElementById('drug-substance').value;
-        const est = document.getElementById('drug-ester').value;
-        const dose = parseFloat(document.getElementById('drug-dose').value);
-        const start = parseInt(document.getElementById('drug-start').value);
-        const end = parseInt(document.getElementById('drug-end').value);
-        if(start >= end) return alert('Финиш должен быть больше старта!');
-        this.state.stack.push({substanceId:sub, esterId:est, dose, startWeek:start, endWeek:end});
-        this.renderStack();
-        e.target.reset();
-        document.getElementById('drug-ester').disabled = true;
-        document.getElementById('drug-start').value = 1;
-        document.getElementById('drug-end').value = 8;
-    },
-    renderStack: function() {
-        const list = document.getElementById('stack-list'); list.innerHTML = '';
-        this.state.stack.forEach((item, idx) => {
-            const sub = DB.substances.find(s=>s.id===item.substanceId);
-            const est = DB.esters[item.substanceId]?.find(e=>e.id===item.esterId);
-            list.innerHTML += `<div class="drug-card"><div><b>${sub?.name}</b> ${est?'('+est.name+)':''}<br>${item.dose}мг | ${item.startWeek}-${item.endWeek} нед</div><button class="btn-delete" onclick="App.state.stack.splice(${idx},1);App.renderStack()">✕</button></div>`;
-        });
-    },
-    generatePlan: function() {
-        this.state.plan = Engine.generateWeeklyPlan(this.state.stack);
-        this.state.weekIdx = 0;
-        this.renderHeatmap();
-        this.renderChart();
-        document.getElementById('weekly-plan-output').innerHTML = `<p style="color:#03dac6">Расчет на ${this.state.plan.length} недель</p>`;
-        document.getElementById('dash-risk').textContent = Math.round(this.state.plan[0].risks.liver.cholestasis) + '%';
-    },
-    changeWeek: function(dir) {
-        if(!this.state.plan.length) return;
-        this.state.weekIdx += dir;
-        if(this.state.weekIdx < 0) this.state.weekIdx = 0;
-        if(this.state.weekIdx >= this.state.plan.length) this.state.weekIdx = this.state.plan.length-1;
-        this.renderHeatmap();
-    },
-    toggleChart: function(sys) { this.state.charts[sys] = !this.state.charts[sys]; this.renderChart(); },
-    renderHeatmap: function() {
-        if(!this.state.plan.length) return;
-        const data = this.state.plan[this.state.weekIdx];
-        document.getElementById('week-display').textContent = 'Неделя '+data.week;
-        const container = document.getElementById('heatmap'); container.innerHTML = '';
-        for(let sys in DB.riskMatrix) {
-            container.innerHTML += `<div style="grid-column:1/-1;color:#bb86fc;font-weight:bold;margin-top:10px">${sys.toUpperCase()}</div>`;
-            DB.riskMatrix[sys].mechanisms.forEach(m => {
-                const val = data.risks[sys][m.id]||0;
-                const cell = document.createElement('div');
-                cell.className = 'heatmap-cell';
-                cell.style.backgroundColor = Engine.getRiskColor(val);
-                cell.style.color = val>50?'#000':'#fff';
-                cell.innerHTML = `<div>${m.name}</div><b>${val}%</b>`;
-                container.appendChild(cell);
-            });
-        }
-    },
-    renderChart: function() {
-        const ctx = document.getElementById('risk-trend-chart');
-        if(!ctx || !this.state.plan.length) return;
-        if(window.riskChart) window.riskChart.destroy();
-        const labels = this.state.plan.map(p=>'W'+p.week);
-        const datasets = [];
-        const colors = {liver:'#ff6384', cardio:'#36a2eb', hemato:'#ff9f40'};
-        for(let sys in this.state.charts) {
-            if(this.state.charts[sys]) {
-                const d = this.state.plan.map(p => {
-                    let sum=0,cnt=0; for(let k in p.risks[sys]){sum+=p.risks[sys][k];cnt++;} return cnt?Math.round(sum/cnt):0;
-                });
-                datasets.push({label:sys.toUpperCase(), data:d, borderColor:colors[sys], borderWidth:2, fill:false});
-            }
-        }
-        window.riskChart = new Chart(ctx, {type:'line', data:{labels, datasets}, options:{responsive:true, plugins:{legend:{labels:{color:'white'}}}, scales:{y:{ticks:{color:'#aaa'},grid:{color:'#333'}},x:{ticks:{color:'#aaa'},grid:{color:'#333'}}}});
-    },
-    renderSupport: function() {
-        const list = document.getElementById('support-list'); list.innerHTML = '';
-        DB.supportProtocol.forEach(b => {
-            list.innerHTML += `<div class="time-block"><h3>${b.title}</h3>${b.items.map(i=>`<div class="support-item"><b>${i.name}</b> ${i.dose}<br><small>${i.mechanism}</small></div>`).join('')}</div>`;
-        });
-    },
-    calcFertility: function() {
-        const v=parseFloat(document.getElementById('semen-vol').value)||0;
-        const c=parseFloat(document.getElementById('semen-conc').value)||0;
-        const res = Math.round((v/1.5)*20 + (c/16)*30);
-        document.getElementById('fert-result').innerHTML = `<h3>IF: ${res}/100</h3>`;
-    },
-    renderArticles: function() {
-        const list = document.getElementById('articles-list'); list.innerHTML = '';
-        DB.articles.forEach(a => list.innerHTML += `<div class="drug-card"><b>${a.title}</b><br><small>${a.category} | 👁${a.views}</small></div>`);
-    },
-    renderShop: function() {
-        const list = document.getElementById('shop-list'); list.innerHTML = '';
-        for(let k in DB.shopItems) {
-            DB.shopItems[k].forEach(i => list.innerHTML += `<div class="drug-card"><b>${k}</b><br>${i.platform} ${i.price} <a href="${i.url}" class="btn-primary" style="padding:5px;font-size:0.8em">Buy</a></div>`);
-        }
-    },
-    renderGlossary: function() {
-        const list = document.getElementById('glossary-list'); list.innerHTML = '';
-        for(let k in DB.glossary) list.innerHTML += `<div class="drug-card"><b>${k}</b><p>${DB.glossary[k]}</p></div>`;
+const UI = {
+  data: { stack:[], plan:[], wk:0, ch:{liv:true,car:true,hem:true} },
+  init: function() {
+    const s = document.getElementById('sel-sub');
+    if(s) {
+      s.innerHTML = '';
+      DB_DATA.substances.forEach(x => {
+        const o = document.createElement('option'); o.value=x.id; o.innerText=x.name; s.appendChild(o);
+      });
     }
+    this.renderSup(); this.renderArt(); this.renderShop(); this.renderGlos();
+  },
+  tab: function(id) {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+  loadEst: function() {
+    const sub = document.getElementById('sel-sub').value;
+    const sel = document.getElementById('sel-est');
+    sel.innerHTML = '';
+    const list = DB_DATA.esters[sub];
+    if(list && list.length) {
+      sel.disabled = false;
+      list.forEach(x => { const o=document.createElement('option'); o.value=x.id; o.innerText=x.n+' ('+x.h+'д)'; sel.appendChild(o); });
+    } else { sel.disabled = true; }
+  },
+  addDrug: function(e) {
+    e.preventDefault();
+    const sub = document.getElementById('sel-sub').value;
+    const est = document.getElementById('sel-est').value;
+    const dose = parseFloat(document.getElementById('in-dose').value);
+    const start = parseInt(document.getElementById('in-start').value);
+    const end = parseInt(document.getElementById('in-end').value);
+    if(start >= end) return alert('Ошибка недель');
+    this.data.stack.push({sub:sub, est:est, dose:dose, start:start, end:end});
+    this.rStack();
+    e.target.reset();
+    document.getElementById('sel-est').disabled = true;
+    document.getElementById('in-start').value = 1;
+    document.getElementById('in-end').value = 8;
+  },
+  rStack: function() {
+    const d = document.getElementById('list-stack'); d.innerHTML = '';
+    this.data.stack.forEach((x,i) => {
+      const s = DB_DATA.substances.find(z=>z.id===x.sub);
+      const eList = DB_DATA.esters[x.sub];
+      const e = eList ? eList.find(z=>z.id===x.est) : null;
+      d.innerHTML += '<div class="item"><b>'+s.name+'</b> '+(e?e.n:'')+'<br>'+x.dose+'мг | '+x.start+'-'+x.end+' нед <button onclick="UI.data.stack.splice('+i+',1);UI.rStack()">✕</button></div>';
+    });
+  },
+  calc: function() {
+    this.data.plan = EngineCore.genPlan(this.data.stack);
+    this.data.wk = 0;
+    this.rHeat(); this.rChart();
+    document.getElementById('out-plan').innerHTML = '<p style="color:#03dac6">Курс: '+this.data.plan.length+' нед</p>';
+    if(this.data.plan[0]) document.getElementById('d-risk').innerText = Math.round(this.data.plan[0].r.liver.chol)+'%';
+  },
+  wk: function(dir) {
+    if(!this.data.plan.length) return;
+    this.data.wk += dir;
+    if(this.data.wk<0) this.data.wk=0;
+    if(this.data.wk>=this.data.plan.length) this.data.wk=this.data.plan.length-1;
+    this.rHeat();
+  },
+  togChart: function(k) { this.data.ch[k] = !this.data.ch[k]; this.rChart(); },
+  rHeat: function() {
+    if(!this.data.plan.length) return;
+    const p = this.data.plan[this.data.wk];
+    document.getElementById('wk-txt').innerText = 'W'+p.w;
+    const c = document.getElementById('heat'); c.innerHTML = '';
+    for(let sys in DB_DATA.risks) {
+      c.innerHTML += '<div class="h-head">'+sys.toUpperCase()+'</div>';
+      DB_DATA.risks[sys].forEach(m => {
+        const v = p.r[sys][m.id]||0;
+        const d = document.createElement('div');
+        d.className = 'h-cell';
+        d.style.backgroundColor = EngineCore.getColor(v);
+        d.style.color = v>50?'#000':'#fff';
+        d.innerHTML = '<div>'+m.n+'</div><b>'+v+'%</b>';
+        c.appendChild(d);
+      });
+    }
+  },
+  rChart: function() {
+    const ctx = document.getElementById('chart-r');
+    if(!ctx || !this.data.plan.length) return;
+    if(window.gChart) window.gChart.destroy();
+    const lbs = this.data.plan.map(x=>'W'+x.w);
+    const ds = [];
+    const cols = {liv:'#ff6384', car:'#36a2eb', hem:'#ff9f40'};
+    const names = {liv:'Печень', car:'Сердце', hem:'Кровь'};
+    for(let k in this.data.ch) {
+      if(this.data.ch[k]) {
+        const dt = this.data.plan.map(x => {
+          let sum=0,cnt=0; for(let z in x.r[k]){sum+=x.r[k][z];cnt++;} return cnt?Math.round(sum/cnt):0;
+        });
+        ds.push({label:names[k], data:dt, borderColor:cols[k], borderWidth:2, fill:false});
+      }
+    }
+    window.gChart = new Chart(ctx, {type:'line', data:{labels:lbs, datasets:ds}, options:{responsive:true, plugins:{legend:{labels:{color:'#fff'}}}, scales:{y:{ticks:{color:'#aaa'},grid:{color:'#333'}},x:{ticks:{color:'#aaa'},grid:{color:'#333'}}}});
+  },
+  renderSup: function() {
+    const d = document.getElementById('list-sup'); d.innerHTML = '';
+    DB_DATA.support.forEach(b => {
+      d.innerHTML += '<div class="blk"><h3>'+b.t+'</h3>'+b.items.map(i=>'<div class="item"><b>'+i.n+'</b> '+i.d+'<br><small>'+i.m+'</small></div>').join('')+'</div>';
+    });
+  },
+  fert: function() {
+    const v=parseFloat(document.getElementById('lab-v').value)||0;
+    const c=parseFloat(document.getElementById('lab-c').value)||0;
+    const res = Math.round((v/1.5)*20 + (c/16)*30);
+    document.getElementById('res-fert').innerHTML = '<h3>IF: '+res+'/100</h3>';
+  },
+  renderArt: function() {
+    const d = document.getElementById('list-art'); d.innerHTML = '';
+    DB_DATA.articles.forEach(a => d.innerHTML += '<div class="item"><b>'+a.t+'</b><br><small>'+a.c+' | 👁'+a.v+'</small></div>');
+  },
+  renderShop: function() {
+    const d = document.getElementById('list-shop'); d.innerHTML = '';
+    for(let k in DB_DATA.shop) {
+      DB_DATA.shop[k].forEach(i => d.innerHTML += '<div class="item"><b>'+k+'</b><br>'+i.p+' '+i.pr+' <a href="'+i.u+'" class="btn-s">Buy</a></div>');
+    }
+  },
+  renderGlos: function() {
+    const d = document.getElementById('list-glos'); d.innerHTML = '';
+    for(let k in DB_DATA.glossary) d.innerHTML += '<div class="item"><b>'+k+'</b><p>'+DB_DATA.glossary[k]+'</p></div>';
+  }
 };
-document.addEventListener('DOMContentLoaded', () => App.init());
+window.addEventListener('DOMContentLoaded', () => UI.init());

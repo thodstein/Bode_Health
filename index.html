@@ -1,64 +1,58 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0</title>
-    <base href="https://thodstein.github.io/Bode_Health/">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bode Health v11</title>
+<base href="https://thodstein.github.io/Bode_Health/">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="app-container">
-        <header><h1>Bode Health <span>v11.0</span></h1><div id="xp-display">XP:0</div></header>
-        <nav class="tabs">
-            <button class="tab-btn active" onclick="App.switchTab('dashboard')">📊 Главная</button>
-            <button class="tab-btn" onclick="App.switchTab('stack')">💉 Стек</button>
-            <button class="tab-btn" onclick="App.switchTab('risks')">⚠️ Риски</button>
-            <button class="tab-btn" onclick="App.switchTab('support')">💊 Поддержка</button>
-            <button class="tab-btn" onclick="App.switchTab('labs')">🧬 Анализы</button>
-            <button class="tab-btn" onclick="App.switchTab('articles')">📚 Статьи</button>
-            <button class="tab-btn" onclick="App.switchTab('shop')">🛒 Магазин</button>
-        </nav>
-        <main>
-            <section id="dashboard" class="tab-content active"><div class="cards-grid"><div class="card"><h3>Readiness</h3><div id="dash-readiness" class="big-value">--</div></div><div class="card"><h3>Risk</h3><div id="dash-risk" class="big-value">--</div></div></div></section>
-            
-            <section id="stack" class="tab-content">
-                <h2>Добавить препарат</h2>
-                <form id="add-drug-form" onsubmit="App.addDrug(event)">
-                    <label>Вещество:</label><select id="drug-substance" onchange="App.loadEsters()"></select>
-                    <label>Эфир:</label><select id="drug-ester" disabled></select>
-                    <div class="row"><input type="number" id="drug-dose" placeholder="Доза (мг)" required></div>
-                    <div class="row"><input type="number" id="drug-start" placeholder="Старт (нед)" value="1" required><input type="number" id="drug-end" placeholder="Финиш (нед)" value="8" required></div>
-                    <button type="submit" class="btn-primary">Добавить</button>
-                </form>
-                <div id="stack-list"></div>
-                <button onclick="App.generatePlan()" class="btn-success">Рассчитать</button>
-                <div id="weekly-plan-output"></div>
-            </section>
-
-            <section id="risks" class="tab-content">
-                <h2>Динамика</h2>
-                <div class="chart-controls">
-                    <label><input type="checkbox" checked onchange="App.toggleChart('liver')"> Печень</label>
-                    <label><input type="checkbox" checked onchange="App.toggleChart('cardio')"> Сердце</label>
-                    <label><input type="checkbox" checked onchange="App.toggleChart('hemato')"> Кровь</label>
-                </div>
-                <canvas id="risk-trend-chart"></canvas>
-                <h2>Матрица (Heatmap)</h2>
-                <div class="week-selector"><button onclick="App.changeWeek(-1)">◀</button><span id="week-display">Неделя 1</span><button onclick="App.changeWeek(1)">▶</button></div>
-                <div id="heatmap" class="heatmap-grid"></div>
-            </section>
-
-            <section id="support" class="tab-content"><h2>Поддержка</h2><div id="support-list"></div></section>
-            <section id="labs" class="tab-content"><h2>Фертильность</h2><div class="input-group"><input id="semen-vol" placeholder="Объем"><input id="semen-conc" placeholder="Конц"><input id="semen-pr" placeholder="PR%"></div><button onclick="App.calcFertility()">Рассчитать</button><div id="fert-result"></div></section>
-            
-            <section id="articles" class="tab-content"><h2>Статьи</h2><div id="articles-list"></div></section>
-            <section id="shop" class="tab-content"><h2>Магазин</h2><div id="shop-list"></div><h2>Глоссарий</h2><div id="glossary-list"></div></section>
-        </main>
-    </div>
-    <script src="assets/js/core/database.js"></script>
-    <script src="assets/js/core/engine.js"></script>
-    <script src="assets/js/app.js"></script>
+<div class="app">
+  <header><h1>Bode Health <span>v11</span></h1><div id="xp">XP:0</div></header>
+  <nav class="tabs">
+    <button onclick="UI.tab('dash')">📊 Главная</button>
+    <button onclick="UI.tab('stack')">💉 Стек</button>
+    <button onclick="UI.tab('risks')">⚠️ Риски</button>
+    <button onclick="UI.tab('support')">💊 Поддержка</button>
+    <button onclick="UI.tab('labs')">🧬 Анализы</button>
+    <button onclick="UI.tab('articles')">📚 Статьи</button>
+    <button onclick="UI.tab('shop')">🛒 Магазин</button>
+  </nav>
+  <main>
+    <section id="dash" class="tab active">
+      <div class="grid"><div class="card"><h3>Readiness</h3><div id="d-read" class="val">--</div></div><div class="card"><h3>Risk</h3><div id="d-risk" class="val">--</div></div></div>
+    </section>
+    <section id="stack" class="tab">
+      <h2>Добавить препарат</h2>
+      <form onsubmit="UI.addDrug(event)">
+        <label>Вещество</label><select id="sel-sub" onchange="UI.loadEst()"></select>
+        <label>Эфир</label><select id="sel-est" disabled></select>
+        <div class="row"><input type="number" id="in-dose" placeholder="Доза" required></div>
+        <div class="row"><input type="number" id="in-start" value="1" placeholder="Старт" required><input type="number" id="in-end" value="8" placeholder="Финиш" required></div>
+        <button type="submit">Добавить</button>
+      </form>
+      <div id="list-stack"></div>
+      <button class="ok" onclick="UI.calc()">Рассчитать курс</button>
+      <div id="out-plan"></div>
+    </section>
+    <section id="risks" class="tab">
+      <h2>Динамика</h2>
+      <div class="ctrl"><label><input type="checkbox" checked onchange="UI.togChart('liv')"> Печень</label><label><input type="checkbox" checked onchange="UI.togChart('car')"> Сердце</label><label><input type="checkbox" checked onchange="UI.togChart('hem')"> Кровь</label></div>
+      <canvas id="chart-r"></canvas>
+      <h2>Матрица</h2>
+      <div class="wk-nav"><button onclick="UI.wk(-1)">◀</button><span id="wk-txt">W1</span><button onclick="UI.wk(1)">▶</button></div>
+      <div id="heat" class="heat"></div>
+    </section>
+    <section id="support" class="tab"><h2>Поддержка</h2><div id="list-sup"></div></section>
+    <section id="labs" class="tab"><h2>Фертильность</h2><div class="row"><input id="lab-v" placeholder="Объем"><input id="lab-c" placeholder="Конц"><input id="lab-p" placeholder="PR%"></div><button onclick="UI.fert()">Расчет</button><div id="res-fert"></div></section>
+    <section id="articles" class="tab"><h2>Статьи</h2><div id="list-art"></div></section>
+    <section id="shop" class="tab"><h2>Магазин</h2><div id="list-shop"></div><h2>Глоссарий</h2><div id="list-glos"></div></section>
+  </main>
+</div>
+<script src="assets/js/core/database.js"></script>
+<script src="assets/js/core/engine.js"></script>
+<script src="assets/js/app.js"></script>
 </body>
 </html>
