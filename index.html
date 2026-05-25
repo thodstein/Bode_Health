@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bode Health v11.0 Ultimate</title>
     <base href="https://thodstein.github.io/Bode_Health/">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div class="app">
@@ -16,13 +16,13 @@
     </header>
 
     <nav class="tabs">
-        <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Главная</button>
-        <button class="tab-btn" onclick="switchTab('stack')">💉 Стек</button>
-        <button class="tab-btn" onclick="switchTab('risks')">⚠️ Риски</button>
-        <button class="tab-btn" onclick="switchTab('support')">💊 Поддержка</button>
-        <button class="tab-btn" onclick="switchTab('labs')">🧬 Анализы</button>
-        <button class="tab-btn" onclick="switchTab('articles')">📚 Статьи</button>
-        <button class="tab-btn" onclick="switchTab('shop')">🛒 Магазин</button>
+        <button class="tab-btn active" onclick="App.switchTab('dashboard')">📊 Главная</button>
+        <button class="tab-btn" onclick="App.switchTab('stack')">💉 Стек</button>
+        <button class="tab-btn" onclick="App.switchTab('risks')">⚠️ Риски</button>
+        <button class="tab-btn" onclick="App.switchTab('support')">💊 Поддержка</button>
+        <button class="tab-btn" onclick="App.switchTab('labs')">🧬 Анализы</button>
+        <button class="tab-btn" onclick="App.switchTab('articles')">📚 Статьи</button>
+        <button class="tab-btn" onclick="App.switchTab('shop')">🛒 Магазин</button>
     </nav>
 
     <main>
@@ -41,7 +41,7 @@
         <div id="stack" class="view">
             <div class="form-box">
                 <label>Вещество</label>
-                <select id="sub-select" onchange="loadEsters()"></select>
+                <select id="sub-select" onchange="App.loadEsters()"></select>
                 
                 <label>Эфир</label>
                 <select id="est-select" disabled></select>
@@ -53,10 +53,10 @@
                     <input type="number" id="in-start" placeholder="Старт (нед)" value="1">
                     <input type="number" id="in-end" placeholder="Финиш (нед)" value="8">
                 </div>
-                <button class="btn-pri" onclick="addDrug()">Добавить в курс</button>
+                <button class="btn-pri" onclick="App.addDrug()">Добавить в курс</button>
             </div>
             <div id="stack-list"></div>
-            <button class="btn-sec" onclick="calcPlan()">РАССЧИТАТЬ ДИНАМИКУ</button>
+            <button class="btn-sec" onclick="App.calcPlan()">РАССЧИТАТЬ ДИНАМИКУ</button>
             <div id="plan-msg" style="margin-top:15px; color:var(--sec); font-weight:bold;"></div>
         </div>
 
@@ -68,9 +68,9 @@
             
             <h3>Матрица (Heatmap)</h3>
             <div class="week-nav">
-                <button onclick="changeWeek(-1)">◀</button>
+                <button onclick="App.changeWeek(-1)">◀</button>
                 <span id="week-label" style="font-weight:bold; color:var(--sec)">Неделя 1</span>
-                <button onclick="changeWeek(1)">▶</button>
+                <button onclick="App.changeWeek(1)">▶</button>
             </div>
             <div id="heatmap" class="heatmap"></div>
         </div>
@@ -88,7 +88,7 @@
                 <input type="number" id="lab-vol" placeholder="Объем (мл)">
                 <input type="number" id="lab-conc" placeholder="Концентрация (млн)">
                 <input type="number" id="lab-pr" placeholder="Подвижность (%)">
-                <button class="btn-pri" onclick="calcFert()">Рассчитать IF</button>
+                <button class="btn-pri" onclick="App.calcFert()">Рассчитать IF</button>
                 <div id="fert-res" style="margin-top:15px; font-size:1.2rem; font-weight:bold"></div>
             </div>
         </div>
@@ -109,7 +109,7 @@
     </main>
 </div>
 
-<!-- Scripts in Order -->
+<!-- Scripts -->
 <script src="assets/js/core/database.js"></script>
 <script src="assets/js/core/engine.js"></script>
 <script src="assets/js/app.js"></script>
