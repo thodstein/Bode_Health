@@ -1,0 +1,54 @@
+:root {
+    --bg: #121212; --surface: #1e1e1e; --primary: #bb86fc; --secondary: #03dac6;
+    --error: #cf6679; --text: #ffffff; --text-sec: #b0b0b0;
+}
+body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); }
+.app-container { max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+header { background: var(--surface); padding: 20px; text-align: center; border-bottom: 1px solid #333; }
+header h1 { margin: 0; font-size: 24px; color: var(--primary); }
+.version { font-size: 12px; color: var(--text-sec); }
+
+/* Tabs */
+.tabs { display: flex; overflow-x: auto; background: var(--surface); position: sticky; top: 0; z-index: 100; }
+.tab-btn { flex: 1; padding: 15px 10px; border: none; background: none; color: var(--text-sec); font-weight: bold; white-space: nowrap; cursor: pointer; border-bottom: 3px solid transparent; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Content */
+.tab-content { display: none; padding: 20px; animation: fade 0.3s; }
+.tab-content.active { display: block; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.card { background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+h2 { margin-top: 0; font-size: 18px; color: var(--secondary); }
+
+/* Forms */
+input, select { width: 100%; padding: 12px; margin: 8px 0; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; }
+.form-row { display: flex; gap: 10px; }
+.form-row input, .form-row select { margin: 0; }
+
+button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+.btn-primary { background: var(--primary); color: #000; }
+.btn-success { background: var(--secondary); color: #000; }
+.btn-danger { background: var(--error); color: white; }
+.btn-icon { width: auto; padding: 10px; background: #333; }
+
+/* Drug List */
+.drug-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--primary); }
+.drug-info h4 { margin: 0; font-size: 16px; }
+.drug-info p { margin: 5px 0 0; font-size: 12px; color: var(--text-sec); }
+.delete-btn { background: transparent; color: var(--error); width: auto; padding: 5px; margin: 0; font-size: 20px; }
+
+/* Support Grid */
+.support-group { margin-bottom: 25px; }
+.support-group h3 { color: var(--secondary); border-bottom: 1px solid #444; padding-bottom: 5px; }
+.support-item { background: #2a2a2a; padding: 10px; margin: 5px 0; border-radius: 6px; font-size: 14px; }
+.support-item strong { color: var(--primary); }
+
+/* Risks */
+.risk-matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; }
+.risk-card { background: #252525; padding: 15px; border-radius: 8px; text-align: center; }
+.risk-val { font-size: 24px; font-weight: bold; }
+.risk-low { color: #4caf50; } .risk-med { color: #ff9800; } .risk-high { color: #f44336; }
+
+.voice-input { display: flex; gap: 10px; }
+.voice-input input { flex: 1; }
