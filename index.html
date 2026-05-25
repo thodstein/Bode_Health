@@ -3,57 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health - Анализ рисков</title>
+    <title>Bode Health Pro</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <link rel="stylesheet" href="assets/css/app.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="dark-theme">
     <div class="container">
         <header>
-            <h1>Bode Health</h1>
-            <p>Система анализа фармакологических рисков</p>
+            <h1>Bode Health <span style="color:#4fd1c5; font-size:0.6em;">PRO</span></h1>
+            <p>Комплексный анализ фармакологии, питания и тренировок</p>
         </header>
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="input">Ввод данных</button>
-            <button class="tab-btn" data-tab="stack">Стек препаратов</button>
-            <button class="tab-btn" data-tab="results">Результаты</button>
-        </div>
-        <div id="input" class="tab-content active">
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="drugs">💊 Стек</button>
+            <button class="tab-btn" data-tab="nutrition">🥗 Питание</button>
+            <button class="tab-btn" data-tab="training">🏋️ Тренировки</button>
+            <button class="tab-btn" data-tab="risks">📊 Риски</button>
+        </nav>
+
+        <!-- Вкладка СТЕК -->
+        <div id="drugs" class="tab-content active">
             <h2>Добавить препарат</h2>
-            <form id="drugForm" class="form-grid">
-                <input type="text" id="drugName" placeholder="Название препарата" required>
-                <input type="text" id="drugDose" placeholder="Дозировка (напр. 50 мг)" required>
-                <select id="drugRoute"><option value="oral">Перорально</option><option value="inject">Инъекционно</option><option value="topical">Местно</option></select>
-                <input type="text" id="drugPeriod" placeholder="Период (напр. 12 недель)" required>
-                <h3>Оценка токсичности (0-10)</h3>
-                <div class="sliders">
-                    <label>Сердце (CV): <input type="range" id="riskCV" min="0" max="10" value="0"><span id="valCV">0</span></label>
-                    <label>Печень (Hep): <input type="range" id="riskHep" min="0" max="10" value="0"><span id="valHep">0</span></label>
-                    <label>Невро (Neuro): <input type="range" id="riskNeuro" min="0" max="10" value="0"><span id="valNeuro">0</span></label>
-                    <label>Липиды (Lipid): <input type="range" id="riskLipid" min="0" max="10" value="0"><span id="valLipid">0</span></label>
-                    <label>Почки (Nephro): <input type="range" id="riskNephro" min="0" max="10" value="0"><span id="valNephro">0</span></label>
-                    <label>Кровь (Hemo): <input type="range" id="riskHemo" min="0" max="10" value="0"><span id="valHemo">0</span></label>
+            <form id="drugForm" class="modern-form">
+                <div class="form-row">
+                    <input type="text" id="drugName" placeholder="Название (напр. Testosterone)" required>
+                    <input type="text" id="drugDose" placeholder="Доза (напр. 250 мг/нед)" required>
                 </div>
-                <button type="submit" class="btn-primary">Добавить в стек</button>
+                <div class="form-row">
+                    <select id="drugRoute">
+                        <option value="oral">💊 Перорально</option>
+                        <option value="inject">💉 Инъекционно</option>
+                        <option value="topical">🧴 Трансдермально</option>
+                    </select>
+                    <input type="text" id="drugPeriod" placeholder="Длительность (напр. 10 недель)" required>
+                </div>
+                
+                <div class="risk-sliders">
+                    <h3>Оценка токсичности (0-10)</h3>
+                    <div class="slider-group"><label>❤️ Сердце</label><input type="range" id="rCV" min="0" max="10" value="0"><span class="val">0</span></div>
+                    <div class="slider-group"><label>🛡️ Печень</label><input type="range" id="rHep" min="0" max="10" value="0"><span class="val">0</span></div>
+                    <div class="slider-group"><label>🧠 Нервы</label><input type="range" id="rNeuro" min="0" max="10" value="0"><span class="val">0</span></div>
+                    <div class="slider-group"><label>🩸 Липиды</label><input type="range" id="rLipid" min="0" max="10" value="0"><span class="val">0</span></div>
+                    <div class="slider-group"><label> kidneys Почки</label><input type="range" id="rNephro" min="0" max="10" value="0"><span class="val">0</span></div>
+                    <div class="slider-group"><label>🩸 Кровь</label><input type="range" id="rHemo" min="0" max="10" value="0"><span class="val">0</span></div>
+                </div>
+                <button type="submit" class="btn-add">Добавить в стек</button>
             </form>
-        </div>
-        <div id="stack" class="tab-content">
-            <h2>Ваш текущий стек</h2>
-            <div id="stackList" class="drug-list"></div>
-            <div class="actions">
-                <button id="calcRiskBtn" class="btn-success">Рассчитать риски</button>
-                <button id="clearStackBtn" class="btn-danger">Очистить всё</button>
+
+            <div class="stack-display">
+                <h3>Текущий стек</h3>
+                <div id="stackList" class="card-grid"></div>
+                <div class="actions">
+                    <button id="calcRiskBtn" class="btn-calc">🚀 Рассчитать риски</button>
+                    <button id="clearStackBtn" class="btn-clear">🗑️ Очистить</button>
+                </div>
             </div>
-            <div id="riskSummary" class="risk-summary" style="display:none;">
-                <h3>Итоговый профиль токсичности</h3>
+        </div>
+
+        <!-- Вкладка ПИТАНИЕ -->
+        <div id="nutrition" class="tab-content">
+            <h2>План питания</h2>
+            <div class="macro-calc">
+                <div class="input-group">
+                    <label>Вес (кг)</label><input type="number" id="weight" value="80">
+                </div>
+                <div class="input-group">
+                    <label>Цель</label>
+                    <select id="goal">
+                        <option value="cut">Сушка</option>
+                        <option value="maintain">Поддержание</option>
+                        <option value="bulk">Масса</option>
+                    </select>
+                </div>
+                <button onclick="calcMacros()" class="btn-calc" style="width:100%; margin-top:10px;">Рассчитать КБЖУ</button>
+            </div>
+            <div id="macroResult" class="result-box" style="display:none;"></div>
+        </div>
+
+        <!-- Вкладка ТРЕНИРОВКИ -->
+        <div id="training" class="tab-content">
+            <h2>Программа тренировок</h2>
+            <div class="workout-card">
+                <h3>День 1: Грудь + Трицепс</h3>
+                <ul>
+                    <li>Жим лежа: 4x8-10</li>
+                    <li>Жим наклонный: 3x10-12</li>
+                    <li>Разводка: 3x12-15</li>
+                    <li>Французский жим: 3x10-12</li>
+                    <li>Разгибания на блоке: 3x15</li>
+                </ul>
+            </div>
+            <div class="workout-card">
+                <h3>День 2: Спина + Бицепс</h3>
+                <ul>
+                    <li>Становая тяга: 4x6-8</li>
+                    <li>Подтягивания: 4xMax</li>
+                    <li>Тяга штанги в наклоне: 3x10</li>
+                    <li>Подъем штанги на бицепс: 3x10</li>
+                    <li>Молотки: 3x12</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Вкладка РИСКИ (График) -->
+        <div id="risks" class="tab-content">
+            <h2>Профиль безопасности</h2>
+            <div id="chartContainer" style="position:relative; height:400px; width:100%;">
                 <canvas id="riskChart"></canvas>
-                <div id="totalScore" class="total-score"></div>
             </div>
-        </div>
-        <div id="results" class="tab-content">
-            <h2>Детальный отчет</h2>
-            <div id="reportContent"></div>
+            <div id="riskSummary" class="summary-box"></div>
         </div>
     </div>
     <script src="assets/js/app.js"></script>
