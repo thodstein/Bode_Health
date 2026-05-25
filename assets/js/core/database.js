@@ -1,65 +1,68 @@
 const DB = {
+    // 1.1 Вещества (Расширенная токсичность для всех 7 систем)
     substances: [
-        { id: 'test', name: 'Тестостерон', class: 'AAS', baseTox: { liver: 1, lipid: 3, hct: 4, neuro: 0, kidney: 1, endo: 2, repro: 5 } },
-        { id: 'nandrolone', name: 'Нандролон', class: 'AAS', baseTox: { liver: 1, lipid: 4, hct: 2, neuro: 0, kidney: 3, endo: 5, repro: 4 } },
-        { id: 'trenbolone', name: 'Тренболон', class: 'AAS', baseTox: { liver: 2, lipid: 5, hct: 3, neuro: 5, kidney: 4, endo: 4, repro: 5 } },
-        { id: 'boldenone', name: 'Болденон', class: 'AAS', baseTox: { liver: 1, lipid: 3, hct: 6, neuro: 0, kidney: 1, endo: 1, repro: 3 } },
-        { id: 'dhb', name: 'Дигидроболденон (DHB)', class: 'AAS', baseTox: { liver: 1, lipid: 4, hct: 5, neuro: 0, kidney: 3, endo: 1, repro: 3 } },
-        { id: 'masteron', name: 'Мастерон', class: 'AAS', baseTox: { liver: 1, lipid: 4, hct: 3, neuro: 0, kidney: 1, endo: 1, repro: 4 } },
-        { id: 'primobolan', name: 'Примоболан', class: 'AAS', baseTox: { liver: 1, lipid: 3, hct: 2, neuro: 0, kidney: 1, endo: 1, repro: 2 } },
-        { id: 'oxandrolone', name: 'Оксандролон', class: 'Oral', baseTox: { liver: 5, lipid: 5, hct: 1, neuro: 0, kidney: 1, endo: 1, repro: 2 } },
-        { id: 'stanozolol', name: 'Станозолол', class: 'Oral/Inj', baseTox: { liver: 5, lipid: 5, hct: 2, neuro: 0, kidney: 3, endo: 1, repro: 3 } },
-        { id: 'methandienone', name: 'Метандиенон', class: 'Oral', baseTox: { liver: 5, lipid: 4, hct: 3, neuro: 0, kidney: 1, endo: 3, repro: 3 } },
-        { id: 'gh', name: 'Гормон Роста', class: 'Peptide', baseTox: { liver: 0, lipid: 2, hct: 0, neuro: 0, kidney: 1, endo: 5, repro: 0 } },
-        { id: 'insulin', name: 'Инсулин', class: 'Hormone', baseTox: { liver: 0, lipid: 1, hct: 0, neuro: 0, kidney: 0, endo: 5, repro: 0 } },
-        { id: 'igf1', name: 'IGF-1', class: 'Peptide', baseTox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kidney: 2, endo: 4, repro: 0 } },
-        { id: 'mgf', name: 'MGF / PEG-MGF', class: 'Peptide', baseTox: { liver: 0, lipid: 0, hct: 0, neuro: 0, kidney: 1, endo: 2, repro: 0 } }
+        { id: 'test', name: 'Тестостерон', class: 'AAS', tox: { liver: 1, cardio: 3, kidney: 1, neuro: 0, hemato: 4, endo: 2, repro: 5 } },
+        { id: 'nandrolone', name: 'Нандролон', class: 'AAS', tox: { liver: 1, cardio: 4, kidney: 2, neuro: 0, hemato: 2, endo: 4, repro: 4 } },
+        { id: 'trenbolone', name: 'Тренболон', class: 'AAS', tox: { liver: 2, cardio: 5, kidney: 4, neuro: 5, hemato: 3, endo: 4, repro: 5 } },
+        { id: 'boldenone', name: 'Болденон', class: 'AAS', tox: { liver: 1, cardio: 3, kidney: 1, neuro: 0, hemato: 6, endo: 1, repro: 3 } },
+        { id: 'dhb', name: 'Дигидроболденон (DHB)', class: 'AAS', tox: { liver: 1, cardio: 4, kidney: 3, neuro: 0, hemato: 5, endo: 1, repro: 3 } },
+        { id: 'masteron', name: 'Мастерон', class: 'AAS', tox: { liver: 1, cardio: 4, kidney: 1, neuro: 0, hemato: 3, endo: 1, repro: 4 } },
+        { id: 'primobolan', name: 'Примоболан', class: 'AAS', tox: { liver: 1, cardio: 3, kidney: 1, neuro: 0, hemato: 2, endo: 1, repro: 2 } },
+        { id: 'oxandrolone', name: 'Оксандролон', class: 'Oral', tox: { liver: 4, cardio: 5, kidney: 1, neuro: 0, hemato: 1, endo: 1, repro: 2 } },
+        { id: 'stanozolol', name: 'Станозолол', class: 'Oral/Inj', tox: { liver: 5, cardio: 5, kidney: 2, neuro: 0, hemato: 2, endo: 1, repro: 3 } },
+        { id: 'methandienone', name: 'Метандиенон', class: 'Oral', tox: { liver: 5, cardio: 4, kidney: 1, neuro: 0, hemato: 3, endo: 3, repro: 3 } },
+        { id: 'gh', name: 'Гормон Роста', class: 'Peptide', tox: { liver: 0, cardio: 2, kidney: 1, neuro: 0, hemato: 0, endo: 5, repro: 0 } },
+        { id: 'insulin', name: 'Инсулин', class: 'Hormone', tox: { liver: 0, cardio: 1, kidney: 0, neuro: 0, hemato: 0, endo: 5, repro: 0 } },
+        { id: 'igf1', name: 'IGF-1', class: 'Peptide', tox: { liver: 0, cardio: 0, kidney: 2, neuro: 0, hemato: 0, endo: 4, repro: 0 } },
+        { id: 'mgf', name: 'MGF / PEG-MGF', class: 'Peptide', tox: { liver: 0, cardio: 0, kidney: 1, neuro: 0, hemato: 0, endo: 2, repro: 0 } }
     ],
 
+    // 1.2 Эфиры (Полный список)
     esters: {
         'test': [
-            { id: 'test_p', name: 'Пропионат', halfLife: 2.0 },
-            { id: 'test_e', name: 'Энантат', halfLife: 7.0 },
-            { id: 'test_c', name: 'Ципионат', halfLife: 8.0 },
-            { id: 'test_sus', name: 'Сустанон', halfLife: 15.0 }
+            { id: 'test_p', name: 'Пропионат', hl: 2.0 },
+            { id: 'test_e', name: 'Энантат', hl: 7.0 },
+            { id: 'test_c', name: 'Ципионат', hl: 8.0 },
+            { id: 'test_sus', name: 'Сустанон', hl: 15.0 }
         ],
         'nandrolone': [
-            { id: 'nandrolone_p', name: 'Фенилпропионат', halfLife: 4.5 },
-            { id: 'nandrolone_d', name: 'Деканоат', halfLife: 14.0 }
+            { id: 'nandrolone_p', name: 'Фенилпропионат', hl: 4.5 },
+            { id: 'nandrolone_d', name: 'Деканоат', hl: 14.0 }
         ],
         'trenbolone': [
-            { id: 'trenbolone_a', name: 'Ацетат', halfLife: 3.0 },
-            { id: 'trenbolone_e', name: 'Энантат', halfLife: 7.0 },
-            { id: 'trenbolone_h', name: 'Гекса', halfLife: 10.0 }
+            { id: 'trenbolone_a', name: 'Ацетат', hl: 3.0 },
+            { id: 'trenbolone_e', name: 'Энантат', hl: 7.0 },
+            { id: 'trenbolone_h', name: 'Гекса', hl: 10.0 }
         ],
-        'boldenone': [{ id: 'boldenone_u', name: 'Ундесиленат', halfLife: 14.0 }],
-        'dhb': [{ id: 'dhb_p', name: 'Ацетат', halfLife: 10.0 }],
+        'boldenone': [{ id: 'boldenone_u', name: 'Ундесиленат', hl: 14.0 }],
+        'dhb': [{ id: 'dhb_p', name: 'Ацетат', hl: 10.0 }],
         'masteron': [
-            { id: 'masteron_p', name: 'Пропионат', halfLife: 2.5 },
-            { id: 'masteron_e', name: 'Энантат', halfLife: 7.0 }
+            { id: 'masteron_p', name: 'Пропионат', hl: 2.5 },
+            { id: 'masteron_e', name: 'Энантат', hl: 7.0 }
         ],
-        'primobolan': [{ id: 'primobolan_e', name: 'Энантат', halfLife: 10.0 }],
-        'stanozolol': [{ id: 'stanozolol_susp', name: 'Суспензия', halfLife: 24.0 }],
+        'primobolan': [{ id: 'primobolan_e', name: 'Энантат', hl: 10.0 }],
+        'stanozolol': [{ id: 'stanozolol_s', name: 'Суспензия', hl: 24.0 }],
         'gh': [
-            { id: 'gh_short', name: 'Ежедневно', halfLife: 0.1 },
-            { id: 'gh_long', name: 'Пролонг (Weekly)', halfLife: 168.0 }
+            { id: 'gh_short', name: 'Ежедневно', hl: 0.1 },
+            { id: 'gh_long', name: 'Пролонг (Weekly)', hl: 168.0 }
         ],
         'insulin': [
-            { id: 'insulin_r', name: 'Короткий (R)', halfLife: 0.1 },
-            { id: 'insulin_l', name: 'Продленный (Glargine)', halfLife: 24.0 }
+            { id: 'insulin_r', name: 'Короткий (R)', hl: 0.1 },
+            { id: 'insulin_l', name: 'Продленный (Glargine)', hl: 24.0 }
         ],
         'igf1': [
-            { id: 'igf1_lr3', name: 'LR3 (Длинный)', halfLife: 24.0 },
-            { id: 'igf1_des', name: 'DES (Короткий)', halfLife: 0.5 }
+            { id: 'igf1_lr3', name: 'LR3 (Длинный)', hl: 24.0 },
+            { id: 'igf1_des', name: 'DES (Короткий)', hl: 0.5 }
         ],
         'mgf': [
-            { id: 'mgf_plain', name: 'MGF', halfLife: 0.5 },
-            { id: 'peg_mgf', name: 'PEG-MGF', halfLife: 48.0 }
+            { id: 'mgf_plain', name: 'MGF', hl: 0.5 },
+            { id: 'peg_mgf', name: 'PEG-MGF', hl: 48.0 }
         ]
     },
 
+    // 1.3 Матрица рисков (7x7)
     riskMatrix: {
-        liver: { mechanisms: [
+        liver: [
             { id: 'cholestasis', name: 'Холестаз', desc: 'Застой желчи' },
             { id: 'oxidative', name: 'Окс. стресс', desc: 'Свободные радикалы' },
             { id: 'cytolysis', name: 'Цитолиз', desc: 'Разрушение клеток (ALT/AST)' },
@@ -67,8 +70,8 @@ const DB = {
             { id: 'mito', name: 'Митохондрии', desc: 'Энергодефицит' },
             { id: 'methylation', name: 'Метилирование', desc: 'Дефицит метил-групп' },
             { id: 'apoptosis', name: 'Апоптоз', desc: 'Гибель клеток' }
-        ]},
-        cardio: { mechanisms: [
+        ],
+        cardio: [
             { id: 'htn', name: 'Гипертония', desc: 'Высокое АД' },
             { id: 'tachycardia', name: 'Тахикардия', desc: 'Высокий пульс' },
             { id: 'lipids', name: 'Дислипидемия', desc: 'ЛПНП↑ / ЛПВП↓' },
@@ -76,8 +79,8 @@ const DB = {
             { id: 'lvh', name: 'Гипертрофия', desc: 'Утолщение стенок' },
             { id: 'endo', name: 'Эндотелий', desc: 'Дисфункция сосудов' },
             { id: 'arrhythmia', name: 'Аритмия', desc: 'Сбой ритма' }
-        ]},
-        kidney: { mechanisms: [
+        ],
+        kidney: [
             { id: 'hyperfiltration', name: 'Гиперфильтрация', desc: 'Перегрузка клубочков' },
             { id: 'fibrosis_k', name: 'Фиброз почек', desc: 'Рубцевание' },
             { id: 'electrolytes', name: 'Электролиты', desc: 'Дисбаланс K/Na' },
@@ -85,8 +88,8 @@ const DB = {
             { id: 'stones', name: 'Камни', desc: 'Нефролитиаз' },
             { id: 'tubular', name: 'Тубулярный некроз', desc: 'Отмирание канальцев' },
             { id: 'gfr_drop', name: 'Падение СКФ', desc: 'Снижение функции' }
-        ]},
-        neuro: { mechanisms: [
+        ],
+        neuro: [
             { id: 'dopamine', name: 'Дофамин', desc: 'Дисбаланс (агрессия/апатия)' },
             { id: 'glutamate', name: 'Глутамат', desc: 'Эксайтотоксичность' },
             { id: 'gaba', name: 'ГАМК', desc: 'Тревожность/Бессонница' },
@@ -94,8 +97,8 @@ const DB = {
             { id: 'inflammation', name: 'Нейровоспаление', desc: 'Микроглия' },
             { id: 'cognitive', name: 'Когнитивный спад', desc: 'Память/Фокус' },
             { id: 'addiction', name: 'Зависимость', desc: 'Дофаминовая яма' }
-        ]},
-        hemato: { mechanisms: [
+        ],
+        hemato: [
             { id: 'erythrocytosis', name: 'Эритроцитоз', desc: 'Высокий гематокрит' },
             { id: 'viscosity', name: 'Вязкость', desc: 'Густая кровь' },
             { id: 'coagulation', name: 'Коагуляция', desc: 'Свертываемость' },
@@ -103,8 +106,8 @@ const DB = {
             { id: 'leukocytosis', name: 'Лейкоцитоз', desc: 'Воспаление' },
             { id: 'platelets', name: 'Тромбоциты', desc: 'Агрегация' },
             { id: 'hemolysis', name: 'Гемолиз', desc: 'Разрушение эритроцитов' }
-        ]},
-        endo: { mechanisms: [
+        ],
+        endo: [
             { id: 'insulin_res', name: 'Инсулинорезистентность', desc: 'Рост сахара' },
             { id: 'estrogen', name: 'Эстроген', desc: 'Гинекомастия/Отеки' },
             { id: 'prolactin', name: 'Пролактин', desc: 'Либидо↓/Потенция' },
@@ -112,8 +115,8 @@ const DB = {
             { id: 'cortisol', name: 'Кортизол', desc: 'Катаболизм/Стресс' },
             { id: 'gh_axis', name: 'Ось ГР', desc: 'Снижение собственного' },
             { id: 'adrenal', name: 'Надпочечники', desc: 'Истощение' }
-        ]},
-        repro: { mechanisms: [
+        ],
+        repro: [
             { id: 'atrophy', name: 'Атрофия', desc: 'Уменьшение тестикул' },
             { id: 'suppression', name: 'Подавление оси', desc: 'Нет своего Тестостерона' },
             { id: 'sperm', name: 'Спермогенез', desc: 'Качество спермы↓' },
@@ -121,9 +124,10 @@ const DB = {
             { id: 'erectile', name: 'Эрекция', desc: 'ЭД' },
             { id: 'gyno', name: 'Гинекомастия', desc: 'Рост груди' },
             { id: 'infertility', name: 'Бесплодие', desc: 'Невозможность зачатия' }
-        ]}
+        ]
     },
 
+    // 1.4 ПРОТОКОЛ ПОДДЕРЖКИ (ПОЛНЫЙ, ИЗ ТЗ)
     supportProtocol: [
         { timeId: 'morning_empty', title: '☀️ Натощак', items: [
             { name: 'Iron Guard', dose: '2 капс', mechanism: 'Гемоглобин', risks: ['hemato_anemia'] },
@@ -150,6 +154,11 @@ const DB = {
         { timeId: 'pre_workout', title: '💪 Предтреник', items: [
             { name: 'Агмантин', dose: '1000 мг', mechanism: 'NO', risks: ['cardio_endo'] }
         ]},
+        { timeId: 'intra_workout', title: '🥤 Intra-Workout', items: [
+            { name: 'Цитруллин', dose: '6 г', mechanism: 'NO', risks: ['cardio_pump'] },
+            { name: 'Креатин', dose: '5 г', mechanism: 'АТФ', risks: [] },
+            { name: 'Таурин', dose: '2 г', mechanism: 'Объем клетки', risks: ['neuro_glutamate'] }
+        ]},
         { timeId: 'evening', title: '🌙 Вечер', items: [
             { name: 'Телмисартан', dose: '80 мг', mechanism: 'Давление/Почки', risks: ['cardio_htn', 'kidney_hyperfiltration'] },
             { name: 'Магний', dose: '400 мг', mechanism: 'Расслабление', risks: ['neuro_gaba', 'cardio_arrhythmia'] },
@@ -157,7 +166,14 @@ const DB = {
             { name: 'Гормон Роста', dose: '5 ЕД', mechanism: 'Рост', risks: ['endo_gh_axis'], note: 'Инъекция' }
         ]}
     ],
-    
+
+    // 1.5 Магазин и Глоссарий
+    shopItems: {
+        'udca': [{ platform: 'Ozon', price: '1500 ₽', url: '#' }],
+        'telmisartan': [{ platform: 'Apteka.ru', price: '600 ₽', url: '#' }],
+        'berberine': [{ platform: 'iHerb', price: '$20', url: '#' }],
+        'taurine': [{ platform: 'Ozon', price: '800 ₽', url: '#' }]
+    },
     glossary: {
         'Raw Risk': 'Исходный риск без поддержки.',
         'Net Risk': 'Риск после применения протокола.',
@@ -167,14 +183,5 @@ const DB = {
         'IGF-1 DES': 'Короткая версия (20 мин), колется локально перед тренировкой.',
         'PEG-MGF': 'Пролонгированный MGF для восстановления мышц.',
         'Insulin Glargine': 'Продленный инсулин (фон), без пиков.'
-    },
-    
-    shopItems: {
-        'udca': [{ platform: 'Ozon', price: '1500 ₽', url: '#' }, { platform: 'iHerb', price: '$25', url: '#' }],
-        'telmisartan': [{ platform: 'Apteka.ru', price: '600 ₽', url: '#' }],
-        'nebivolol': [{ platform: 'Ozon', price: '400 ₽', url: '#' }],
-        'berberine': [{ platform: 'iHerb', price: '$20', url: '#' }],
-        'taurine': [{ platform: 'Ozon', price: '800 ₽', url: '#' }],
-        'magnesium': [{ platform: 'Ozon', price: '900 ₽', url: '#' }]
     }
 };
