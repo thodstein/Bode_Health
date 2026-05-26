@@ -2,13 +2,14 @@ const App = {
     state: {stack:[], plan:[], wIdx:0, xp:0, charts:{liver:true, cardio:true, hemato:true, kidney:false, neuro:false, endo:false, repro:false}},
     init: function() {
         const sel = document.getElementById('sub-select');
-        if(sel) {
+        if(sel && typeof DB !== 'undefined') {
             sel.innerHTML = '';
             DB.substances.forEach(s => {
                 let o = document.createElement('option'); o.value=s.id; o.innerText=s.name; sel.appendChild(o);
             });
         }
         this.renderSupport(); this.renderArticles(); this.renderShop(); this.renderGlossary(); this.renderControls();
+        console.log("App Initialized");
     },
     switchTab: function(id) {
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -21,6 +22,7 @@ const App = {
         const subId = document.getElementById('sub-select').value;
         const estSel = document.getElementById('est-select');
         estSel.innerHTML = '';
+        if(typeof DB === 'undefined' || !DB.esters[subId]) { estSel.disabled = true; return; }
         const list = DB.esters[subId];
         if(list && list.length) {
             estSel.disabled = false;
@@ -44,11 +46,12 @@ const App = {
             const s = DB.substances.find(x => x.id === it.sub);
             const e = DB.esters[it.sub] ? DB.esters[it.sub].find(x => x.id === it.est) : null;
             const name = e ? (s.name + ' (' + e.name + ')') : s.name;
-            div.innerHTML += '<div class="item"><div><b>'+name+'</b><br><small>'+it.dose+'мг | Нед '+it.start+'-'+it.end+'</small></div><button class="btn-del" onclick="App.state.stack.splice('+idx+',1);App.renderStack()">X</button></div>';
+            div.innerHTML += '<div class="item"><div><b>'+name+'</b><br><small>'+it.dose+'мг | Нед '+it.start+'-'+it.end+'</small></div><button class="btn-del" onclick="App.state.stack.splice('+idx+',1);App.renderStack()" style="background:none;border:none;color:red;cursor:pointer">X</button></div>';
         });
     },
     calcPlan: function() {
         if(!this.state.stack.length) return alert('Добавьте препараты!');
+        if(typeof Engine === 'undefined') return alert('Ошибка движка!');
         this.state.plan = Engine.generatePlan(this.state.stack);
         this.state.wIdx = 0;
         this.renderHeatmap(); this.renderChart();
@@ -88,25 +91,45 @@ const App = {
         const labels = this.state.plan.map(p => 'W'+p.w);
         const datasets = [];
         const colors = {liver:'#ff6384', cardio:'#36a2eb', hemato:'#ff9f40', kidney:'#4bc0c0', neuro:'#9966ff', endo:'#c9cbcf', repro:'#e7e9ed'};
+        
         for(let sys in this.state.charts) {
             if(this.state.charts[sys]) {
                 const d = this.state.plan.map(p => { let sum=0,cnt=0; for(let k in p.r[sys]){sum+=p.r[sys][k];cnt++;} return cnt?Math.round(sum/cnt):0; });
-                datasets.push({label:sys.toUpperCase(), d, borderColor:colors[sys], borderWidth:2, fill:false, tension:0.4});
+                datasets.push({label:sys.toUpperCase(), data:d, borderColor:colors[sys], borderWidth:2, fill:false, tension:0.4});
             }
         }
-        window.myChart = new Chart(ctx.getContext('2d'), {type:'line', data:{labels:labels, datasets:datasets}, options:{responsive:true, plugins:{legend:{labels:{color:'#aaa'}}}, scales:{y:{beginAtZero:true, max:100, ticks:{color:'#aaa'},grid:{color:'#333'}}, x:{ticks:{color:'#aaa'},grid:{color:'#333'}}}});
+        
+        // ИСПРАВЛЕННЫЙ СИНТАКСИС CHART.JS
+        window.myChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#aaa' } }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 100, ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                    x: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
+                }
+            }
+        });
     },
     toggleChart: function(sys) { this.state.charts[sys] = !this.state.charts[sys]; this.renderChart(); },
     renderControls: function() {
         const div = document.getElementById('chart-controls'); if(!div) return;
         const names = {liver:'Печень', cardio:'Сердце', hemato:'Кровь', kidney:'Почки', neuro:'Невро', endo:'Эндо', repro:'Репро'};
         div.innerHTML = '';
-        for(let k in names) div.innerHTML += '<label><input type="checkbox" '+(this.state.charts[k]?'checked':'')+' onchange="App.toggleChart(\''+k+'\')"> '+names[k]+'</label>';
+        for(let k in names) div.innerHTML += '<label style="margin-right:10px;color:#fff"><input type="checkbox" '+(this.state.charts[k]?'checked':'')+' onchange="App.toggleChart(\''+k+'\')"> '+names[k]+'</label>';
     },
     renderSupport: function() {
         const div = document.getElementById('support-list'); if(!div) return;
+        if(typeof DB === 'undefined') return;
         DB.support.forEach(b => {
-            let html = '<div class="time-block"><h3>'+b.t+'</h3>';
+            let html = '<div class="time-block" style="background:#252525;padding:15px;margin:10px 0;border-radius:8px"><h3 style="color:var(--pri);margin:0 0 10px">'+b.t+'</h3>';
             b.items.forEach(i => { html += '<div class="item" style="margin:5px 0;padding:10px"><div><b>'+i.n+'</b> '+i.d+'<br><small>'+i.m+'</small></div></div>'; });
             div.innerHTML += html+'</div>';
         });
@@ -116,18 +139,21 @@ const App = {
         const c = parseFloat(document.getElementById('lab-conc').value)||0;
         const res = Math.round((v/1.5)*20 + (c/16)*30);
         const el = document.getElementById('fert-res');
-        if(el) el.innerHTML = '<span style="color:'+(res>50?'var(--sec)':'var(--err)')+'">IF: '+res+'/100</span>';
+        if(el) el.innerHTML = '<span style="color:'+(res>50?'var(--sec)':'var(--err)')+';font-size:1.2rem;font-weight:bold">IF: '+res+'/100</span>';
     },
     renderArticles: function() {
         const div = document.getElementById('articles-list'); if(!div) return;
+        if(typeof DB === 'undefined') return;
         DB.articles.forEach(a => div.innerHTML += '<div class="item"><div><b>'+a.t+'</b><br><small>'+a.c+' | 👁'+a.v+'</small></div></div>');
     },
     renderShop: function() {
         const div = document.getElementById('shop-list'); if(!div) return;
+        if(typeof DB === 'undefined') return;
         for(let k in DB.shop) DB.shop[k].forEach(i => div.innerHTML += '<div class="item"><div><b>'+k.toUpperCase()+'</b><br>'+i.p+'</div><div style="color:var(--sec)">'+i.pr+'</div></div>');
     },
     renderGlossary: function() {
         const div = document.getElementById('glossary-list'); if(!div) return;
+        if(typeof DB === 'undefined') return;
         for(let k in DB.glossary) div.innerHTML += '<div class="item"><b>'+k+'</b><br><small>'+DB.glossary[k]+'</small></div>';
     },
     updateProfile: function() {
@@ -137,4 +163,12 @@ const App = {
         if(trustEl) trustEl.innerText = Math.min(100, Math.floor(this.state.xp/10));
     }
 };
-document.addEventListener('DOMContentLoaded', () => { App.init(); setInterval(() => App.updateProfile(), 1000); });
+
+document.addEventListener('DOMContentLoaded', () => { 
+    if(typeof DB !== 'undefined' && typeof Engine !== 'undefined') {
+        App.init(); 
+        setInterval(() => App.updateProfile(), 1000); 
+    } else {
+        console.error("DB or Engine not loaded!");
+    }
+});
