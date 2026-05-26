@@ -1,101 +1,84 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bode Health v11.0</title>
-    <base href="https://thodstein.github.io/Bode_Health/">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="assets/css/style.css?v=99">
-    <style>
-        :root { --bg: #121212; --card: #1e1e1e; --pri: #bb86fc; --sec: #03dac6; --err: #cf6679; --txt: #fff; --bor: #333; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); }
-        .app { max-width: 900px; margin: 0 auto; }
-        header { background: var(--card); padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--bor); }
-        .tabs { display: flex; overflow-x: auto; background: var(--card); position: sticky; top: 0; z-index: 100; }
-        .tab-btn { flex: 0 0 auto; padding: 15px; background: none; border: none; color: #888; font-weight: bold; border-bottom: 3px solid transparent; cursor: pointer; }
-        .tab-btn.active { color: var(--sec); border-bottom-color: var(--sec); }
-        .view { display: none; padding: 20px; }
-        .view.active { display: block; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; }
-        .big-val { font-size: 2em; color: var(--sec); font-weight: bold; }
-        .form-box { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        input, select { width: 100%; background: #2c2c2c; border: 1px solid var(--bor); color: #fff; padding: 12px; margin-bottom: 10px; border-radius: 8px; }
-        .row { display: flex; gap: 10px; }
-        button { width: 100%; padding: 14px; background: var(--pri); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-sec { background: var(--sec); margin-top: 10px; }
-        .btn-del { background: rgba(207,102,121,0.2); color: var(--err); width: auto; padding: 5px 10px; }
-        .item { background: var(--card); padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--sec); display: flex; justify-content: space-between; }
-        .time-block { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .time-block h3 { color: var(--pri); margin: 0 0 10px; font-size: 0.9em; text-transform: uppercase; }
-        .heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin-top: 15px; }
-        .hm-cell { padding: 8px; border-radius: 4px; text-align: center; font-size: 0.75rem; color: #fff; }
-        .week-nav { display: flex; justify-content: center; gap: 20px; margin: 20px 0; align-items: center; }
-        .week-nav button { width: auto; background: #333; color: #fff; padding: 5px 15px; }
-        canvas { background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 20px; }
-        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--card); padding: 10px; border-radius: 8px; }
-        .controls label { display: flex; align-items: center; gap: 5px; color: #fff; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bode Health v99</title>
+<base href="https://thodstein.github.io/Bode_Health/">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#121212;--c:#1e1e1e;--p:#bb86fc;--s:#03dac6;--t:#fff;--b:#333}
+body{margin:0;font-family:sans-serif;background:var(--bg);color:var(--t)}
+.app{max-width:900px;margin:0 auto}
+header{background:var(--c);padding:15px;display:flex;justify-content:space-between;border-bottom:1px solid var(--b)}
+.tabs{display:flex;overflow-x:auto;background:var(--c);position:sticky;top:0;z-index:100}
+.tab-btn{flex:0 0 auto;padding:15px;background:none;border:none;color:#888;font-weight:bold;border-bottom:3px solid transparent;cursor:pointer}
+.tab-btn.active{color:var(--s);border-bottom-color:var(--s)}
+.view{display:none;padding:20px}
+.view.active{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+.card{background:var(--c);padding:20px;border-radius:12px;text-align:center}
+.big{font-size:2em;font-weight:bold;color:var(--s)}
+.box{background:var(--c);padding:20px;border-radius:12px;margin-bottom:20px}
+input,select{width:100%;background:#2c2c2c;border:1px solid var(--b);color:#fff;padding:12px;margin:5px 0;border-radius:8px}
+.row{display:flex;gap:10px}
+button{width:100%;padding:14px;background:var(--p);color:#000;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+.btn-sec{background:var(--s);margin-top:10px}
+.btn-del{background:rgba(207,102,121,0.2);color:#cf6679;width:auto;padding:5px 10px}
+.item{background:var(--c);padding:15px;margin-bottom:10px;border-radius:8px;border-left:4px solid var(--s);display:flex;justify-content:space-between}
+.time-block{background:#252525;padding:15px;border-radius:8px;margin-bottom:15px}
+.time-block h3{color:var(--p);margin:0 0 10px;font-size:0.9em}
+.hm{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-top:15px}
+.hm-cell{padding:8px;border-radius:4px;text-align:center;font-size:0.75rem;color:#fff}
+.w-nav{display:flex;justify-content:center;gap:20px;margin:20px 0}
+.w-nav button{width:auto;background:#333;color:#fff}
+canvas{background:var(--c);border-radius:12px;padding:10px;margin-bottom:20px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px;background:var(--c);padding:10px;border-radius:8px}
+.ctrl label{display:flex;align-items:center;gap:5px;margin:0;color:#fff;font-size:0.85rem}
+</style>
 </head>
 <body>
 <div class="app">
-    <header>
-        <h1>Bode Health v11.0</h1>
-        <div id="xp-display" style="color:var(--pri); font-weight:bold;">XP: 0</div>
-    </header>
-    <nav class="tabs">
-        <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
-        <button class="tab-btn" data-tab="stack">💉 Стек</button>
-        <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
-        <button class="tab-btn" data-tab="support">💊 Поддержка</button>
-        <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
-        <button class="tab-btn" data-tab="articles">📚 Статьи</button>
-        <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
-    </nav>
-    <main>
-        <div id="dashboard" class="view active">
-            <div class="grid">
-                <div class="card"><h3>Readiness</h3><div class="big-val" id="d-readiness">--</div></div>
-                <div class="card"><h3>Risk</h3><div class="big-val" id="d-risk">--</div></div>
-            </div>
-        </div>
-        <div id="stack" class="view">
-            <div class="form-box">
-                <label>Вещество</label><select id="sub-select" onchange="loadEsters()"></select>
-                <label>Эфир</label><select id="est-select" disabled></select>
-                <div class="row"><input type="number" id="in-dose" placeholder="Доза"></div>
-                <div class="row"><input type="number" id="in-start" value="1" placeholder="Старт"><input type="number" id="in-end" value="8" placeholder="Финиш"></div>
-                <button onclick="addDrug()">Добавить</button>
-            </div>
-            <div id="stack-list"></div>
-            <button class="btn-sec" onclick="calcPlan()">РАССЧИТАТЬ</button>
-            <div id="plan-msg" style="margin-top:15px; color:var(--sec)"></div>
-        </div>
-        <div id="risks" class="view">
-            <h3>Динамика</h3>
-            <div class="controls" id="chart-controls"></div>
-            <canvas id="trend-chart"></canvas>
-            <h3>Матрица</h3>
-            <div class="week-nav"><button onclick="changeWeek(-1)">◀</button><span id="week-label">Неделя 1</span><button onclick="changeWeek(1)">▶</button></div>
-            <div id="heatmap" class="heatmap"></div>
-        </div>
-        <div id="support" class="view"><h2>Поддержка</h2><div id="support-list"></div></div>
-        <div id="labs" class="view">
-            <div class="form-box">
-                <h3>Фертильность</h3>
-                <input type="number" id="lab-vol" placeholder="Объем">
-                <input type="number" id="lab-conc" placeholder="Конц">
-                <button onclick="calcFert()">Рассчитать</button>
-                <div id="fert-res" style="margin-top:15px; font-weight:bold;"></div>
-            </div>
-        </div>
-        <div id="articles" class="view"><h2>Статьи</h2><div id="articles-list"></div></div>
-        <div id="shop" class="view"><h2>Магазин</h2><div id="shop-list"></div><h2>Глоссарий</h2><div id="glossary-list"></div></div>
-    </main>
+<header><h1>Bode Health <span style="font-size:0.6em;color:var(--s)">v99</span></h1><div id="xp">XP:0</div></header>
+<nav class="tabs">
+<button class="tab-btn active" onclick="App.tab('dash')">📊 Главная</button>
+<button class="tab-btn" onclick="App.tab('stack')">💉 Стек</button>
+<button class="tab-btn" onclick="App.tab('risks')">⚠️ Риски</button>
+<button class="tab-btn" onclick="App.tab('sup')">💊 Поддержка</button>
+<button class="tab-btn" onclick="App.tab('art')">📚 Статьи</button>
+<button class="tab-btn" onclick="App.tab('shop')">🛒 Магазин</button>
+</nav>
+<main>
+<div id="dash" class="view active">
+<div class="grid"><div class="card"><h3>Readiness</h3><div class="big" id="d-r">--</div></div><div class="card"><h3>Risk</h3><div class="big" id="d-a">--</div></div></div>
 </div>
-<script src="assets/js/core/database.js?v=99"></script>
-<script src="assets/js/core/engine.js?v=99"></script>
-<script src="assets/js/app.js?v=99"></script>
+<div id="stack" class="view">
+<div class="box">
+<label>Вещество</label><select id="sub-s" onchange="App.loadEst()"></select>
+<label>Эфир</label><select id="est-s" disabled></select>
+<div class="row"><input type="number" id="in-d" placeholder="Доза"></div>
+<div class="row"><input type="number" id="in-st" value="1" placeholder="Старт"><input type="number" id="in-en" value="8" placeholder="Финиш"></div>
+<button onclick="App.add()">Добавить</button>
+</div>
+<div id="stack-l"></div>
+<button class="btn-sec" onclick="App.calc()">РАССЧИТАТЬ</button>
+<div id="msg" style="margin-top:15px;color:var(--s)"></div>
+</div>
+<div id="risks" class="view">
+<h3>Динамика</h3>
+<div class="ctrl" id="ch-ctrl"></div>
+<canvas id="ch-c"></canvas>
+<h3>Матрица</h3>
+<div class="w-nav"><button onclick="App.chW(-1)">◀</button><span id="w-lbl" style="font-weight:bold;color:var(--s)">Week 1</span><button onclick="App.chW(1)">▶</button></div>
+<div id="hm" class="hm"></div>
+</div>
+<div id="sup" class="view"><h2>Поддержка</h2><div id="sup-l"></div></div>
+<div id="art" class="view"><h2>Статьи</h2><div id="art-l"></div></div>
+<div id="shop" class="view"><h2>Магазин</h2><div id="shop-l"></div></div>
+</main>
+</div>
+<script src="assets/js/core/db.v99.js"></script>
+<script src="assets/js/core/eng.v99.js"></script>
+<script src="assets/js/app.v99.js"></script>
 </body>
 </html>
