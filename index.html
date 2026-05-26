@@ -2,108 +2,100 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bode Health v11.0 Ultimate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bode Health v11.0</title>
     <base href="https://thodstein.github.io/Bode_Health/">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="assets/css/style.css?v=10">
+    <link rel="stylesheet" href="assets/css/style.css?v=99">
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --pri: #bb86fc; --sec: #03dac6; --err: #cf6679; --txt: #ffffff; --bor: #333; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--txt); padding-bottom: 80px; }
+        :root { --bg: #121212; --card: #1e1e1e; --pri: #bb86fc; --sec: #03dac6; --err: #cf6679; --txt: #fff; --bor: #333; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); }
         .app { max-width: 900px; margin: 0 auto; }
-        header { background: var(--card); padding: 15px 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--bor); display: flex; justify-content: space-between; align-items: center; }
-        h1 { margin: 0; font-size: 1.2rem; color: var(--pri); }
-        .xp-badge { background: rgba(187, 134, 252, 0.2); color: var(--pri); padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-        .tabs { display: flex; overflow-x: auto; background: var(--card); position: sticky; top: 60px; z-index: 99; scrollbar-width: none; }
-        .tabs::-webkit-scrollbar { display: none; }
-        .tab-btn { flex: 0 0 auto; padding: 15px 20px; background: none; border: none; color: #888; font-weight: 600; font-size: 0.9rem; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+        header { background: var(--card); padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--bor); }
+        .tabs { display: flex; overflow-x: auto; background: var(--card); position: sticky; top: 0; z-index: 100; }
+        .tab-btn { flex: 0 0 auto; padding: 15px; background: none; border: none; color: #888; font-weight: bold; border-bottom: 3px solid transparent; cursor: pointer; }
         .tab-btn.active { color: var(--sec); border-bottom-color: var(--sec); }
-        .view { display: none; padding: 20px; animation: fade 0.3s; }
+        .view { display: none; padding: 20px; }
         .view.active { display: block; }
-        @keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--bor); }
-        .big-val { font-size: 1.8rem; font-weight: bold; color: var(--sec); margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; }
+        .big-val { font-size: 2em; color: var(--sec); font-weight: bold; }
         .form-box { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; color: #aaa; font-size: 0.9rem; }
-        input, select { width: 100%; background: #2c2c2c; border: 1px solid var(--bor); color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 1rem; }
+        input, select { width: 100%; background: #2c2c2c; border: 1px solid var(--bor); color: #fff; padding: 12px; margin-bottom: 10px; border-radius: 8px; }
         .row { display: flex; gap: 10px; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        .btn-pri { background: var(--pri); color: #000; }
-        .btn-sec { background: var(--sec); color: #000; margin-top: 10px; }
-        .btn-del { background: rgba(207, 102, 121, 0.2); color: var(--err); width: auto; padding: 5px 10px; font-size: 0.8rem; }
-        .item { background: var(--card); padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--sec); display: flex; justify-content: space-between; align-items: center; }
+        button { width: 100%; padding: 14px; background: var(--pri); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-sec { background: var(--sec); margin-top: 10px; }
+        .btn-del { background: rgba(207,102,121,0.2); color: var(--err); width: auto; padding: 5px 10px; }
+        .item { background: var(--card); padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--sec); display: flex; justify-content: space-between; }
         .time-block { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .time-block h3 { color: var(--pri); margin: 0 0 10px; font-size: 0.9rem; text-transform: uppercase; }
+        .time-block h3 { color: var(--pri); margin: 0 0 10px; font-size: 0.9em; text-transform: uppercase; }
         .heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin-top: 15px; }
-        .hm-cell { padding: 8px; border-radius: 4px; text-align: center; font-size: 0.75rem; color: #fff; cursor: help; }
-        .week-nav { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 20px 0; }
-        .week-nav button { width: auto; padding: 5px 15px; background: #333; color: #fff; }
+        .hm-cell { padding: 8px; border-radius: 4px; text-align: center; font-size: 0.75rem; color: #fff; }
+        .week-nav { display: flex; justify-content: center; gap: 20px; margin: 20px 0; align-items: center; }
+        .week-nav button { width: auto; background: #333; color: #fff; padding: 5px 15px; }
         canvas { background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 20px; }
         .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--card); padding: 10px; border-radius: 8px; }
-        .controls label { display: flex; align-items: center; gap: 5px; margin: 0; color: #fff; font-size: 0.85rem; }
+        .controls label { display: flex; align-items: center; gap: 5px; color: #fff; }
     </style>
 </head>
 <body>
 <div class="app">
     <header>
-        <h1>Bode Health <span style="font-size:0.6em; color:var(--sec)">v11.0</span></h1>
-        <div class="xp-badge" id="xp-display">XP: 0</div>
+        <h1>Bode Health v11.0</h1>
+        <div id="xp-display" style="color:var(--pri); font-weight:bold;">XP: 0</div>
     </header>
     <nav class="tabs">
-        <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Главная</button>
-        <button class="tab-btn" onclick="switchTab('stack')">💉 Стек</button>
-        <button class="tab-btn" onclick="switchTab('risks')">⚠️ Риски</button>
-        <button class="tab-btn" onclick="switchTab('support')">💊 Поддержка</button>
-        <button class="tab-btn" onclick="switchTab('labs')">🧬 Анализы</button>
-        <button class="tab-btn" onclick="switchTab('articles')">📚 Статьи</button>
-        <button class="tab-btn" onclick="switchTab('shop')">🛒 Магазин</button>
+        <button class="tab-btn active" data-tab="dashboard">📊 Главная</button>
+        <button class="tab-btn" data-tab="stack">💉 Стек</button>
+        <button class="tab-btn" data-tab="risks">⚠️ Риски</button>
+        <button class="tab-btn" data-tab="support">💊 Поддержка</button>
+        <button class="tab-btn" data-tab="labs">🧬 Анализы</button>
+        <button class="tab-btn" data-tab="articles">📚 Статьи</button>
+        <button class="tab-btn" data-tab="shop">🛒 Магазин</button>
     </nav>
     <main>
         <div id="dashboard" class="view active">
             <div class="grid">
                 <div class="card"><h3>Readiness</h3><div class="big-val" id="d-readiness">--</div></div>
-                <div class="card"><h3>Risk Avg</h3><div class="big-val" id="d-risk">--</div></div>
+                <div class="card"><h3>Risk</h3><div class="big-val" id="d-risk">--</div></div>
             </div>
-            <div class="form-box" style="border:1px solid var(--err); color:var(--err)">⚠️ Добавьте препараты во вкладке "Стек" для расчета.</div>
         </div>
         <div id="stack" class="view">
             <div class="form-box">
                 <label>Вещество</label><select id="sub-select" onchange="loadEsters()"></select>
                 <label>Эфир</label><select id="est-select" disabled></select>
-                <div class="row"><input type="number" id="in-dose" placeholder="Доза (мг/нед)"></div>
-                <div class="row"><input type="number" id="in-start" placeholder="Старт (нед)" value="1"><input type="number" id="in-end" placeholder="Финиш (нед)" value="8"></div>
-                <button class="btn-pri" onclick="addDrug()">Добавить в курс</button>
+                <div class="row"><input type="number" id="in-dose" placeholder="Доза"></div>
+                <div class="row"><input type="number" id="in-start" value="1" placeholder="Старт"><input type="number" id="in-end" value="8" placeholder="Финиш"></div>
+                <button onclick="addDrug()">Добавить</button>
             </div>
             <div id="stack-list"></div>
-            <button class="btn-sec" onclick="calcPlan()">РАССЧИТАТЬ ДИНАМИКУ</button>
+            <button class="btn-sec" onclick="calcPlan()">РАССЧИТАТЬ</button>
             <div id="plan-msg" style="margin-top:15px; color:var(--sec)"></div>
         </div>
         <div id="risks" class="view">
-            <h3>Динамика рисков</h3>
+            <h3>Динамика</h3>
             <div class="controls" id="chart-controls"></div>
             <canvas id="trend-chart"></canvas>
-            <h3>Матрица (Heatmap)</h3>
-            <div class="week-nav"><button onclick="changeWeek(-1)">◀</button><span id="week-label" style="font-weight:bold; color:var(--sec)">Неделя 1</span><button onclick="changeWeek(1)">▶</button></div>
+            <h3>Матрица</h3>
+            <div class="week-nav"><button onclick="changeWeek(-1)">◀</button><span id="week-label">Неделя 1</span><button onclick="changeWeek(1)">▶</button></div>
             <div id="heatmap" class="heatmap"></div>
         </div>
-        <div id="support" class="view"><h2>Протокол поддержки</h2><div id="support-list"></div></div>
+        <div id="support" class="view"><h2>Поддержка</h2><div id="support-list"></div></div>
         <div id="labs" class="view">
-            <div class="form-box"><h3>Индекс Фертильности (WHO)</h3>
-                <input type="number" id="lab-vol" placeholder="Объем (мл)">
-                <input type="number" id="lab-conc" placeholder="Концентрация (млн)">
-                <input type="number" id="lab-pr" placeholder="Подвижность (%)">
-                <button class="btn-pri" onclick="calcFert()">Рассчитать IF</button>
-                <div id="fert-res" style="margin-top:15px; font-size:1.2rem; font-weight:bold"></div>
+            <div class="form-box">
+                <h3>Фертильность</h3>
+                <input type="number" id="lab-vol" placeholder="Объем">
+                <input type="number" id="lab-conc" placeholder="Конц">
+                <button onclick="calcFert()">Рассчитать</button>
+                <div id="fert-res" style="margin-top:15px; font-weight:bold;"></div>
             </div>
         </div>
-        <div id="articles" class="view"><h2>База знаний</h2><div id="articles-list"></div></div>
+        <div id="articles" class="view"><h2>Статьи</h2><div id="articles-list"></div></div>
         <div id="shop" class="view"><h2>Магазин</h2><div id="shop-list"></div><h2>Глоссарий</h2><div id="glossary-list"></div></div>
     </main>
 </div>
-<script src="assets/js/core/database.js?v=10"></script>
-<script src="assets/js/core/engine.js?v=10"></script>
-<script src="assets/js/app.js?v=10"></script>
+<script src="assets/js/core/database.js?v=99"></script>
+<script src="assets/js/core/engine.js?v=99"></script>
+<script src="assets/js/app.js?v=99"></script>
 </body>
 </html>

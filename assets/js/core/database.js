@@ -72,3 +72,4 @@ const DB = {
         'Insulin Glargine': 'Продленный инсулин без пиковых значений.'
     }
 };
+console.log("Database Loaded");
