@@ -35,5 +35,15 @@ const Engine = {
     },
     getColor: function(v) {
         if(v<20) return '#4caf50'; if(v<40) return '#8bc34a'; if(v<60) return '#ffeb3b'; if(v<80) return '#ff9800'; return '#f44336';
+    },
+    calcFertility: function(data) {
+        const { volume, concentration, pr, morphology } = data;
+        if (!volume || !concentration) return 0;
+        let score = 0;
+        score += Math.min(1, volume / 1.5) * 15;
+        score += Math.min(1, concentration / 16) * 20;
+        score += Math.min(1, (pr || 0) / 30) * 25;
+        score += Math.min(1, (morphology || 0) / 4) * 20;
+        return Math.round(score * 100 / 80);
     }
 };
